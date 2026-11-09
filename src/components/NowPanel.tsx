@@ -3,9 +3,9 @@ import { Droplet, Flash, SeaWaves, Timer, Wind } from 'iconoir-react'
 import type { ReactNode } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import { KIND_LABEL, type Spot } from '../data/spots'
-import { dayLabel, dirDeg, energyLabel, energyRatio, faceRange, fmt, fmtEnergy, rate, WIND_LABEL, waveEnergy, windKind } from '../lib/surf'
+import { dayLabel, dirDeg, energyLabel, energyRatio, faceRange, fmt, fmtEnergy, WIND_LABEL, waveEnergy, windKind, windStrength } from '../lib/surf'
 import { brand } from '../theme'
-import { DirArrow, RatingDots } from './bits'
+import { DirArrow } from './bits'
 
 function Stat({ icon, label, value, sub }: { icon: ReactNode; label: string; value: ReactNode; sub?: ReactNode }) {
   return (
@@ -31,7 +31,6 @@ function Stat({ icon, label, value, sub }: { icon: ReactNode; label: string; val
 }
 
 export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; isNow: boolean }) {
-  const r = rate(spot, hour)
   const wk = windKind(spot, hour.windDirection, hour.windSpeed)
   const { wd, dm } = dayLabel(hour.time.slice(0, 10))
   const iconProps = { width: 16, height: 16, strokeWidth: 2 }
@@ -110,9 +109,16 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
             <Typography sx={{ fontSize: { xs: 56, md: 72 }, fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 1 }}>
               {faceRange(hour.waveHeight)}
             </Typography>
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 1.5 }}>
-              <RatingDots score={r.score} light />
-              <Typography sx={{ fontWeight: 800 }}>{r.label}</Typography>
+            {/* só os fatos do vento: sem nota nem juízo sobre as ondas */}
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 1.5, flexWrap: 'wrap', rowGap: 1 }}>
+              <Box sx={{ px: 1.5, py: 0.5, borderRadius: 99, bgcolor: 'rgba(245,230,211,.14)', fontWeight: 800 }}>
+                {WIND_LABEL[wk]}
+              </Box>
+              {wk !== 'calmo' && (
+                <Box sx={{ px: 1.5, py: 0.5, borderRadius: 99, bgcolor: 'rgba(245,230,211,.14)', fontWeight: 800 }}>
+                  {windStrength(hour.windSpeed)}
+                </Box>
+              )}
             </Stack>
             <Typography variant="body2" sx={{ opacity: 0.72, mt: 1 }}>
               Altura significativa {fmt.m(hour.waveHeight)} · mar de vento {fmt.m(hour.windWaveHeight)}

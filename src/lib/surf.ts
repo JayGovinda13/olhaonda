@@ -48,6 +48,15 @@ export function windKind(spot: Spot, windDir: number | null, windSpeed: number |
   return 'maral'
 }
 
+/** Limite (km/h) entre vento fraco e forte. 20 km/h ≈ 11 nós. */
+export const STRONG_WIND_KMH = 20
+
+/** "Vento fraco" / "Vento forte", sem julgar a qualidade das ondas. */
+export function windStrength(speed: number | null | undefined) {
+  if (speed == null) return '—'
+  return speed < STRONG_WIND_KMH ? 'Vento fraco' : 'Vento forte'
+}
+
 export type Rating = { score: number; label: string }
 
 const LABELS = ['Flat', 'Fraco', 'Regular', 'Bom', 'Muito bom', 'Clássico']
