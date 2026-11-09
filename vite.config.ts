@@ -33,10 +33,87 @@ function adsense(mode: string, client: string | undefined): Plugin {
   }
 }
 
+/**
+ * robots.txt e sitemap.xml gerados no build.
+ *  - produção: libera tudo e lista a home, as páginas fixas e todos os picos do ambiente
+ *  - staging/dev: bloqueia os buscadores
+ * Os picos vêm do próprio src/data/spots.ts (carregado pelo Vite com o mesmo modo do build).
+ */
+function seo(mode: string, siteUrl: string): Plugin {
+  return {
+    name: 'olhaonda-seo',
+    apply: 'build',
+    async generateBundle() {
+      if (mode !== 'production') {
+        this.emitFile({ type: 'asset', fileName: 'robots.txt', source: 'User-agent: *\nDisallow: /\n' })
+        return
+      }
+      const { createServer } = await import('vite')
+      const server = await createServer({
+        mode,
+        configFile: false,
+        logLevel: 'silent',
+        appType: 'custom',
+        server: { middlewareMode: true, hmr: false, ws: false },
+      })
+      let ids: string[] = []
+      try {
+        const mod = (await server.ssrLoadModule('/src/data/spots.ts')) as { SPOTS: { id: string }[] }
+        ids = mod.SPOTS.map((s) => s.id)
+      } finally {
+        await server.close()
+      }
+      const today = new Date().toISOString().slice(0, 10)
+      const url = (path: string, freq: string, prio: string) =>
+        `  <url><loc>${siteUrl}${path}</loc><lastmod>${today}</lastmod><changefreq>${freq}</changefreq><priority>${prio}</priority></url>`
+      const urls = [
+        url('/', 'daily', '1.0'),
+        ...ids.map((id) => url(`/pico/${id}`, 'hourly', '0.8')),
+        url('/sobre', 'monthly', '0.4'),
+        url('/privacidade', 'yearly', '0.2'),
+      ]
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sitemap.xml',
+        source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`,
+      })
+      this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n` })
+    },
+  }
+}
+
+/** No HTML de produção: endereço canônico e dados para compartilhamento (WhatsApp, redes sociais). */
+function canonical(mode: string, siteUrl: string): Plugin {
+  return {
+    name: 'olhaonda-canonical',
+    transformIndexHtml(html) {
+      if (mode !== 'production') return html
+      return html.replace(
+        '</head>',
+        `    <link rel="canonical" href="${siteUrl}/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="OlhaOnda" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:url" content="${siteUrl}/" />
+    <meta property="og:title" content="OlhaOnda · Previsão de ondas para surf e bodyboard" />
+    <meta property="og:description" content="Previsão de ondas para surf e bodyboard: swell, vento terral ou maral, maré e tempo, hora a hora." />
+  </head>`,
+      )
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
+  const siteUrl = (env.VITE_SITE_URL || 'https://olhaonda.com').replace(/\/$/, '')
   return {
-    plugins: [react(), noindexOutsideProduction(mode), adsense(mode, env.VITE_ADSENSE_CLIENT)],
+    plugins: [
+      react(),
+      noindexOutsideProduction(mode),
+      adsense(mode, env.VITE_ADSENSE_CLIENT),
+      seo(mode, siteUrl),
+      canonical(mode, siteUrl),
+    ],
   }
 })

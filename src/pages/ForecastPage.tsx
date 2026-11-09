@@ -16,6 +16,7 @@ import { DEFAULT_SPOT_ID, SPOTS } from '../data/spots'
 import { useForecast } from '../hooks/useForecast'
 import { useLocalState } from '../hooks/useLocalState'
 import { summarizeDays } from '../lib/days'
+import { usePageMeta } from '../lib/meta'
 import { currentHourIndex } from '../lib/surf'
 
 export default function ForecastPage() {
@@ -47,9 +48,11 @@ export default function ForecastPage() {
   const weather = forecast.data?.sun ?? []
   const dayWeather = weather.find((s) => s.date === selDate)
 
-  useEffect(() => {
-    document.title = `${spot.name} · OlhaOnda`
-  }, [spot.name])
+  usePageMeta({
+    title: `${spot.name} (${spot.city}) · Previsão de ondas · OlhaOnda`,
+    description: `Previsão de ondas para ${spot.name}, ${spot.city}: altura, swell, período, força da onda, vento terral ou maral, maré no padrão da Marinha e tempo, hora a hora e para 7 dias.`,
+    path: `/pico/${spot.id}`,
+  })
 
   const pickDay = (date: string) => {
     if (!hours) return

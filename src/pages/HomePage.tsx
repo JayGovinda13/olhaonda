@@ -1,7 +1,7 @@
 import { Box, Breadcrumbs, Button, ButtonBase, Link, Paper, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ArrowLeft, ArrowRight, Position } from 'iconoir-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import { HomeMap, type MapItem } from '../components/home/HomeMap'
 import { Wordmark } from '../components/Logo'
@@ -9,6 +9,7 @@ import { SpotPicker } from '../components/SpotPicker'
 import { cities, spotsIn, STATE_NAMES, states } from '../data/hierarchy'
 import { DEFAULT_SPOT_ID, KIND_LABEL, nearestSpot, SPOTS, type Spot } from '../data/spots'
 import { useLocalState } from '../hooks/useLocalState'
+import { usePageMeta } from '../lib/meta'
 import { dirDeg } from '../lib/surf'
 import { brand } from '../theme'
 
@@ -33,9 +34,12 @@ export default function HomePage() {
   const cityList = useMemo(() => (uf ? cities(uf) : []), [uf])
   const spotList = useMemo(() => (uf && city ? spotsIn(uf, city) : []), [uf, city])
 
-  useEffect(() => {
-    document.title = 'OlhaOnda · Previsão de ondas'
-  }, [])
+  usePageMeta({
+    title: 'OlhaOnda · Previsão de ondas para surf e bodyboard',
+    description:
+      'Previsão de ondas para surf e bodyboard na Baixada Santista: Guarujá, Santos, São Vicente, Praia Grande, Peruíbe, Bertioga e mais. Swell, vento, maré e tempo.',
+    path: '/',
+  })
 
   const go = (s: Spot | null) => s && navigate(`/pico/${s.id}`)
   const setLevel = (next: { uf?: string | null; cidade?: string | null }) => {

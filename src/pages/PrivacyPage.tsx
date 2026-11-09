@@ -1,8 +1,9 @@
 import { Box, Button, Link, Paper, Stack, Typography } from '@mui/material'
-import { useEffect, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { ADS_ENABLED } from '../config/ads'
 import { FEATURES, HAS_COMMUNITY } from '../config/env'
 import { consentStore, useConsent } from '../lib/consent'
+import { usePageMeta } from '../lib/meta'
 
 const CONTACT = (import.meta.env.VITE_PRIVACY_CONTACT as string | undefined) ?? 'privacidade@olhaonda.com'
 const UPDATED = '9 de novembro de 2026'
@@ -26,9 +27,11 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
  */
 export default function PrivacyPage() {
   const consent = useConsent()
-  useEffect(() => {
-    document.title = 'Privacidade · OlhaOnda'
-  }, [])
+  usePageMeta({
+    title: 'Privacidade e cookies · OlhaOnda',
+    description: 'Como o OlhaOnda trata dados pessoais e cookies, incluindo os anúncios do Google AdSense (LGPD).',
+    path: '/privacidade',
+  })
 
   return (
     <Paper sx={{ p: { xs: 2.5, sm: 4 }, maxWidth: 820, mx: 'auto' }}>

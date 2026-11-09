@@ -14,12 +14,14 @@ const SessionPage = lazy(() => import('./pages/photos/SessionPage'))
 const SellPage = lazy(() => import('./pages/photos/SellPage'))
 const PurchasesPage = lazy(() => import('./pages/photos/PurchasesPage'))
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
+const AboutPage = lazy(() => import('./pages/AboutPage'))
 
 // Rotas desligadas no ambiente (ex.: fórum e fotos em produção) nem entram no roteador.
 const routes: RouteObject[] = [
   { index: true, element: <HomePage /> },
   { path: 'pico/:id', element: <ForecastPage /> },
   { path: 'privacidade', element: <PrivacyPage /> },
+  { path: 'sobre', element: <AboutPage /> },
   ...(FEATURES.forum
     ? [
         { path: 'forum', element: <ForumPage /> },

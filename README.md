@@ -157,14 +157,21 @@ em cada projeto com `supabase secrets set`.
 
 ## Google AdSense (publicidade)
 
-O site já está preparado; falta só a conta:
+O site já está preparado: página *Sobre e contato* (`/sobre`), política de privacidade (`/privacidade`), aviso de
+cookies, `robots.txt` e `sitemap.xml` com todos os picos (gerados no build de produção) e endereço canônico
+`https://olhaonda.com` em cada página. Falta só a conta:
 
-1. Publique a produção no domínio definitivo (o AdSense não aprova `*.vercel.app`).
-2. Crie a conta em adsense.google.com com o domínio.
-3. Na Vercel (ambiente Production), defina `VITE_ADSENSE_CLIENT=ca-pub-…` e publique de novo. O build gera
-   sozinho a meta tag `google-adsense-account` (verificação) e o arquivo `/ads.txt`.
-4. Peça a revisão no painel. Depois de aprovado, crie três blocos de anúncio e preencha
-   `VITE_ADSENSE_SLOT_LEADERBOARD`, `VITE_ADSENSE_SLOT_RECTANGLE` e `VITE_ADSENSE_SLOT_INLINE`.
+1. O domínio principal precisa abrir: na Cloudflare, Workers & Pages > olhaonda > Custom domains > adicione
+   `olhaonda.com` (além do `www`). Recomendado: Rules > Redirect Rules > "Redirect from WWW to root".
+2. Crie a conta em adsense.google.com com o site `olhaonda.com` (sem `https://` e sem `www`).
+3. Na Cloudflare (Settings > Variables and Secrets > Production), defina `VITE_ADSENSE_CLIENT=ca-pub-…` e refaça o
+   último deploy. O build gera sozinho a meta tag `google-adsense-account` (verificação) e o arquivo `/ads.txt`.
+4. Confira `https://olhaonda.com/ads.txt` e peça a revisão no painel. Depois de aprovado, crie três blocos de anúncio e
+   preencha `VITE_ADSENSE_SLOT_LEADERBOARD`, `VITE_ADSENSE_SLOT_RECTANGLE` e `VITE_ADSENSE_SLOT_INLINE`.
+5. Envie `https://olhaonda.com/sitemap.xml` no Google Search Console para os picos aparecerem nas buscas.
+
+Atenção: com anúncios o site passa a ser uso comercial, e o plano gratuito da Open-Meteo é só para uso não comercial.
+Assine um plano em open-meteo.com e defina `VITE_OPEN_METEO_API_KEY` em Production.
 
 Privacidade: com o AdSense ligado aparece um aviso de cookies (LGPD). Nenhum script do Google carrega antes da
 escolha; quem recusa recebe só anúncios não personalizados. A página `/privacidade` traz os textos que o AdSense

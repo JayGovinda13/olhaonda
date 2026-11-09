@@ -59,7 +59,7 @@ export function Layout() {
             </Link>{' '}
             (ECMWF WAM, Météo-France MFWAM, NOAA GFS-Wave), CC BY 4.0.
           </Typography>
-          <Stack direction="row" spacing={2}>
+          <Stack direction="row" sx={{ columnGap: 2, rowGap: 0.5, flexWrap: 'wrap' }}>
             {FEATURES.forum && (
               <Link component={RouterLink} to="/forum" color="inherit" variant="body2">
                 Fórum
@@ -70,6 +70,9 @@ export function Layout() {
                 Venda suas fotos
               </Link>
             )}
+            <Link component={RouterLink} to="/sobre" color="inherit" variant="body2">
+              Sobre e contato
+            </Link>
             <Link href="mailto:anuncie@olhaonda.com" color="inherit" variant="body2">
               Anuncie
             </Link>
