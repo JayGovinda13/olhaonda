@@ -4,15 +4,16 @@ import { Camera, ChatLines, LogIn, LogOut, SeaWaves, ShoppingBag, Upload } from 
 import { useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 import { backend } from '../backend'
+import { FEATURES, HAS_COMMUNITY } from '../config/env'
 import { useAuth } from '../auth/context'
 import { brand } from '../theme'
 import { LogoMark, Wordmark } from './Logo'
 
-const NAV: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
-  { to: '/', label: 'Previsão', icon: <SeaWaves width={18} height={18} />, end: true },
-  { to: '/forum', label: 'Fórum', icon: <ChatLines width={18} height={18} /> },
-  { to: '/fotos', label: 'Fotos', icon: <Camera width={18} height={18} /> },
-]
+const NAV: { to: string; label: string; icon: ReactNode; end?: boolean; on: boolean }[] = [
+  { to: '/', label: 'Previsão', icon: <SeaWaves width={18} height={18} />, end: true, on: true },
+  { to: '/forum', label: 'Fórum', icon: <ChatLines width={18} height={18} />, on: FEATURES.forum },
+  { to: '/fotos', label: 'Fotos', icon: <Camera width={18} height={18} />, on: FEATURES.photos },
+].filter((n) => n.on)
 
 export function Header() {
   const { user, requireLogin } = useAuth()
@@ -46,7 +47,7 @@ export function Header() {
         </Box>
 
         <Stack component="nav" direction="row" spacing={0.5} sx={{ flex: 1, justifyContent: { xs: 'center', md: 'flex-start' } }}>
-          {NAV.map((n) => (
+          {NAV.length > 1 && NAV.map((n) => (
             <Button
               key={n.to}
               component={NavLink}
@@ -68,7 +69,7 @@ export function Header() {
           ))}
         </Stack>
 
-        {user ? (
+        {!HAS_COMMUNITY ? null : user ? (
           <>
             <IconButton onClick={(e) => setAnchor(e.currentTarget)} aria-label="Minha conta" sx={{ p: 0.25 }}>
               <Avatar src={user.avatarUrl ?? undefined} sx={{ width: 36, height: 36, bgcolor: brand.plum, color: brand.sand, fontWeight: 800 }}>
@@ -83,19 +84,22 @@ export function Header() {
                 </Typography>
               </Box>
               <Divider />
-              <MenuItem onClick={() => go('/fotos/compras')}>
-                <ListItemIcon>
-                  <ShoppingBag width={18} height={18} />
-                </ListItemIcon>
-                Minhas fotos
-              </MenuItem>
-              <MenuItem onClick={() => go('/fotos/vender')}>
-                <ListItemIcon>
-                  <Upload width={18} height={18} />
-                </ListItemIcon>
-                {user.isPhotographer ? 'Painel do fotógrafo' : 'Vender fotos'}
-              </MenuItem>
-              <Divider />
+              {/* MUI Menu não aceita Fragment como filho: itens condicionais em array */}
+              {FEATURES.photos && [
+                <MenuItem key="compras" onClick={() => go('/fotos/compras')}>
+                  <ListItemIcon>
+                    <ShoppingBag width={18} height={18} />
+                  </ListItemIcon>
+                  Minhas fotos
+                </MenuItem>,
+                <MenuItem key="vender" onClick={() => go('/fotos/vender')}>
+                  <ListItemIcon>
+                    <Upload width={18} height={18} />
+                  </ListItemIcon>
+                  {user.isPhotographer ? 'Painel do fotógrafo' : 'Vender fotos'}
+                </MenuItem>,
+                <Divider key="div" />,
+              ]}
               <MenuItem
                 onClick={() => {
                   setAnchor(null)

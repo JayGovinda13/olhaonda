@@ -97,6 +97,10 @@ Build: `npm run build`, pasta `dist`.
 | Anúncios | só espaços "Anuncie aqui" (sem AdSense) | AdSense e venda direta |
 | Google | `noindex` (não aparece em buscas) | indexado |
 | Aviso no topo | faixa "STAGING" | nenhum |
+| Seções | previsão, fórum e fotos | **só previsão** (fórum e fotos desligados) |
+
+Para ligar fórum ou fotos em produção, defina `VITE_FEATURE_FORUM=true` e/ou `VITE_FEATURE_PHOTOS=true` nas variáveis
+de produção e publique de novo. Desligados, os endereços `/forum` e `/fotos` voltam para a previsão e o login some.
 
 Fluxo: trabalho novo vai para `staging`, é testado no endereço de staging e, aprovado, é mesclado em `main`.
 

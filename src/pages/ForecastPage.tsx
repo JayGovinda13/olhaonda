@@ -7,6 +7,7 @@ import { DayStrip } from '../components/DayStrip'
 import { HourlyChart } from '../components/HourlyChart'
 import { NowPanel } from '../components/NowPanel'
 import { SpotCommunity } from '../components/SpotCommunity'
+import { HAS_COMMUNITY } from '../config/env'
 import { SpotCompass } from '../components/SpotCompass'
 import { SpotPicker } from '../components/SpotPicker'
 import { TidePanel } from '../components/TidePanel'
@@ -100,7 +101,7 @@ export default function ForecastPage() {
         </>
       )}
 
-      <SpotCommunity spot={spot} />
+      {HAS_COMMUNITY && <SpotCommunity spot={spot} />}
     </Stack>
   )
 }

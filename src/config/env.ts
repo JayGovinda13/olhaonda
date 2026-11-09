@@ -14,3 +14,18 @@ const fromMode: AppEnv =
 
 export const APP_ENV: AppEnv = fromVar ?? fromMode
 export const IS_PRODUCTION = APP_ENV === 'production'
+
+const flag = (v: string | undefined, fallback: boolean) => (v == null || v === '' ? fallback : v === 'true')
+
+/**
+ * Recursos ligados por ambiente. Em produção, por enquanto, só a previsão:
+ * fórum e fotos ficam desligados e seguem sendo testados em staging.
+ * Para ligar em produção: VITE_FEATURE_FORUM=true / VITE_FEATURE_PHOTOS=true.
+ */
+export const FEATURES = {
+  forum: flag(import.meta.env.VITE_FEATURE_FORUM, !IS_PRODUCTION),
+  photos: flag(import.meta.env.VITE_FEATURE_PHOTOS, !IS_PRODUCTION),
+}
+
+/** Algum recurso que exige conta (login) está ligado. */
+export const HAS_COMMUNITY = FEATURES.forum || FEATURES.photos

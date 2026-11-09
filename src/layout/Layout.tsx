@@ -2,7 +2,7 @@ import { Alert, Box, Container, Link, Skeleton, Stack, Typography } from '@mui/m
 import { Suspense } from 'react'
 import { Link as RouterLink, Outlet } from 'react-router'
 import { backend } from '../backend'
-import { APP_ENV } from '../config/env'
+import { APP_ENV, FEATURES, HAS_COMMUNITY } from '../config/env'
 import { AdSlot } from '../components/AdSlot'
 import { Header } from '../components/Header'
 import { LogoMark } from '../components/Logo'
@@ -27,7 +27,7 @@ export function Layout() {
         </Box>
       )}
       <Header />
-      {backend.mode === 'demo' && (
+      {HAS_COMMUNITY && backend.mode === 'demo' && (
         <Alert severity="info" sx={{ borderRadius: 0, py: 0, justifyContent: 'center', '& .MuiAlert-message': { fontSize: 13 } }}>
           Modo demonstração: fórum e fotos guardam dados só neste navegador.
         </Alert>
@@ -59,12 +59,16 @@ export function Layout() {
             (ECMWF WAM, Météo-France MFWAM, NOAA GFS-Wave), CC BY 4.0.
           </Typography>
           <Stack direction="row" spacing={2}>
-            <Link component={RouterLink} to="/forum" color="inherit" variant="body2">
-              Fórum
-            </Link>
-            <Link component={RouterLink} to="/fotos/vender" color="inherit" variant="body2">
-              Venda suas fotos
-            </Link>
+            {FEATURES.forum && (
+              <Link component={RouterLink} to="/forum" color="inherit" variant="body2">
+                Fórum
+              </Link>
+            )}
+            {FEATURES.photos && (
+              <Link component={RouterLink} to="/fotos/vender" color="inherit" variant="body2">
+                Venda suas fotos
+              </Link>
+            )}
             <Link href="mailto:anuncie@olhaonda.com.br" color="inherit" variant="body2">
               Anuncie
             </Link>

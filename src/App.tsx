@@ -1,6 +1,7 @@
 import { lazy } from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router'
+import { createBrowserRouter, Navigate, RouterProvider, type RouteObject } from 'react-router'
 import { AuthProvider } from './auth/AuthProvider'
+import { FEATURES } from './config/env'
 import { Layout } from './layout/Layout'
 import ForecastPage from './pages/ForecastPage'
 
@@ -12,21 +13,28 @@ const SessionPage = lazy(() => import('./pages/photos/SessionPage'))
 const SellPage = lazy(() => import('./pages/photos/SellPage'))
 const PurchasesPage = lazy(() => import('./pages/photos/PurchasesPage'))
 
-const router = createBrowserRouter([
-  {
-    element: <Layout />,
-    children: [
-      { index: true, element: <ForecastPage /> },
-      { path: 'forum', element: <ForumPage /> },
-      { path: 'forum/:id', element: <ThreadPage /> },
-      { path: 'fotos', element: <PhotosPage /> },
-      { path: 'fotos/sessao/:id', element: <SessionPage /> },
-      { path: 'fotos/vender', element: <SellPage /> },
-      { path: 'fotos/compras', element: <PurchasesPage /> },
-      { path: '*', element: <ForecastPage /> },
-    ],
-  },
-])
+// Rotas desligadas no ambiente (ex.: fórum e fotos em produção) nem entram no roteador.
+const routes: RouteObject[] = [
+  { index: true, element: <ForecastPage /> },
+  ...(FEATURES.forum
+    ? [
+        { path: 'forum', element: <ForumPage /> },
+        { path: 'forum/:id', element: <ThreadPage /> },
+      ]
+    : []),
+  ...(FEATURES.photos
+    ? [
+        { path: 'fotos', element: <PhotosPage /> },
+        { path: 'fotos/sessao/:id', element: <SessionPage /> },
+        { path: 'fotos/vender', element: <SellPage /> },
+        { path: 'fotos/compras', element: <PurchasesPage /> },
+      ]
+    : []),
+  // qualquer outro endereço volta para a previsão
+  { path: '*', element: <Navigate to="/" replace /> },
+]
+
+const router = createBrowserRouter([{ element: <Layout />, children: routes }])
 
 export default function App() {
   return (
