@@ -1,76 +1,216 @@
-import { Box, Paper, Stack, Typography } from '@mui/material'
-import { HalfMoon, SunLight } from 'iconoir-react'
-import { useId } from 'react'
+import { Box, ButtonBase, Paper, Stack, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
+import { ArrowDown, ArrowUp, HalfMoon, SunLight } from 'iconoir-react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { DayWeather, HourPoint } from '../api/openMeteo'
 import { fmt } from '../lib/surf'
 import { brand } from '../theme'
 
 type Extreme = { time: string; level: number; kind: 'alta' | 'baixa' }
 
+const m2 = (v: number) => `${v.toFixed(2).replace('.', ',')} m`
+
+/**
+ * Preamares e baixa-mares com precisão de minutos: ajusta uma parábola pelos três pontos
+ * horários em volta de cada pico/vale e pega o vértice (os dados vêm de hora em hora).
+ */
 function extremes(hours: HourPoint[]): Extreme[] {
   const out: Extreme[] = []
   for (let i = 1; i < hours.length - 1; i++) {
     const [a, b, c] = [hours[i - 1].seaLevel, hours[i].seaLevel, hours[i + 1].seaLevel]
     if (a == null || b == null || c == null) continue
-    if (b > a && b >= c) out.push({ time: hours[i].time, level: b, kind: 'alta' })
-    if (b < a && b <= c) out.push({ time: hours[i].time, level: b, kind: 'baixa' })
+    const isHigh = b > a && b >= c
+    const isLow = b < a && b <= c
+    if (!isHigh && !isLow) continue
+    const denom = a - 2 * b + c
+    const dt = denom === 0 ? 0 : Math.max(-0.5, Math.min(0.5, (a - c) / (2 * denom))) // em horas
+    const level = b - ((a - c) * dt) / 4
+    const base = new Date(`${hours[i].time}:00Z`)
+    const t = new Date(base.getTime() + Math.round(dt * 60) * 60_000).toISOString().slice(0, 16)
+    out.push({ time: t, level, kind: isHigh ? 'alta' : 'baixa' })
   }
   return out
 }
 
-export function TidePanel({ hours, selected, sun }: { hours: HourPoint[]; selected: string; sun?: DayWeather }) {
+export function TidePanel({
+  hours,
+  selected,
+  sun,
+  onSelect,
+}: {
+  hours: HourPoint[]
+  selected: string
+  sun?: DayWeather
+  onSelect: (time: string) => void
+}) {
   const grad = useId()
+  const svgRef = useRef<SVGSVGElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const [dragging, setDragging] = useState(false)
   const levels = hours.map((h) => h.seaLevel)
   const valid = levels.filter((v): v is number => v != null)
 
   const W = 480
-  const H = 140
-  const PAD = 14
+  const H = 170
+  const PAD_X = 16
+  const TOP = 34 // espaço para o rótulo do cursor
+  const BOTTOM = 26 // espaço para as horas
   const min = Math.min(...valid)
   const max = Math.max(...valid)
   const span = Math.max(max - min, 0.2)
-  const x = (i: number) => PAD + (i / Math.max(1, hours.length - 1)) * (W - PAD * 2)
-  const y = (v: number) => PAD + (1 - (v - min) / span) * (H - PAD * 2)
+  const x = (i: number) => PAD_X + (i / Math.max(1, hours.length - 1)) * (W - PAD_X * 2)
+  const y = (v: number) => TOP + (1 - (v - min) / span) * (H - TOP - BOTTOM)
 
-  const pts = levels.map((v, i) => (v == null ? null : [x(i), y(v)] as const)).filter(Boolean) as [number, number][]
-  const line = pts.map(([px, py], i) => `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`).join(' ')
-  const area = pts.length ? `${line} L${pts[pts.length - 1][0]} ${H} L${pts[0][0]} ${H} Z` : ''
+  const pts = levels.map((v, i) => (v == null ? null : ([x(i), y(v)] as const))).filter(Boolean) as [number, number][]
+  // curva suave (Catmull-Rom -> Bézier) entre os pontos horários
+  const line = pts
+    .map(([px, py], i) => {
+      if (i === 0) return `M${px.toFixed(1)} ${py.toFixed(1)}`
+      const p0 = pts[i - 2] ?? pts[i - 1]
+      const p1 = pts[i - 1]
+      const p3 = pts[i + 1] ?? [px, py]
+      const c1 = [p1[0] + (px - p0[0]) / 6, p1[1] + (py - p0[1]) / 6]
+      const c2 = [px - (p3[0] - p1[0]) / 6, py - (p3[1] - p1[1]) / 6]
+      return `C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${px.toFixed(1)} ${py.toFixed(1)}`
+    })
+    .join(' ')
+  const baseY = H - BOTTOM
+  const area = pts.length ? `${line} L${pts[pts.length - 1][0]} ${baseY} L${pts[0][0]} ${baseY} Z` : ''
+  const zeroY = min < 0 && max > 0 ? y(0) : null
+
   const selIdx = hours.findIndex((h) => h.time === selected)
   const sel = selIdx >= 0 ? hours[selIdx].seaLevel : null
   const ext = extremes(hours)
 
-  let trend = ''
-  if (selIdx >= 0 && selIdx < hours.length - 1) {
-    const a = hours[selIdx].seaLevel
-    const b = hours[selIdx + 1].seaLevel
-    if (a != null && b != null) trend = b > a ? 'enchendo' : 'secando'
+  const trendAt = (i: number) => {
+    const a = hours[i]?.seaLevel
+    const b = hours[i + 1]?.seaLevel ?? null
+    const prev = hours[i - 1]?.seaLevel ?? null
+    if (a == null) return null
+    if (b != null) return b > a ? 'up' : 'down'
+    if (prev != null) return a > prev ? 'up' : 'down'
+    return null
   }
+  const trend = selIdx >= 0 ? trendAt(selIdx) : null
+
+  // cursor: converte a posição do ponteiro na hora mais próxima
+  const pickFromPointer = (clientX: number) => {
+    const svg = svgRef.current
+    if (!svg || !hours.length) return
+    const r = svg.getBoundingClientRect()
+    const vx = ((clientX - r.left) / r.width) * W
+    const i = Math.round(((vx - PAD_X) / (W - PAD_X * 2)) * (hours.length - 1))
+    const idx = Math.max(0, Math.min(hours.length - 1, i))
+    if (hours[idx].time !== selected) onSelect(hours[idx].time)
+  }
+  const onDown = (e: PointerEvent<SVGSVGElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setDragging(true)
+    pickFromPointer(e.clientX)
+  }
+  const onMove = (e: PointerEvent<SVGSVGElement>) => {
+    if (dragging || e.pointerType === 'mouse') pickFromPointer(e.clientX)
+  }
+  const onKey = (e: KeyboardEvent) => {
+    const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+    if (!step || selIdx < 0) return
+    e.preventDefault()
+    const next = hours[Math.max(0, Math.min(hours.length - 1, selIdx + step))]
+    onSelect(next.time)
+  }
+
+  // mantém a hora selecionada visível na tabela horária
+  useEffect(() => {
+    const box = listRef.current
+    const el = box?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (box && el) box.scrollTo({ left: el.offsetLeft - box.clientWidth / 2 + el.clientWidth / 2, behavior: 'smooth' })
+  }, [selected])
+
+  // rótulo do cursor não pode sair do gráfico
+  const labelX = selIdx >= 0 ? Math.max(62, Math.min(W - 62, x(selIdx))) : 0
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
         <Typography variant="h6">Maré</Typography>
-        {trend && (
-          <Typography variant="body2" sx={{ fontWeight: 700, color: brand.green }}>
-            {trend} · {sel != null ? `${sel.toFixed(2).replace('.', ',')} m` : ''}
-          </Typography>
+        {trend && sel != null && (
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: trend === 'up' ? brand.green : brand.plum }}>
+            {trend === 'up' ? <ArrowUp width={16} height={16} /> : <ArrowDown width={16} height={16} />}
+            <Typography variant="body2" sx={{ fontWeight: 800 }}>
+              {trend === 'up' ? 'enchendo' : 'secando'} · {m2(sel)}
+            </Typography>
+          </Stack>
         )}
       </Stack>
 
       {valid.length ? (
-        <Box component="svg" viewBox={`0 0 ${W} ${H}`} sx={{ width: '100%', height: 'auto', mt: 1.5, display: 'block' }}>
+        <Box
+          component="svg"
+          ref={svgRef}
+          viewBox={`0 0 ${W} ${H}`}
+          role="slider"
+          tabIndex={0}
+          aria-label="Hora no gráfico de maré"
+          aria-valuemin={0}
+          aria-valuemax={23}
+          aria-valuenow={selIdx}
+          aria-valuetext={sel != null ? `${fmt.hour(selected)}, ${m2(sel)}` : undefined}
+          onPointerDown={onDown}
+          onPointerMove={onMove}
+          onPointerUp={() => setDragging(false)}
+          onPointerCancel={() => setDragging(false)}
+          onKeyDown={onKey}
+          sx={{
+            width: '100%',
+            height: 'auto',
+            mt: 1.5,
+            display: 'block',
+            cursor: dragging ? 'grabbing' : 'ew-resize',
+            touchAction: 'pan-y', // arrastar na horizontal move o cursor; na vertical rola a página
+            userSelect: 'none',
+            outline: 'none',
+            borderRadius: '12px',
+            '&:focus-visible': { boxShadow: `0 0 0 2px ${alpha(brand.purple, 0.4)}` },
+          }}
+        >
           <defs>
             <linearGradient id={grad} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor={brand.green} stopOpacity="0.35" />
-              <stop offset="1" stopColor={brand.green} stopOpacity="0" />
+              <stop offset="0" stopColor={brand.green} stopOpacity="0.38" />
+              <stop offset="1" stopColor={brand.green} stopOpacity="0.02" />
             </linearGradient>
           </defs>
+          {/* grade das horas */}
+          {[0, 6, 12, 18, 23].map((hIdx) =>
+            hIdx < hours.length ? (
+              <g key={hIdx}>
+                <line x1={x(hIdx)} x2={x(hIdx)} y1={TOP - 6} y2={baseY} stroke={brand.purple} strokeOpacity="0.07" />
+                <text x={x(hIdx)} y={H - 6} textAnchor={hIdx === 0 ? 'start' : hIdx >= hours.length - 1 ? 'end' : 'middle'} fontSize="14" fontWeight="700" fill={brand.purple} opacity="0.55">
+                  {fmt.hour(hours[hIdx].time)}
+                </text>
+              </g>
+            ) : null,
+          )}
+          {zeroY != null && (
+            <g>
+              <line x1={PAD_X} x2={W - PAD_X} y1={zeroY} y2={zeroY} stroke={brand.purple} strokeOpacity="0.25" strokeDasharray="2 4" />
+              <text x={W - PAD_X} y={zeroY - 4} textAnchor="end" fontSize="13" fill={brand.purple} opacity="0.5">
+                nível médio
+              </text>
+            </g>
+          )}
           <path d={area} fill={`url(#${grad})`} />
           <path d={line} fill="none" stroke={brand.deepGreen} strokeWidth="2.5" strokeLinejoin="round" />
+          {pts.map(([px, py], i) => (
+            <circle key={i} cx={px} cy={py} r="2" fill={brand.deepGreen} opacity="0.45" />
+          ))}
           {selIdx >= 0 && sel != null && (
-            <g>
-              <line x1={x(selIdx)} x2={x(selIdx)} y1={PAD / 2} y2={H} stroke={brand.purple} strokeDasharray="3 4" opacity="0.5" />
-              <circle cx={x(selIdx)} cy={y(sel)} r="6" fill={brand.purple} stroke={brand.sand} strokeWidth="2.5" />
+            <g pointerEvents="none">
+              <line x1={x(selIdx)} x2={x(selIdx)} y1={TOP - 4} y2={baseY} stroke={brand.purple} strokeWidth="1.5" opacity="0.55" />
+              <circle cx={x(selIdx)} cy={y(sel)} r={dragging ? 9 : 7} fill={brand.purple} stroke={brand.sand} strokeWidth="3" />
+              <rect x={labelX - 60} y={0} width="120" height="28" rx="14" fill={brand.purple} />
+              <text x={labelX} y={19} textAnchor="middle" fontSize="15" fontWeight="800" fill={brand.sand}>
+                {fmt.hour(selected)} · {sel.toFixed(2).replace('.', ',')} m
+              </text>
             </g>
           )}
         </Box>
@@ -80,6 +220,7 @@ export function TidePanel({ hours, selected, sun }: { hours: HourPoint[]; select
         </Typography>
       )}
 
+      {/* preamares e baixa-mares */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1.5 }}>
         {ext.map((e) => (
           <Box
@@ -91,18 +232,60 @@ export function TidePanel({ hours, selected, sun }: { hours: HourPoint[]; select
               bgcolor: e.kind === 'alta' ? 'rgba(47,174,123,.14)' : 'rgba(122,46,110,.1)',
             }}
           >
-            <Typography sx={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', opacity: 0.7 }}>
-              {e.kind}
-            </Typography>
+            <Typography sx={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', opacity: 0.7 }}>{e.kind}</Typography>
             <Typography sx={{ fontSize: 14, fontWeight: 800 }}>
-              {fmt.hour(e.time)} · {e.level.toFixed(1).replace('.', ',')} m
+              {fmt.hour(e.time)} · {m2(e.level)}
             </Typography>
           </Box>
         ))}
       </Box>
 
+      {/* tabela de hora em hora */}
+      <Box
+        ref={listRef}
+        role="group"
+        aria-label="Maré de hora em hora"
+        sx={{
+          display: 'grid',
+          gridAutoFlow: 'column',
+          gridAutoColumns: '54px',
+          gap: 0.5,
+          overflowX: 'auto',
+          mt: 2,
+          pb: 0.5,
+          position: 'relative',
+        }}
+      >
+        {hours.map((h, i) => {
+          const active = h.time === selected
+          const t = trendAt(i)
+          return (
+            <ButtonBase
+              key={h.time}
+              aria-pressed={active}
+              onClick={() => onSelect(h.time)}
+              sx={{
+                flexDirection: 'column',
+                py: 0.75,
+                borderRadius: '10px',
+                bgcolor: active ? brand.purple : alpha(brand.purple, 0.04),
+                color: active ? brand.sand : 'text.primary',
+              }}
+            >
+              <Typography sx={{ fontSize: 11, fontWeight: 700, opacity: 0.75 }}>{fmt.hour(h.time)}</Typography>
+              <Typography sx={{ fontSize: 13, fontWeight: 800 }}>
+                {h.seaLevel == null ? '—' : h.seaLevel.toFixed(2).replace('.', ',')}
+              </Typography>
+              <Box sx={{ display: 'flex', color: active ? brand.sand : t === 'up' ? brand.green : brand.plum }}>
+                {t === 'up' ? <ArrowUp width={12} height={12} /> : t === 'down' ? <ArrowDown width={12} height={12} /> : null}
+              </Box>
+            </ButtonBase>
+          )
+        })}
+      </Box>
+
       {sun && (
-        <Stack direction="row" spacing={3} sx={{ mt: 2.5, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Stack direction="row" spacing={3} sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <SunLight width={18} height={18} color={brand.plum} />
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
@@ -118,7 +301,8 @@ export function TidePanel({ hours, selected, sun }: { hours: HourPoint[]; select
         </Stack>
       )}
       <Typography variant="caption" sx={{ display: 'block', mt: 1.5, opacity: 0.6 }}>
-        Nível do mar modelado (resolução ~8 km). Em baías e estuários confira a tábua da Marinha.
+        Arraste no gráfico para mudar a hora. Alturas em metros em relação ao nível médio do mar (0 m), de um modelo
+        oceânico global. Tábuas da Marinha usam outro zero (nível de redução), por isso os números diferem.
       </Typography>
     </Paper>
   )

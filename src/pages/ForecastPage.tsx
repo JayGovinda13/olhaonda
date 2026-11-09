@@ -90,7 +90,7 @@ export default function ForecastPage() {
           <HourlyChart spot={spot} hours={dayHours} scaleMax={weekMax} selected={selected.time} onSelect={setSelTime} />
           <AdSlot format="inline" />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-            <TidePanel hours={dayHours} selected={selected.time} sun={dayWeather} />
+            <TidePanel hours={dayHours} selected={selected.time} sun={dayWeather} onSelect={setSelTime} />
             <WeatherPanel days={weather} selectedDate={selDate} hour={selected} onSelectDay={pickDay} />
           </Box>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 2fr) minmax(0, 1fr)' }, gap: 2 }}>
