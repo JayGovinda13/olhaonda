@@ -1,0 +1,60 @@
+# Deploy automático na hospedagem Hostinger (FTP):
+#   push em `main`    -> produção (olhaonda.com.br)
+#   push em `staging` -> staging  (staging.olhaonda.com.br)
+#
+# Configure em GitHub > Settings > Environments, nos environments `production` e `staging`:
+#   Secrets:   FTP_PASSWORD
+#   Variables: FTP_SERVER        (ex.: ftp.olhaonda.com.br ou o IP mostrado no hPanel)
+#              FTP_USERNAME      (usuário FTP do hPanel)
+#              FTP_SERVER_DIR    (pasta do site, terminando em "/"; ex.: public_html/ ou
+#                                 public_html/staging/ para o subdomínio)
+#              FTP_PROTOCOL      (opcional: ftps (padrão) ou ftp)
+#              VITE_*            (as variáveis de .env.production.example / .env.staging.example)
+name: Deploy Hostinger
+
+on:
+  push:
+    branches: [main, staging]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Build (produção na main, staging nas outras)
+        run: npm run build:ci
+        env:
+          VITE_APP_ENV: ${{ vars.VITE_APP_ENV }}
+          VITE_FEATURE_FORUM: ${{ vars.VITE_FEATURE_FORUM }}
+          VITE_FEATURE_PHOTOS: ${{ vars.VITE_FEATURE_PHOTOS }}
+          VITE_SPOT_SCOPE: ${{ vars.VITE_SPOT_SCOPE }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_PLATFORM_FEE_PERCENT: ${{ vars.VITE_PLATFORM_FEE_PERCENT }}
+          VITE_ADSENSE_CLIENT: ${{ vars.VITE_ADSENSE_CLIENT }}
+          VITE_ADSENSE_SLOT_LEADERBOARD: ${{ vars.VITE_ADSENSE_SLOT_LEADERBOARD }}
+          VITE_ADSENSE_SLOT_RECTANGLE: ${{ vars.VITE_ADSENSE_SLOT_RECTANGLE }}
+          VITE_ADSENSE_SLOT_INLINE: ${{ vars.VITE_ADSENSE_SLOT_INLINE }}
+          VITE_ADS_CONTACT: ${{ vars.VITE_ADS_CONTACT }}
+          VITE_PRIVACY_CONTACT: ${{ vars.VITE_PRIVACY_CONTACT }}
+          VITE_OPEN_METEO_API_KEY: ${{ vars.VITE_OPEN_METEO_API_KEY }}
+      - name: Enviar para a Hostinger (só arquivos alterados)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ vars.FTP_SERVER }}
+          username: ${{ vars.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir: ./dist/
+          server-dir: ${{ vars.FTP_SERVER_DIR || 'public_html/' }}
