@@ -3,7 +3,7 @@ import { alpha } from '@mui/material/styles'
 import { useEffect, useRef } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
-import { fmt, powerRatio, rate, ratingColor, wavePower, windKind } from '../lib/surf'
+import { energyRatio, fmt, rate, ratingColor, waveEnergy, windKind } from '../lib/surf'
 import { brand } from '../theme'
 import { DirArrow } from './bits'
 import { WeatherIcon } from './WeatherIcon'
@@ -22,8 +22,9 @@ const ROW_LABEL = {
 const ROWS = [
   { key: 'hora', label: 'Hora', h: 22 },
   { key: 'swell', label: 'Período', h: 22 },
-  { key: 'forca', label: 'Força', h: 30 },
-  { key: 'vento', label: 'Vento', h: 36 },
+  { key: 'swelldir', label: 'Swell °', h: 22 },
+  { key: 'forca', label: 'Energia', h: 30 },
+  { key: 'vento', label: 'Vento', h: 50 },
   { key: 'tempo', label: 'Tempo', h: 28 },
 ] as const
 
@@ -107,7 +108,7 @@ export function HourlyChart({
             const active = h.time === selected
             const wk = windKind(spot, h.windDirection, h.windSpeed)
             const good = wk === 'terral' || wk === 'cross-terral' || wk === 'calmo'
-            const power = wavePower(h)
+            const energy = waveEnergy(h)
             const hr = Number(h.time.slice(11, 13))
             return (
               <ButtonBase
@@ -144,19 +145,25 @@ export function HourlyChart({
                 <Typography sx={{ fontSize: 12, opacity: 0.75, height: ROWS[1].h }}>
                   {fmt.s(h.swellPeakPeriod ?? h.swellPeriod)}
                 </Typography>
-                <Box sx={{ height: ROWS[2].h, flexDirection: 'column', gap: '3px' }}>
+                <Typography sx={{ fontSize: 12, opacity: 0.75, height: ROWS[2].h }}>
+                  {h.swellDirection == null ? '—' : `${Math.round(h.swellDirection)}°`}
+                </Typography>
+                <Box sx={{ height: ROWS[3].h, flexDirection: 'column', gap: '3px' }}>
                   <Typography sx={{ fontSize: 11, fontWeight: 700, lineHeight: 1 }}>
-                    {power == null ? '—' : Math.round(power)}
+                    {energy == null ? '—' : Math.round(energy)}
                   </Typography>
                   <Box sx={{ width: '60%', height: 3, borderRadius: 2, bgcolor: alpha(brand.purple, 0.1), overflow: 'hidden' }}>
-                    <Box sx={{ width: `${powerRatio(power) * 100}%`, height: '100%', bgcolor: brand.plum }} />
+                    <Box sx={{ width: `${energyRatio(energy) * 100}%`, height: '100%', bgcolor: brand.plum }} />
                   </Box>
                 </Box>
-                <Stack sx={{ height: ROWS[3].h, color: good ? brand.green : brand.plum }}>
+                <Stack sx={{ height: ROWS[4].h, color: good ? brand.green : brand.plum }}>
                   <DirArrow deg={h.windDirection} size={16} />
                   <Typography sx={{ fontSize: 11, fontWeight: 700, lineHeight: 1.1 }}>{Math.round(h.windSpeed ?? 0)}</Typography>
+                  <Typography sx={{ fontSize: 10, opacity: 0.8, lineHeight: 1.1 }}>
+                    {h.windDirection == null ? '' : `${Math.round(h.windDirection)}°`}
+                  </Typography>
                 </Stack>
-                <Box sx={{ height: ROWS[4].h, color: brand.deepGreen }}>
+                <Box sx={{ height: ROWS[5].h, color: brand.deepGreen }}>
                   <WeatherIcon code={h.weatherCode} size={18} night={hr < 6 || hr >= 19} />
                 </Box>
               </ButtonBase>
@@ -165,7 +172,7 @@ export function HourlyChart({
         </Box>
       </Box>
       <Typography variant="caption" sx={{ display: 'block', mt: 1.5, opacity: 0.6 }}>
-        Barras: altura significativa (m). Força em kW por metro de onda. Vento em km/h; verde = terral ou fraco, vinho =
+        Barras: altura significativa (m). Swell °: direção de onde vem o swell, em graus. Energia: kJ de cada onda por metro de crista. Vento em km/h e graus (de onde sopra); verde = terral ou fraco, vinho =
         maral/lateral.
       </Typography>
     </Paper>

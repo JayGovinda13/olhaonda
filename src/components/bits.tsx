@@ -1,6 +1,6 @@
 import { Box, Tooltip } from '@mui/material'
 import { ArrowUp } from 'iconoir-react'
-import { compass, ratingColor } from '../lib/surf'
+import { dirDeg, ratingColor } from '../lib/surf'
 
 /** Seta apontando para onde a ondulação/vento VAI (dados vêm como "de onde"). */
 export function DirArrow({
@@ -16,7 +16,7 @@ export function DirArrow({
 }) {
   if (deg == null) return null
   return (
-    <Tooltip title={`${label ?? 'De'} ${compass(deg)} (${Math.round(deg)}°)`}>
+    <Tooltip title={`${label ?? 'De'} ${dirDeg(deg)}`}>
       <Box
         component="span"
         sx={{ display: 'inline-flex', transform: `rotate(${deg + 180}deg)`, transition: 'transform .3s' }}

@@ -3,7 +3,7 @@ import { Droplet, Flash, SeaWaves, Timer, Wind } from 'iconoir-react'
 import type { ReactNode } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import { KIND_LABEL, type Spot } from '../data/spots'
-import { compass, dayLabel, faceRange, fmt, powerLabel, powerRatio, rate, WIND_LABEL, wavePower, windKind } from '../lib/surf'
+import { dayLabel, dirDeg, energyLabel, energyRatio, faceRange, fmt, fmtEnergy, rate, WIND_LABEL, waveEnergy, windKind } from '../lib/surf'
 import { brand } from '../theme'
 import { DirArrow, RatingDots } from './bits'
 
@@ -35,7 +35,7 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
   const wk = windKind(spot, hour.windDirection, hour.windSpeed)
   const { wd, dm } = dayLabel(hour.time.slice(0, 10))
   const iconProps = { width: 16, height: 16, strokeWidth: 2 }
-  const power = wavePower(hour)
+  const energy = waveEnergy(hour)
 
   return (
     <Paper
@@ -69,6 +69,7 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
           <Box>
             <Typography variant="overline" sx={{ opacity: 0.7 }}>
               {spot.city} · {spot.state}
+              {spot.note ? ` · ${spot.note}` : ''}
             </Typography>
             <Typography variant="h3" component="h1" sx={{ fontSize: { xs: 34, md: 44 } }}>
               {spot.name}
@@ -133,7 +134,7 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
                   {fmt.m(hour.swellHeight)} <DirArrow deg={hour.swellDirection} color={brand.green} />
                 </>
               }
-              sub={`${fmt.s(hour.swellPeakPeriod ?? hour.swellPeriod)} · ${compass(hour.swellDirection)}`}
+              sub={`${fmt.s(hour.swellPeakPeriod ?? hour.swellPeriod)} · ${dirDeg(hour.swellDirection)}`}
             />
             <Stat
               icon={<Timer {...iconProps} />}
@@ -143,7 +144,7 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
                   {fmt.m(hour.swell2Height)} <DirArrow deg={hour.swell2Direction} color={brand.green} />
                 </>
               }
-              sub={`${fmt.s(hour.swell2Period)} · ${compass(hour.swell2Direction)}`}
+              sub={`${fmt.s(hour.swell2Period)} · ${dirDeg(hour.swell2Direction)}`}
             />
             <Stat
               icon={<Wind {...iconProps} />}
@@ -153,17 +154,17 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
                   {fmt.kmh(hour.windSpeed)} <DirArrow deg={hour.windDirection} color={brand.sand} />
                 </>
               }
-              sub={`${WIND_LABEL[wk]} · ${compass(hour.windDirection)} · raj. ${fmt.kmh(hour.windGusts)}`}
+              sub={`${WIND_LABEL[wk]} · ${dirDeg(hour.windDirection)} · raj. ${fmt.kmh(hour.windGusts)}`}
             />
             <Stat
               icon={<Flash {...iconProps} />}
               label="Força"
-              value={power == null ? '—' : `${Math.round(power)} kW/m`}
+              value={fmtEnergy(energy)}
               sub={
                 <Box component="span" sx={{ display: 'block' }}>
-                  {powerLabel(power)}
+                  {energyLabel(energy)} · por metro de onda
                   <Box component="span" sx={{ display: 'block', mt: 0.75, height: 4, borderRadius: 2, bgcolor: 'rgba(245,230,211,.2)', overflow: 'hidden' }}>
-                    <Box component="span" sx={{ display: 'block', height: '100%', width: `${powerRatio(power) * 100}%`, bgcolor: brand.green }} />
+                    <Box component="span" sx={{ display: 'block', height: '100%', width: `${energyRatio(energy) * 100}%`, bgcolor: brand.green }} />
                   </Box>
                 </Box>
               }

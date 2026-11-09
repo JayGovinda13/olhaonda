@@ -9,6 +9,13 @@ export function compass(deg: number | null | undefined) {
   return COMPASS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16]
 }
 
+/** Direção em graus + rosa dos ventos: "172° S". */
+export function dirDeg(deg: number | null | undefined) {
+  if (deg == null) return '—'
+  const d = Math.round(((deg % 360) + 360) % 360)
+  return `${d}° ${compass(d)}`
+}
+
 /** Menor diferença angular entre dois rumos (0–180). */
 export function angleDiff(a: number, b: number) {
   const d = Math.abs((((a - b) % 360) + 540) % 360 - 180)
@@ -137,34 +144,44 @@ export function currentHourIndex(hours: HourPoint[]) {
 }
 
 /**
- * Força da onda: fluxo de energia por metro de crista (kW/m), P ≈ 0,49 · Hs² · Te.
- * Te (período de energia) ≈ 0,9 × período de pico do swell; sem ele, usa o período médio.
+ * Força da onda como energia, em quilojoules (kJ): energia de uma onda por metro de crista,
+ * E = ρ·g·H²·L / 8, com L = g·T² / 2π (comprimento de onda em águas profundas).
+ * H = altura significativa; T = período de pico do swell (ou período médio, se faltar).
+ * É a mesma ideia do "kJ" usado em sites de previsão de surf.
  */
-export function wavePower(h: HourPoint) {
+export function waveEnergy(h: HourPoint) {
   const hs = h.waveHeight
-  const tp = h.swellPeakPeriod ?? h.swellPeriod
-  const te = tp != null ? tp * 0.9 : h.wavePeriod
-  if (hs == null || te == null) return null
-  return 0.49 * hs * hs * te
+  const t = h.swellPeakPeriod ?? h.swellPeriod ?? h.wavePeriod
+  if (hs == null || t == null) return null
+  const rhoG = 1025 * 9.81 // água do mar (kg/m³) × gravidade (m/s²)
+  const L = (9.81 * t * t) / (2 * Math.PI)
+  return (rhoG * hs * hs * L) / 8 / 1000 // J -> kJ
 }
 
-export const POWER_LEVELS = [
-  { max: 4, label: 'Fraca' },
-  { max: 12, label: 'Moderada' },
-  { max: 30, label: 'Forte' },
-  { max: 60, label: 'Muito forte' },
+export const ENERGY_LEVELS = [
+  { max: 100, label: 'Fraca' },
+  { max: 400, label: 'Moderada' },
+  { max: 1000, label: 'Forte' },
+  { max: 2500, label: 'Muito forte' },
   { max: Infinity, label: 'Pesada' },
 ] as const
 
-export function powerLabel(kw: number | null) {
-  if (kw == null) return '—'
-  return POWER_LEVELS.find((l) => kw < l.max)!.label
+export function energyLabel(kj: number | null) {
+  if (kj == null) return '—'
+  return ENERGY_LEVELS.find((l) => kj < l.max)!.label
 }
 
-/** 0–1 para barras (escala log, satura em ~100 kW/m). */
-export function powerRatio(kw: number | null) {
-  if (kw == null || kw <= 0) return 0
-  return Math.min(1, Math.log10(1 + kw) / 2)
+/** 0–1 para barras (escala log, satura em ~5000 kJ). */
+export function energyRatio(kj: number | null) {
+  if (kj == null || kj <= 0) return 0
+  return Math.min(1, Math.log10(1 + kj) / Math.log10(5001))
+}
+
+/** "123 kJ", ou "1,2 MJ" acima de 10 000 kJ. */
+export function fmtEnergy(kj: number | null) {
+  if (kj == null) return '—'
+  if (kj >= 10000) return `${(kj / 1000).toFixed(1).replace('.', ',')} MJ`
+  return `${Math.round(kj).toLocaleString('pt-BR')} kJ`
 }
 
 /** Códigos WMO usados pela Open-Meteo -> descrição curta. */

@@ -1,7 +1,7 @@
 import { Box, Paper, Stack, Typography } from '@mui/material'
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
-import { angleDiff, compass, WIND_LABEL, windKind } from '../lib/surf'
+import { angleDiff, dirDeg, WIND_LABEL, windKind } from '../lib/surf'
 import { brand } from '../theme'
 
 /** Rosa dos ventos: setor de exposição da praia, swell e vento chegando. */
@@ -64,17 +64,17 @@ export function SpotCompass({ spot, hour }: { spot: Spot; hour: HourPoint }) {
           <circle cx={C} cy={C} r="5" fill={brand.purple} />
         </Box>
         <Stack spacing={1.5}>
-          <Legend color={brand.green} soft label="Janela da praia" value={`Voltada para ${compass(spot.facing)} (${spot.facing}°)`} />
+          <Legend color={brand.green} soft label="Janela da praia" value={`Voltada para ${dirDeg(spot.facing)}`} />
           <Legend
             color={brand.deepGreen}
             label="Swell"
             value={
               exposure == null
                 ? '—'
-                : `De ${compass(hour.swellDirection)} · ${exposure < 45 ? 'entra de frente' : exposure < 90 ? 'entra de lado' : 'bloqueado pela costa'}`
+                : `De ${dirDeg(hour.swellDirection)} · ${exposure < 45 ? 'entra de frente' : exposure < 90 ? 'entra de lado' : 'bloqueado pela costa'}`
             }
           />
-          <Legend color={brand.plum} label="Vento" value={`De ${compass(hour.windDirection)} · ${WIND_LABEL[wk]}`} />
+          <Legend color={brand.plum} label="Vento" value={`De ${dirDeg(hour.windDirection)} · ${WIND_LABEL[wk]}`} />
         </Stack>
       </Box>
     </Paper>
