@@ -1,76 +1,42 @@
 import { Box, Paper, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetchGrid, regionFor, WIDE_BBOX, type Bbox, type Grid } from '../../api/grid'
+import { SeaWaves, Wind } from 'iconoir-react'
+import { useCallback, useMemo } from 'react'
 import type { HourPoint } from '../../api/openMeteo'
 import type { Spot } from '../../data/spots'
 import { useLocalState } from '../../hooks/useLocalState'
-import { FIELDS, legendGradient, type FieldDef, type FieldId } from '../../lib/fields'
-import { dirDeg, ENERGY_GRADIENT } from '../../lib/surf'
+import { compass, dirDeg, energyColor, fmt, WIND_LABEL, windKind } from '../../lib/surf'
 import { brand } from '../../theme'
-import { FieldMap } from './FieldMap'
-import { COMPONENTS } from './components'
-import { SpectralView } from './SpectralView'
+import { SpotDetailMap, type FlowMode } from '../SpotDetailMap'
 import { Timeline } from './Timeline'
 
-type GridState = { key: string; grid?: Grid; error?: string }
+const f1 = (v: number) => v.toFixed(1).replace('.', ',')
 
-/** Carrega a grade de uma região (com cache) só quando `enabled`. */
-function useGrid(bbox: Bbox, enabled: boolean, nx: number, ny: number) {
-  const key = `${bbox.west},${bbox.south},${bbox.east},${bbox.north}`
-  const [state, setState] = useState<GridState | null>(null)
-  useEffect(() => {
-    if (!enabled) return
-    let alive = true
-    fetchGrid(bbox, nx, ny)
-      .then((grid) => alive && setState({ key, grid }))
-      .catch((e: Error) => alive && setState({ key, error: e.message }))
-    return () => {
-      alive = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, enabled, nx, ny])
-  const cur = state?.key === key ? state : null
-  return { grid: cur?.grid ?? null, error: cur?.error ?? null, loading: enabled && !cur }
+/** Energia de uma componente (kJ por onda e metro de crista), mesma fórmula da "Força". */
+function energy(h: number, t: number) {
+  const L = (9.81 * t * t) / (2 * Math.PI)
+  return (1025 * 9.81 * h * h * L) / 8 / 1000
 }
 
-function Legend({ def }: { def: FieldDef }) {
-  const lo = def.stops[0][0]
-  const hi = def.stops[def.stops.length - 1][0]
+function Chip({ label, value, dot }: { label: string; value: string; dot: string }) {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, width: 46, flexShrink: 0 }}>
-      <Typography sx={{ fontSize: 10, fontWeight: 800, opacity: 0.7 }}>{def.unit}</Typography>
-      <Box sx={{ position: 'relative', flex: 1, width: 18, borderRadius: '9px', background: legendGradient(def), minHeight: 200 }}>
-        {def.ticks.map((t) => (
-          <Typography
-            key={t}
-            sx={{
-              position: 'absolute',
-              left: 22,
-              top: `${((hi - t) / (hi - lo)) * 100}%`,
-              transform: 'translateY(-50%)',
-              fontSize: 10,
-              fontWeight: 800,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {def.fmt ? def.fmt(t) : t}
-          </Typography>
-        ))}
-      </Box>
-      {def.id === 'tempo' && (
-        <Box sx={{ mt: 0.5, textAlign: 'center' }}>
-          <Box sx={{ width: 18, height: 10, borderRadius: '3px', bgcolor: '#2F6FD6', mx: 'auto' }} />
-          <Typography sx={{ fontSize: 9, fontWeight: 800 }}>chuva</Typography>
+    <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
+      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: dot, flexShrink: 0 }} />
+      <Typography variant="body2" noWrap>
+        <Box component="span" sx={{ fontWeight: 800 }}>
+          {label}
+        </Box>{' '}
+        <Box component="span" sx={{ opacity: 0.75 }}>
+          {value}
         </Box>
-      )}
-    </Box>
+      </Typography>
+    </Stack>
   )
 }
 
-const MAP_H = { xs: 300, md: 380 }
-
-/** Painel "O pico": mapas de campos (altura, vento, tempo…) e visão espectral, com linha do tempo. */
+/**
+ * "O pico": um mapa só, com duas camadas que se alternam (ondas ou vento), a linha das
+ * componentes do mar logo abaixo e a linha do tempo. Simples de ler, sem grades nem abas.
+ */
 export function PicoPanel({
   spot,
   hours,
@@ -82,149 +48,70 @@ export function PicoPanel({
   selected: HourPoint
   onSelect: (time: string) => void
 }) {
-  const [fieldId, setFieldId] = useLocalState<FieldId>('olhaonda:field', 'altura')
-  const [right, setRight] = useLocalState<'espectral' | 'amplo'>('olhaonda:mapRight', 'espectral')
-  const def = FIELDS.find((f) => f.id === fieldId) ?? FIELDS[0]
-  const region = useMemo(() => regionFor(spot.lat, spot.lon), [spot.lat, spot.lon])
-
-  const regional = useGrid(region, true, 9, 9)
-  const wide = useGrid(WIDE_BBOX, right === 'amplo', 10, 10)
-
+  const [mode, setMode] = useLocalState<FlowMode>('olhaonda:flow', 'ondas')
   const times = useMemo(() => hours.map((h) => h.time), [hours])
   const index = Math.max(0, times.indexOf(selected.time))
   const pick = useCallback((i: number) => times[i] && onSelect(times[i]), [times, onSelect])
-  const gridIndex = (g: Grid | null) => (g ? Math.max(0, g.times.indexOf(selected.time)) : 0)
+
+  const h = selected
+  const comps = [
+    { label: 'Swell 1', h: h.swellHeight, d: h.swellDirection, t: h.swellPeakPeriod ?? h.swellPeriod },
+    { label: 'Swell 2', h: h.swell2Height, d: h.swell2Direction, t: h.swell2Period },
+    { label: 'Mar de vento', h: h.windWaveHeight, d: h.windWaveDirection, t: h.windWavePeriod },
+  ].filter((c) => c.h != null && c.d != null && c.t != null && c.h >= 0.05)
+  const wk = windKind(spot, h.windDirection, h.windSpeed)
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' }, mb: 2 }}>
-        <Box>
+      <Stack direction="row" spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+        <Box sx={{ minWidth: 0 }}>
           <Typography variant="h6">O pico</Typography>
           <Typography variant="body2" sx={{ opacity: 0.7 }}>
-            {def.title} · janela da praia {dirDeg(spot.facing)}
+            Praia voltada para {dirDeg(spot.facing)}
           </Typography>
         </Box>
         <ToggleButtonGroup
           exclusive
           size="small"
-          value={right}
-          onChange={(_, v) => v && setRight(v)}
-          sx={{ '& .MuiToggleButton-root': { px: 1.5, fontWeight: 800, textTransform: 'none' } }}
+          value={mode}
+          onChange={(_, v) => v && setMode(v)}
+          aria-label="Camada do mapa"
+          sx={{ flexShrink: 0, '& .MuiToggleButton-root': { px: 1.5, gap: 0.75, fontWeight: 800, textTransform: 'none' } }}
         >
-          <ToggleButton value="espectral">Espectral</ToggleButton>
-          <ToggleButton value="amplo">Mapa amplo</ToggleButton>
+          <ToggleButton value="ondas">
+            <SeaWaves width={16} height={16} /> Ondas
+          </ToggleButton>
+          <ToggleButton value="vento">
+            <Wind width={16} height={16} /> Vento
+          </ToggleButton>
         </ToggleButtonGroup>
       </Stack>
 
-      {/* abas dos campos */}
-      <Box
-        role="tablist"
-        aria-label="Campo do mapa"
-        sx={{ display: 'flex', gap: 0.5, overflowX: 'auto', borderBottom: `2px solid ${alpha(brand.purple, 0.12)}`, mb: 2 }}
-      >
-        {FIELDS.map((f) => {
-          const on = f.id === def.id
-          return (
-            <Box
-              key={f.id}
-              component="button"
-              role="tab"
-              aria-selected={on}
-              onClick={() => setFieldId(f.id)}
-              sx={{
-                border: 0,
-                cursor: 'pointer',
-                font: 'inherit',
-                fontWeight: 800,
-                fontSize: 14,
-                px: 1.75,
-                py: 1,
-                borderRadius: '10px 10px 0 0',
-                bgcolor: on ? brand.purple : 'transparent',
-                color: on ? brand.sand : brand.purple,
-                whiteSpace: 'nowrap',
-                '&:hover': { bgcolor: on ? brand.purple : alpha(brand.purple, 0.06) },
-              }}
-            >
-              {f.tab}
-            </Box>
-          )
-        })}
-      </Box>
+      <SpotDetailMap spot={spot} hour={selected} mode={mode} />
 
+      {/* componentes do mar e vento da hora escolhida */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: 'minmax(0,1fr)', md: 'minmax(0,1fr) auto minmax(0,1fr)' },
-          gap: 2,
-          alignItems: 'stretch',
+          gridTemplateColumns: { xs: 'minmax(0,1fr)', sm: 'repeat(2, minmax(0,1fr))', md: 'repeat(4, minmax(0,1fr))' },
+          gap: { xs: 0.75, md: 2 },
+          mt: 1.5,
         }}
       >
-        <FieldMap
-          grid={regional.grid}
-          bbox={region}
-          def={def}
-          timeIndex={gridIndex(regional.grid)}
-          spot={spot}
-          loading={regional.loading}
-          error={regional.error}
-          height={MAP_H}
-          label="Região"
-        />
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', height: MAP_H.md }}>
-          <Legend def={def} />
-        </Box>
-        {/* celular: legenda horizontal compacta */}
-        <Box sx={{ display: { xs: 'block', md: 'none' }, mt: -1 }}>
-          <Box sx={{ height: 10, borderRadius: 5, background: legendGradient(def).replace('180deg', '270deg') }} />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.25 }}>
-            {[def.ticks[0], def.ticks[Math.floor(def.ticks.length / 2)], def.ticks[def.ticks.length - 1]].map((t) => (
-              <Typography key={t} sx={{ fontSize: 10, fontWeight: 800 }}>
-                {def.fmt ? def.fmt(t) : t} {t === def.ticks[def.ticks.length - 1] ? def.unit : ''}
-              </Typography>
-            ))}
-          </Box>
-        </Box>
-        {right === 'amplo' ? (
-          <FieldMap
-            grid={wide.grid}
-            bbox={WIDE_BBOX}
-            def={def}
-            timeIndex={gridIndex(wide.grid)}
-            spot={spot}
-            loading={wide.loading}
-            error={wide.error}
-            height={MAP_H}
-            label="Brasil"
+        {comps.map((c) => (
+          <Chip
+            key={c.label}
+            label={c.label}
+            dot={energyColor(energy(c.h!, c.t!))}
+            value={`${Math.round(c.d!)}° ${compass(c.d)} · ${f1(c.h!)} m · ${f1(c.t!)} s`}
           />
-        ) : (
-          <Box>
-            <SpectralView spot={spot} hour={selected} height={MAP_H} />
-          </Box>
-        )}
+        ))}
+        <Chip
+          label="Vento"
+          dot={wk === 'terral' || wk === 'cross-terral' || wk === 'calmo' ? brand.green : brand.plum}
+          value={`${dirDeg(h.windDirection)} · ${fmt.kmh(h.windSpeed)} · ${WIND_LABEL[wk]}`}
+        />
       </Box>
-
-      {right === 'espectral' && (
-        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 2, mt: 1.5, alignItems: 'center' }}>
-          {COMPONENTS.map((c) => (
-            <Stack key={c.key} direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-              <Box sx={{ width: 0, height: 0, borderLeft: '7px solid transparent', borderRight: '7px solid transparent', borderTop: `12px solid ${c.stroke}` }} />
-              <Typography variant="caption" sx={{ fontWeight: 800 }}>
-                {c.label}
-              </Typography>
-            </Stack>
-          ))}
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', ml: { md: 'auto' } }}>
-            <Typography variant="caption" sx={{ fontWeight: 800 }}>
-              Força
-            </Typography>
-            <Box sx={{ width: 120, height: 8, borderRadius: 4, background: ENERGY_GRADIENT }} />
-            <Typography variant="caption" sx={{ opacity: 0.7 }}>
-              fraca → pesada
-            </Typography>
-          </Stack>
-        </Stack>
-      )}
 
       <Timeline times={times} index={index} onChange={pick} />
     </Paper>

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
 import { arrowImage, loadMapLibre, OFM_ATTRIBUTION, OFM_GLYPHS, OFM_SOURCE, offsetLngLat, snapToCoast } from '../lib/maplibre'
-import { dirDeg, ENERGY_GRADIENT, energyColor, energyLabel, energyRatio, fmt, fmtEnergy, waveEnergy } from '../lib/surf'
+import { dirDeg, ENERGY_GRADIENT, energyColor, energyLabel, energyRatio, fmt, fmtEnergy, waveEnergy, WIND_LABEL, windKind } from '../lib/surf'
 import { brand } from '../theme'
 
 /**
@@ -156,28 +156,67 @@ function swellArrows(
   return { type: 'FeatureCollection' as const, features }
 }
 
-export function SpotDetailMap({
-  spot,
-  hour,
-  spectral = false,
-  mapHeight = { xs: 260, md: 300 },
-}: {
-  spot: Spot
-  hour: HourPoint
-  /** fundo do gráfico espectral: sem setas animadas nem legenda, pico no centro */
-  spectral?: boolean
-  mapHeight?: number | { xs: number; md: number }
-}) {
-  const zoom = spectral ? 12.4 : ZOOM
-  const centerOf = (p: { lat: number; lon: number }, facing: number) =>
-    spectral ? ([p.lon, p.lat] as [number, number]) : viewCenter(p, facing)
+/** Escala de cor do vento (km/h): verde claro (fraco) até roxo (forte). */
+const WIND_STOPS: [number, string][] = [
+  [0, '#8FD3B6'],
+  [10, '#2FAE7B'],
+  [20, '#0F4C3A'],
+  [30, '#7A2E6E'],
+  [45, '#4B1D5A'],
+]
+const WIND_GRADIENT = 'linear-gradient(90deg, #8FD3B6 0%, #2FAE7B 22%, #0F4C3A 44%, #7A2E6E 67%, #4B1D5A 100%)'
+function windColor(kmh: number) {
+  const hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
+  for (let i = 1; i < WIND_STOPS.length; i++) {
+    const [x1, c1] = WIND_STOPS[i]
+    const [x0, c0] = WIND_STOPS[i - 1]
+    if (kmh <= x1) {
+      const t = Math.max(0, (kmh - x0) / (x1 - x0))
+      const [a, b] = [hex(c0), hex(c1)]
+      return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(',')})`
+    }
+  }
+  return WIND_STOPS[WIND_STOPS.length - 1][1]
+}
+
+/**
+ * Setas do vento: uma malha que cobre a vista, andando a favor do vento (sobre terra e mar).
+ * `phase` (0–1) desloca a malha um espaçamento; cor e tamanho pela velocidade.
+ */
+function windArrows(center: { lat: number; lon: number }, fromDeg: number, kmh: number, phase: number) {
+  const toward = (fromDeg + 180) % 360
+  const gap = 520 // m entre setas
+  const R = 2600 // raio coberto
+  const color = windColor(kmh)
+  const size = Math.min(1.05, 0.45 + kmh / 70)
+  const features = []
+  for (let i = -5; i <= 5; i++)
+    for (let j = -5; j <= 5; j++) {
+      const along = (i + phase + (Math.abs(j) % 2) * 0.5) * gap
+      const across = j * gap * 0.9
+      const a = offsetLngLat(center.lat, center.lon, toward, along)
+      const p = offsetLngLat(a[1], a[0], toward + 90, across)
+      const dist = Math.hypot(along, across)
+      if (dist > R) continue
+      features.push({
+        type: 'Feature' as const,
+        properties: { o: 0.85 * Math.min(1, (R - dist) / 900), s: size, r: toward, c: color },
+        geometry: { type: 'Point' as const, coordinates: p },
+      })
+    }
+  return { type: 'FeatureCollection' as const, features }
+}
+
+export type FlowMode = 'ondas' | 'vento'
+
+export function SpotDetailMap({ spot, hour, mode = 'ondas' }: { spot: Spot; hour: HourPoint; mode?: FlowMode }) {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
   const marker = useRef<MLMarker | null>(null)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   // valores atuais lidos pela animação (que roda fora do ciclo do React)
-  const swell = useRef<{ dir: number; h: number; t: number; c: string }>({ dir: 0, h: 0, t: 10, c: brand.deepGreen })
+  const swell = useRef({ dir: 0, h: 0, t: 10, c: brand.deepGreen as string, mode: 'ondas' as FlowMode, wd: 0, ws: 0 })
   const spotRef = useRef(spot)
   /** Ponto do pico na linha da costa (calculado depois que o mapa desenha). */
   const coastRef = useRef<{ lat: number; lon: number } | null>(null)
@@ -192,7 +231,7 @@ export function SpotDetailMap({
       if (!c) return
       coastRef.current = { lon: c[0], lat: c[1] }
       marker.current?.setLngLat(c)
-      m.easeTo({ center: centerOf(coastRef.current, sp.facing), duration: 300 })
+      m.easeTo({ center: viewCenter(coastRef.current, sp.facing), duration: 300 })
     })
   }
 
@@ -201,10 +240,13 @@ export function SpotDetailMap({
   const height = hour.swellHeight ?? hour.waveHeight ?? 0
   const energy = waveEnergy(hour)
   const color = energyColor(energy)
+  const windDir = hour.windDirection ?? 0
+  const windSpeed = hour.windSpeed ?? 0
+  const wk = windKind(spot, hour.windDirection, hour.windSpeed)
   useEffect(() => {
-    swell.current = { dir: dir ?? spot.facing, h: height, t: period, c: color }
+    swell.current = { dir: dir ?? spot.facing, h: height, t: period, c: color, mode, wd: windDir, ws: windSpeed }
     spotRef.current = spot
-  }, [dir, height, period, color, spot])
+  }, [dir, height, period, color, mode, windDir, windSpeed, spot])
 
   useEffect(() => {
     let cancelled = false
@@ -221,8 +263,8 @@ export function SpotDetailMap({
           created = new ml.Map({
             container: ref.current,
             style: STYLE,
-            center: centerOf(spot, spot.facing),
-            zoom,
+            center: viewCenter(spot, spot.facing),
+            zoom: ZOOM,
             attributionControl: false,
             cooperativeGestures: true, // rolar a página não dá zoom sem querer
             dragRotate: false,
@@ -243,13 +285,21 @@ export function SpotDetailMap({
         let last = 0
         const tick = (now: number) => {
           raf = requestAnimationFrame(tick)
-          if (spectral || !visible || now - last < 33) return // ~30 fps e só quando visível
+          if (!visible || now - last < 33) return // ~30 fps e só quando visível
           last = now
           const src = created?.getSource('waves') as GeoJSONSource | undefined
           if (!src) return
-          const { dir: d, h, t, c } = swell.current
-          const phase = reduce ? 0.5 : (((now - start) / 1000) % t) / t
+          const { dir: d, h, t, c, mode: md, wd, ws } = swell.current
           const m = created!
+          if (md === 'vento') {
+            // a malha avança um espaçamento a cada `cycle` segundos (mais rápido com mais vento)
+            const cycle = Math.max(1.4, 9 - ws / 5)
+            const wphase = reduce ? 0.5 : (((now - start) / 1000) % cycle) / cycle
+            const ctr = m.getCenter()
+            src.setData(windArrows({ lat: ctr.lat, lon: ctr.lng }, wd, ws, wphase))
+            return
+          }
+          const phase = reduce ? 0.5 : (((now - start) / 1000) % t) / t
           const isSea = (p: [number, number]) => {
             const px = m.project(p)
             return m.queryRenderedFeatures([px.x, px.y], { layers: ['ocean-query'] }).length > 0
@@ -303,7 +353,7 @@ export function SpotDetailMap({
 
   useEffect(() => {
     if (!map.current) return
-    map.current.easeTo({ center: centerOf(spot, spot.facing), zoom, duration: 900 })
+    map.current.easeTo({ center: viewCenter(spot, spot.facing), zoom: ZOOM, duration: 900 })
     marker.current?.setLngLat([spot.lon, spot.lat])
     placeOnCoast()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -312,7 +362,7 @@ export function SpotDetailMap({
   if (failed) return null
 
   return (
-    <Box sx={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', height: mapHeight, bgcolor: C.water }}>
+    <Box sx={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', height: { xs: 260, md: 300 }, bgcolor: C.water }}>
       <Box
         ref={ref}
         sx={{
@@ -335,7 +385,6 @@ export function SpotDetailMap({
         }}
       />
       {/* resumo do swell + legenda da força (cor das setas) */}
-      {!spectral && (
       <Box
         sx={{
           position: 'absolute',
@@ -349,34 +398,64 @@ export function SpotDetailMap({
           width: 186,
         }}
       >
+        {mode === 'vento' ? (
+          <>
+            <Typography sx={{ fontSize: 11, fontWeight: 800, color: brand.deepGreen }}>
+              Vento {dirDeg(hour.windDirection)} · {fmt.kmh(hour.windSpeed)}
+            </Typography>
+            <Typography sx={{ fontSize: 11, fontWeight: 800, color: brand.purple }}>
+              {WIND_LABEL[wk]} · rajadas {fmt.kmh(hour.windGusts)}
+            </Typography>
+            <Box sx={{ position: 'relative', height: 6, borderRadius: 3, background: WIND_GRADIENT, mt: 0.5 }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -3,
+                  left: `calc(${Math.min(1, windSpeed / 45) * 100}% - 6px)`,
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  bgcolor: windColor(windSpeed),
+                  border: `2px solid ${brand.sand}`,
+                }}
+              />
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.25 }}>
+              <Typography sx={{ fontSize: 9, opacity: 0.6 }}>fraco</Typography>
+              <Typography sx={{ fontSize: 9, opacity: 0.6 }}>forte</Typography>
+            </Box>
+          </>
+        ) : (
+          <>
         {dir != null && (
-          <Typography sx={{ fontSize: 11, fontWeight: 800, color: brand.deepGreen }}>
-            Swell {dirDeg(dir)} · {fmt.m(height)} · {fmt.s(period)}
+            <Typography sx={{ fontSize: 11, fontWeight: 800, color: brand.deepGreen }}>
+              Swell {dirDeg(dir)} · {fmt.m(height)} · {fmt.s(period)}
+            </Typography>
+          )}
+          <Typography sx={{ fontSize: 11, fontWeight: 800, color: brand.purple }}>
+            Força: {fmtEnergy(energy)} · {energyLabel(energy)}
           </Typography>
+          <Box sx={{ position: 'relative', height: 6, borderRadius: 3, background: ENERGY_GRADIENT, mt: 0.5 }}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -3,
+                left: `calc(${energyRatio(energy) * 100}% - 6px)`,
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                bgcolor: color,
+                border: `2px solid ${brand.sand}`,
+              }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.25 }}>
+            <Typography sx={{ fontSize: 9, opacity: 0.6 }}>fraca</Typography>
+            <Typography sx={{ fontSize: 9, opacity: 0.6 }}>pesada</Typography>
+          </Box>
+          </>
         )}
-        <Typography sx={{ fontSize: 11, fontWeight: 800, color: brand.purple }}>
-          Força: {fmtEnergy(energy)} · {energyLabel(energy)}
-        </Typography>
-        <Box sx={{ position: 'relative', height: 6, borderRadius: 3, background: ENERGY_GRADIENT, mt: 0.5 }}>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: -3,
-              left: `calc(${energyRatio(energy) * 100}% - 6px)`,
-              width: 12,
-              height: 12,
-              borderRadius: '50%',
-              bgcolor: color,
-              border: `2px solid ${brand.sand}`,
-            }}
-          />
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.25 }}>
-          <Typography sx={{ fontSize: 9, opacity: 0.6 }}>fraca</Typography>
-          <Typography sx={{ fontSize: 9, opacity: 0.6 }}>pesada</Typography>
-        </Box>
       </Box>
-      )}
       <Typography
         component="a"
         href="https://openfreemap.org"
