@@ -1,6 +1,6 @@
 /**
  * Ambiente em que o site está rodando.
- *  - production: site público (olhaonda.com.br)
+ *  - production: site público (olhaonda.com)
  *  - staging:    homologação, para testar antes de publicar (dados e pagamentos de teste)
  *  - development: máquina local (npm run dev)
  *

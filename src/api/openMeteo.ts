@@ -113,7 +113,15 @@ function buildUrl(base: string, params: Record<string, string | number>) {
 }
 
 async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(url, { signal })
+  let res: Response
+  try {
+    res = await fetch(url, { signal })
+  } catch (e) {
+    if (signal?.aborted) throw e
+    // sem conexão, bloqueio de rede ou limite de uso (respostas 429 chegam sem CORS)
+    throw new Error('Não foi possível carregar a previsão agora. Verifique sua conexão e tente de novo em instantes.')
+  }
+  if (res.status === 429) throw new Error('Muitas consultas à previsão no momento. Tente de novo em alguns minutos.')
   if (!res.ok) {
     let reason = `${res.status}`
     try {

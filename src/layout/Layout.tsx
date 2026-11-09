@@ -70,7 +70,7 @@ export function Layout() {
                 Venda suas fotos
               </Link>
             )}
-            <Link href="mailto:anuncie@olhaonda.com.br" color="inherit" variant="body2">
+            <Link href="mailto:anuncie@olhaonda.com" color="inherit" variant="body2">
               Anuncie
             </Link>
             <Link component={RouterLink} to="/privacidade" color="inherit" variant="body2">

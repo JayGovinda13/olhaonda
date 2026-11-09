@@ -4,7 +4,7 @@ import { ADS_ENABLED } from '../config/ads'
 import { FEATURES, HAS_COMMUNITY } from '../config/env'
 import { consentStore, useConsent } from '../lib/consent'
 
-const CONTACT = (import.meta.env.VITE_PRIVACY_CONTACT as string | undefined) ?? 'privacidade@olhaonda.com.br'
+const CONTACT = (import.meta.env.VITE_PRIVACY_CONTACT as string | undefined) ?? 'privacidade@olhaonda.com'
 const UPDATED = '9 de novembro de 2026'
 
 function Section({ title, children }: { title: string; children: ReactNode }) {

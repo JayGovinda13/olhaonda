@@ -35,7 +35,7 @@ const SIZE: Record<AdFormat, { minHeight: { xs: number; md: number }; label: str
   inline: { minHeight: { xs: 100, md: 120 }, label: 'Nativo' },
 }
 
-const CONTACT = (import.meta.env.VITE_ADS_CONTACT as string | undefined) ?? 'mailto:anuncie@olhaonda.com.br'
+const CONTACT = (import.meta.env.VITE_ADS_CONTACT as string | undefined) ?? 'mailto:anuncie@olhaonda.com'
 
 type AdsQueue = unknown[] & { requestNonPersonalizedAds?: number }
 

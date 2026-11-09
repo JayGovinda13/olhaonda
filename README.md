@@ -76,7 +76,7 @@ melhor por um público tão segmentado do que o AdSense. Os espaços aceitam os 
 4. Configure os segredos e publique as funções:
 
 ```bash
-supabase secrets set SITE_URL=https://olhaonda.com.br MP_CLIENT_ID=... MP_CLIENT_SECRET=... MP_WEBHOOK_SECRET=... PLATFORM_FEE_PERCENT=20
+supabase secrets set SITE_URL=https://olhaonda.com MP_CLIENT_ID=... MP_CLIENT_SECRET=... MP_WEBHOOK_SECRET=... PLATFORM_FEE_PERCENT=20
 ```
 
 ```bash
@@ -101,7 +101,7 @@ Build: `npm run build`, pasta `dist`.
 | | Staging (homologação) | Produção |
 | --- | --- | --- |
 | Branch | `staging` | `main` |
-| Endereço | `staging.olhaonda.com.br` | `olhaonda.com.br` |
+| Endereço | `staging.olhaonda.com` | `olhaonda.com` |
 | Supabase | projeto `olhaonda-staging` | projeto `olhaonda` |
 | Mercado Pago | credenciais **de teste** (`MP_SANDBOX=true`) | credenciais reais |
 | Anúncios | só espaços "Anuncie aqui" (sem AdSense) | AdSense e venda direta |
@@ -121,7 +121,7 @@ npm run build:staging      # build de staging
 npm run build:production   # build de produção
 ```
 
-### Deploy automático: Cloudflare Pages + domínio da Hostinger (olhaonda.com.br)
+### Deploy automático: Cloudflare Pages + domínio da Hostinger (olhaonda.com)
 
 Recomendado: Cloudflare Pages (grátis, uso comercial liberado, deploy a cada push).
 
@@ -134,7 +134,7 @@ Recomendado: Cloudflare Pages (grátis, uso comercial liberado, deploy a cada pu
    - Build output directory: `dist`
 4. Variáveis: Settings > Environment variables. Em **Production** as de `.env.production.example`; em **Preview**
    as de `.env.staging.example`. Depois de mudar variáveis, refaça o último deploy.
-5. Domínios: Custom domains > `olhaonda.com.br` (e `www`). Para staging, crie o domínio `staging.olhaonda.com.br`
+5. Domínios: Custom domains > `olhaonda.com` (e `www`). Para staging, crie o domínio `staging.olhaonda.com`
    apontando (CNAME) para `staging.<projeto>.pages.dev`.
 
 Pronto: todo push na `main` publica a produção; todo push na `staging` publica o staging.
@@ -143,7 +143,7 @@ Alternativa: Vercel (`vercel.json` já configurado). No plano gratuito (Hobby) a
 comercial; com anúncios, o plano é o Pro.
 
 **Vercel (site):** um único projeto. Em Settings > Git, *Production Branch* = `main`. Em Domains, aponte
-`staging.olhaonda.com.br` para a branch `staging`. Em Environment Variables, cadastre as variáveis de
+`staging.olhaonda.com` para a branch `staging`. Em Environment Variables, cadastre as variáveis de
 `.env.production.example` em *Production* e as de `.env.staging.example` em *Preview* restrito à branch `staging`.
 
 **Supabase (banco e funções):** dois projetos. O workflow `.github/workflows/supabase-deploy.yml` aplica as
