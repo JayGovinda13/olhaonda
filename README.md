@@ -41,6 +41,11 @@ mar de vento e vento da hora escolhida, e uma linha do tempo com play ligada à 
 
 **Dados de onda e tempo: Open-Meteo.** Junta ECMWF WAM, Météo-France MFWAM e NOAA GFS-Wave, é gratuita para uso
 não comercial, sem chave, e chamada direto do navegador. Para uso comercial basta um plano pago (`VITE_OPEN_METEO_API_KEY`).
+**Altura na arrebentação** (`src/lib/breaking.ts`): cada trem de ondas (swell 1, swell 2, mar de vento) é levado até o pico
+por fluxo de energia: exposição/refração pela direção em relação à praia (média de cos θ com espalhamento direcional)
+e empinamento até a quebra por Komar & Gaughan, `Hb = 0,39·g^(1/5)·(T·H0²·cos θ)^(2/5)`. Os trens somam pela energia e
+cada pico pode ter um ajuste `surfFactor` (fundo, bancadas, laje), calibrado comparando com o mar real.
+
 Força da onda = energia de uma onda por metro de crista, em quilojoules: `E = ρ·g·Hs²·L / 8`, com `L = g·T²/2π`.
 Escala: até 100 kJ fraca · 400 moderada · 1.000 forte · 2.500 muito forte · acima disso pesada.
 

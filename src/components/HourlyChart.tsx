@@ -3,6 +3,7 @@ import { alpha } from '@mui/material/styles'
 import { useEffect, useRef } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
+import { surfEstimate } from '../lib/breaking'
 import { energyRatio, fmt, rate, ratingColor, waveEnergy, windKind } from '../lib/surf'
 import { brand } from '../theme'
 import { DirArrow } from './bits'
@@ -104,7 +105,7 @@ export function HourlyChart({
         >
           {hours.map((h) => {
             const r = rate(spot, h)
-            const hs = h.waveHeight ?? 0
+            const hs = surfEstimate(spot, h)?.hb ?? 0
             const active = h.time === selected
             const wk = windKind(spot, h.windDirection, h.windSpeed)
             const good = wk === 'terral' || wk === 'cross-terral' || wk === 'calmo'
@@ -172,7 +173,7 @@ export function HourlyChart({
         </Box>
       </Box>
       <Typography variant="caption" sx={{ display: 'block', mt: 1.5, opacity: 0.6 }}>
-        Barras: altura significativa (m). Swell °: direção de onde vem o swell, em graus. Energia: kJ de cada onda por metro de crista. Vento em km/h e graus (de onde sopra); verde = terral ou fraco, vinho =
+        Barras: altura estimada na arrebentação (séries, m). Swell °: direção de onde vem o swell, em graus. Energia: kJ de cada onda por metro de crista. Vento em km/h e graus (de onde sopra); verde = terral ou fraco, vinho =
         maral/lateral.
       </Typography>
     </Paper>

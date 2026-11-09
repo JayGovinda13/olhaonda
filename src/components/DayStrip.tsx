@@ -1,7 +1,8 @@
 import { Box, ButtonBase, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import type { DaySummary } from '../lib/days'
-import { dayLabel, faceRange, ratingColor } from '../lib/surf'
+import { surfRange } from '../lib/breaking'
+import { dayLabel, ratingColor } from '../lib/surf'
 import { brand } from '../theme'
 
 export function DayStrip({
@@ -52,7 +53,7 @@ export function DayStrip({
               {i === 0 ? 'Hoje' : wd} · {dm}
             </Typography>
             <Typography sx={{ fontWeight: 800, fontSize: { xs: 16, sm: 18 }, whiteSpace: 'nowrap', letterSpacing: '-0.02em', my: 0.5 }}>
-              {faceRange(d.maxHs)}
+              {surfRange(d.maxSurf)}
             </Typography>
             <Box
               sx={{

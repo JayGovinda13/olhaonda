@@ -7,6 +7,7 @@ import { useLocalState } from '../../hooks/useLocalState'
 import { compass, dirDeg, energyColor, fmt, WIND_LABEL, windKind } from '../../lib/surf'
 import { brand } from '../../theme'
 import { SpotDetailMap, type FlowMode } from '../SpotDetailMap'
+import { surfEstimate } from '../../lib/breaking'
 import { Timeline } from './Timeline'
 
 const f1 = (v: number) => v.toFixed(1).replace('.', ',')
@@ -60,6 +61,8 @@ export function PicoPanel({
     { label: 'Mar de vento', h: h.windWaveHeight, d: h.windWaveDirection, t: h.windWavePeriod },
   ].filter((c) => c.h != null && c.d != null && c.t != null && c.h >= 0.05)
   const wk = windKind(spot, h.windDirection, h.windSpeed)
+  // quanto cada trem de ondas chega quebrando neste pico
+  const atBeach = new Map((surfEstimate(spot, h)?.trains ?? []).map((t) => [t.label, t.hb]))
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
@@ -103,7 +106,7 @@ export function PicoPanel({
             key={c.label}
             label={c.label}
             dot={energyColor(energy(c.h!, c.t!))}
-            value={`${Math.round(c.d!)}° ${compass(c.d)} · ${f1(c.h!)} m · ${f1(c.t!)} s`}
+            value={`${Math.round(c.d!)}° ${compass(c.d)} · ${f1(c.h!)} m · ${f1(c.t!)} s → ${f1(atBeach.get(c.label) ?? 0)} m na praia`}
           />
         ))}
         <Chip

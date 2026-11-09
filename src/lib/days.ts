@@ -1,8 +1,9 @@
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
+import { surfEstimate, type SurfEstimate } from './breaking'
 import { rate } from './surf'
 
-export type DaySummary = { date: string; hours: HourPoint[]; maxHs: number; best: number }
+export type DaySummary = { date: string; hours: HourPoint[]; maxHs: number; maxSurf: SurfEstimate | null; best: number }
 
 export function summarizeDays(spot: Spot, hours: HourPoint[]): DaySummary[] {
   const map = new Map<string, HourPoint[]>()
@@ -21,6 +22,10 @@ export function summarizeDays(spot: Spot, hours: HourPoint[]): DaySummary[] {
       date,
       hours: hs,
       maxHs: Math.max(...hs.map((h) => h.waveHeight ?? 0)),
+      // maior altura na arrebentação nas horas com luz
+      maxSurf: (daylight.length ? daylight : hs)
+        .map((h) => surfEstimate(spot, h))
+        .reduce<SurfEstimate | null>((m, e) => (e && (!m || e.hb > m.hb) ? e : m), null),
       best: Math.max(0, ...daylight.map((h) => rate(spot, h).score)),
     }
   })

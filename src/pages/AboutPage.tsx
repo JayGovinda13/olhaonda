@@ -73,6 +73,11 @@ export default function AboutPage() {
               e direção em graus. Período maior quer dizer onda com mais força.
             </li>
             <li>
+              <strong>Altura na arrebentação:</strong> o número grande. Os modelos dão a altura do mar aberto; nós levamos
+              cada swell até o pico pela física: quanto ele chega de frente para a praia (refração) e quanto cresce ao
+              chegar no raso, que depende do período. A faixa vai da onda comum até as séries.
+            </li>
+            <li>
               <strong>Força da onda:</strong> a energia de uma onda por metro de crista, em quilojoules (kJ). Junta altura e
               período num número só: até 100 kJ é fraca; acima de 1.000 kJ, forte.
             </li>

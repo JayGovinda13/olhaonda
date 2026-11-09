@@ -16,6 +16,7 @@ import { DEFAULT_SPOT_ID, SPOT_ALIASES, SPOTS } from '../data/spots'
 import { useForecast } from '../hooks/useForecast'
 import { useLocalState } from '../hooks/useLocalState'
 import { summarizeDays } from '../lib/days'
+import { surfEstimate } from '../lib/breaking'
 import { usePageMeta } from '../lib/meta'
 import { currentHourIndex } from '../lib/surf'
 
@@ -35,7 +36,7 @@ export default function ForecastPage() {
   const hours = forecast.data?.hours
   const nowIdx = useMemo(() => (hours ? currentHourIndex(hours) : 0), [hours])
   const days = useMemo(() => (hours ? summarizeDays(spot, hours) : []), [spot, hours])
-  const weekMax = useMemo(() => Math.max(0, ...(hours ?? []).map((h) => h.waveHeight ?? 0)), [hours])
+  const weekMax = useMemo(() => Math.max(0, ...(hours ?? []).map((h) => surfEstimate(spot, h)?.hb ?? 0)), [spot, hours])
 
   // a hora escolhida vale só para o pico em que foi escolhida
   const [pick, setPick] = useState<{ spot: string; time: string } | null>(null)

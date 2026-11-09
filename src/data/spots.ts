@@ -14,6 +14,8 @@ export type Spot = {
   region?: string
   /** Referência para achar o pico. */
   note?: string
+  /** Ajuste da altura na arrebentação para este pico (fundo, bancadas, laje). Padrão 1. */
+  surfFactor?: number
   /** Praia abrigada: só quebra com swell grande ou de direção específica. */
   sheltered?: boolean
   /** Faz parte da Baixada Santista (lista de produção). */

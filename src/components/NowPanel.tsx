@@ -3,7 +3,8 @@ import { Droplet, Flash, SeaWaves, Timer, Wind } from 'iconoir-react'
 import type { ReactNode } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import { KIND_LABEL, type Spot } from '../data/spots'
-import { dayLabel, dirDeg, energyLabel, energyRatio, faceRange, fmt, fmtEnergy, WIND_LABEL, waveEnergy, windKind, windStrength } from '../lib/surf'
+import { surfEstimate, surfRange } from '../lib/breaking'
+import { dayLabel, dirDeg, energyLabel, energyRatio, fmt, fmtEnergy, WIND_LABEL, waveEnergy, windKind, windStrength } from '../lib/surf'
 import { brand } from '../theme'
 import { DirArrow } from './bits'
 import { SpotMap } from './SpotMap'
@@ -33,6 +34,7 @@ function Stat({ icon, label, value, sub }: { icon: ReactNode; label: string; val
 
 export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; isNow: boolean }) {
   const wk = windKind(spot, hour.windDirection, hour.windSpeed)
+  const surf = surfEstimate(spot, hour)
   const { wd, dm } = dayLabel(hour.time.slice(0, 10))
   const iconProps = { width: 16, height: 16, strokeWidth: 2 }
   const energy = waveEnergy(hour)
@@ -99,7 +101,7 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
         >
           <Box>
             <Typography sx={{ fontSize: { xs: 56, md: 72 }, fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 1 }}>
-              {faceRange(hour.waveHeight)}
+              {surfRange(surf)}
             </Typography>
             {/* só os fatos do vento: sem nota nem juízo sobre as ondas */}
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 1.5, flexWrap: 'wrap', rowGap: 1 }}>
@@ -113,7 +115,7 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
               )}
             </Stack>
             <Typography variant="body2" sx={{ opacity: 0.72, mt: 1 }}>
-              Altura significativa {fmt.m(hour.waveHeight)} · mar de vento {fmt.m(hour.windWaveHeight)}
+              Na arrebentação (onda comum – séries) · mar aberto {fmt.m(hour.waveHeight)} · mar de vento {fmt.m(hour.windWaveHeight)}
             </Typography>
           </Box>
 
