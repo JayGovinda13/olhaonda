@@ -2,6 +2,8 @@
 
 Previsão de ondas para surf e bodyboard no litoral brasileiro.
 
+![OlhaOnda](docs/preview-desktop.png)
+
 **Stack:** Vite + React + TypeScript · MUI · Iconoir · fonte Manrope
 
 ## Rodando
