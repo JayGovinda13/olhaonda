@@ -9,25 +9,6 @@ export const brand = {
   sand: '#F5E6D3', // fundo
 } as const
 
-const svgUrl = (svg: string) => `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
-
-/** Padrão discreto de linhas de onda, repetido no fundo da página. */
-const wavePattern = svgUrl(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="72" viewBox="0 0 240 72">
-  <path d="M0 18 C 20 6, 40 6, 60 18 S 100 30, 120 18 S 160 6, 180 18 S 220 30, 240 18" fill="none" stroke="${brand.purple}" stroke-opacity="0.07" stroke-width="2"/>
-  <path d="M-60 54 C -40 42, -20 42, 0 54 S 40 66, 60 54 S 100 42, 120 54 S 160 66, 180 54 S 220 42, 240 54 S 280 66, 300 54" fill="none" stroke="${brand.green}" stroke-opacity="0.09" stroke-width="2"/>
-</svg>`,
-)
-
-/** Ondas grandes fixas no rodapé da tela. */
-const waveSwell = svgUrl(
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-  <path d="M0 190 C 180 120, 360 120, 540 180 S 900 260, 1080 190 S 1350 120, 1440 150 L1440 320 L0 320 Z" fill="${brand.green}" fill-opacity="0.10"/>
-  <path d="M0 240 C 200 190, 380 200, 560 240 S 920 300, 1120 245 S 1360 200, 1440 220 L1440 320 L0 320 Z" fill="${brand.deepGreen}" fill-opacity="0.08"/>
-  <path d="M0 280 C 220 250, 420 260, 620 285 S 1000 320, 1200 290 S 1380 265, 1440 275 L1440 320 L0 320 Z" fill="${brand.plum}" fill-opacity="0.06"/>
-</svg>`,
-)
-
 export const theme = createTheme({
   palette: {
     mode: 'light',
@@ -55,18 +36,26 @@ export const theme = createTheme({
       styleOverrides: {
         body: {
           backgroundColor: brand.sand,
-          backgroundImage: `${waveSwell}, ${wavePattern}`,
-          backgroundRepeat: 'no-repeat, repeat',
-          backgroundPosition: 'bottom center, top left',
-          backgroundSize: '100% 38vh, 240px 72px',
-          backgroundAttachment: 'fixed, scroll',
+          // onda tubular em traço fino (gerada por scripts/gen-wave.mjs), fixa no canto da tela
+          backgroundImage: 'url(/bg-wave.svg)',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed',
+          backgroundPosition: 'right -2vw bottom 0',
+          backgroundSize: 'min(56vw, 760px) auto',
+          '@media (max-width: 600px)': { backgroundSize: '110vw auto', backgroundPosition: 'right -12vw bottom 0' },
         },
       },
     },
     MuiPaper: {
       defaultProps: { elevation: 0 },
       styleOverrides: {
-        root: { backgroundImage: 'none', border: `1px solid ${alpha(brand.purple, 0.08)}` },
+        root: {
+          backgroundImage: 'none',
+          border: `1px solid ${alpha(brand.purple, 0.08)}`,
+          // translúcido: a onda do fundo aparece de leve atrás dos cards
+          backgroundColor: alpha('#FBF4EC', 0.8),
+          backdropFilter: 'blur(3px)',
+        },
       },
     },
     MuiButton: { defaultProps: { disableElevation: true } },
