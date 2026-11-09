@@ -37,7 +37,7 @@ const GUARUJA: Spot[] = [
   { id: 'gua-cheiralimao', name: 'Cheira Limão', ...G, lat: -24.001, lon: -46.318, facing: 290, kind: 'beach', sheltered: true },
   { id: 'gua-sangava', name: 'Sangava', ...G, lat: -24.012, lon: -46.321, facing: 220, kind: 'beach', sheltered: true },
   { id: 'gua-monduba', name: 'Monduba', ...G, lat: -24.009, lon: -46.296, facing: 200, kind: 'beach', sheltered: true },
-  { id: 'gua-guaiuba', name: 'Guaiúba', ...G, lat: -24.011, lon: -46.277, facing: 180, kind: 'beach' },
+  { id: 'gua-guaiuba', name: 'Guaiúba', ...G, lat: -24.0178, lon: -46.2923, facing: 180, kind: 'beach' },
   { id: 'gua-tombo', name: 'Praia do Tombo', ...G, lat: -24.011, lon: -46.271, facing: 165, kind: 'beach' },
   { id: 'gua-therock', name: 'The Rock', ...G, lat: -24.01238, lon: -46.26743, facing: 160, kind: 'reef' },
   { id: 'gua-asturias', name: 'Astúrias', ...G, lat: -24.001, lon: -46.265, facing: 150, kind: 'beach' },

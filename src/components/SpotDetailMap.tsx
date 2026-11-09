@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
 import { loadMapLibre, OFM_ATTRIBUTION, OFM_GLYPHS, OFM_SOURCE, offsetLngLat, snapToCoast } from '../lib/maplibre'
-import { dirDeg, fmt } from '../lib/surf'
+import { dirDeg, ENERGY_GRADIENT, energyColor, energyLabel, energyRatio, fmt, fmtEnergy, waveEnergy } from '../lib/surf'
 import { brand } from '../theme'
 
 /**
  * Mapa detalhado do pico (card "O pico"): terra, vegetação, prédios, ruas e nomes,
- * com as cristas do swell chegando na direção prevista para a hora selecionada.
- * As cristas andam no ritmo real: avançam um comprimento de onda a cada período.
+ * com setas do swell chegando na direção prevista para a hora selecionada.
+ * As setas andam no ritmo real (um comprimento de onda a cada período) e a cor mostra a força.
  */
 
 const C = {
@@ -53,18 +53,6 @@ const STYLE: StyleSpecification = {
       paint: { 'fill-color': '#F1DFC2' },
     },
     { id: 'water', type: 'fill', source: 'ofm', 'source-layer': 'water', paint: { 'fill-color': C.water } },
-    {
-      id: 'waves',
-      type: 'line',
-      source: 'waves',
-      layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: {
-        'line-color': brand.deepGreen,
-        'line-width': ['get', 'w'],
-        'line-opacity': ['get', 'o'],
-        'line-blur': 0.4,
-      },
-    },
     {
       id: 'building',
       type: 'fill',
@@ -114,41 +102,68 @@ const STYLE: StyleSpecification = {
 const ZOOM = 13.2
 
 /** Centro do mapa ~700 m mar adentro: o pico fica perto da borda e as ondas chegando ganham espaço. */
-const viewCenter = (p: { lat: number; lon: number }, facing: number) => offset(p.lat, p.lon, facing, 700)
-const offset = offsetLngLat
+const viewCenter = (p: { lat: number; lon: number }, facing: number) => offsetLngLat(p.lat, p.lon, facing, 700)
 
 /**
- * Cristas paralelas, perpendiculares à direção do swell, vindo do mar até ~200 m do pico.
- * `phase` (0–1) desloca as cristas em direção à costa.
+ * Setas do swell: faixas paralelas vindo do mar até ~120 m do pico, apontando para onde a onda vai.
+ * `phase` (0–1) avança as setas em direção à costa; `color` é a cor da força (energia).
  */
-function waveCrests(spot: { lat: number; lon: number }, fromDeg: number, heightM: number, periodS: number, phase: number) {
+function swellArrows(
+  base: { lat: number; lon: number },
+  fromDeg: number,
+  heightM: number,
+  periodS: number,
+  phase: number,
+  color: string,
+) {
   const L = Math.min(420, Math.max(160, 1.56 * periodS * periodS)) // comprimento de onda em águas profundas (m)
+  const step = Math.max(L * 1.6, 420) // espaço entre setas na mesma faixa
   const maxDist = 2600
-  const minDist = 120 // as cristas morrem ~120 m antes da areia
-  const halfWidth = 900
+  const minDist = 120
+  const lanes = [-2, -1, 0, 1, 2]
+  const laneGap = 360 // m entre faixas
+  const toward = (fromDeg + 180) % 360
+  const size = Math.min(1.1, 0.5 + heightM * 0.22)
   const features = []
-  for (let k = 0; ; k++) {
-    const d = minDist + (k + 1 - phase) * L
-    if (d > maxDist) break
-    const center = offset(spot.lat, spot.lon, fromDeg, d)
-    const coords: [number, number][] = []
-    // crista levemente curva (refração perto da costa)
-    for (let i = -10; i <= 10; i++) {
-      const t = i / 10
-      const along = offset(center[1], center[0], fromDeg + 90, t * halfWidth)
-      const bend = offset(along[1], along[0], fromDeg, t * t * 160 * (1 - d / maxDist))
-      coords.push(bend)
+  for (const lane of lanes) {
+    const stagger = Math.abs(lane) % 2 ? 0.5 : 0
+    for (let k = 0; ; k++) {
+      const d = minDist + (k + 1 - phase + stagger) * step
+      if (d > maxDist) break
+      const onLine = offsetLngLat(base.lat, base.lon, fromDeg, d)
+      const p = offsetLngLat(onLine[1], onLine[0], fromDeg + 90, lane * laneGap)
+      const near = Math.min(1, (d - minDist) / step) // some ao chegar na praia
+      const far = Math.min(1, (maxDist - d) / (step * 1.5)) // surge lá fora
+      const edge = 1 - Math.abs(lane) / (lanes.length / 2 + 1) // faixas das pontas mais suaves
+      features.push({
+        type: 'Feature' as const,
+        properties: { o: 0.95 * near * far * (0.45 + 0.55 * edge), s: size * (1 + 0.2 * (1 - d / maxDist)), r: toward, c: color },
+        geometry: { type: 'Point' as const, coordinates: p },
+      })
     }
-    // some ao chegar perto da praia e ao surgir lá fora
-    const near = Math.min(1, (d - minDist) / L)
-    const far = Math.min(1, (maxDist - d) / (L * 1.5))
-    features.push({
-      type: 'Feature' as const,
-      properties: { o: 0.75 * near * far, w: Math.min(4, 1.2 + heightM * 1.1) },
-      geometry: { type: 'LineString' as const, coordinates: coords },
-    })
   }
   return { type: 'FeatureCollection' as const, features }
+}
+
+/** Seta (apontando para o norte) desenhada em canvas, usada como ícone SDF para poder colorir. */
+function arrowImage() {
+  const S = 64
+  const c = document.createElement('canvas')
+  c.width = S
+  c.height = S
+  const g = c.getContext('2d')!
+  g.fillStyle = '#fff'
+  g.beginPath()
+  g.moveTo(S / 2, 4) // ponta
+  g.lineTo(S - 12, 30)
+  g.lineTo(S / 2 + 7, 26)
+  g.lineTo(S / 2 + 7, S - 6)
+  g.lineTo(S / 2 - 7, S - 6)
+  g.lineTo(S / 2 - 7, 26)
+  g.lineTo(12, 30)
+  g.closePath()
+  g.fill()
+  return g.getImageData(0, 0, S, S)
 }
 
 export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
@@ -158,7 +173,7 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   // valores atuais lidos pela animação (que roda fora do ciclo do React)
-  const swell = useRef({ dir: 0, h: 0, t: 10 })
+  const swell = useRef<{ dir: number; h: number; t: number; c: string }>({ dir: 0, h: 0, t: 10, c: brand.deepGreen })
   const spotRef = useRef(spot)
   /** Ponto do pico na linha da costa (calculado depois que o mapa desenha). */
   const coastRef = useRef<{ lat: number; lon: number } | null>(null)
@@ -180,10 +195,12 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
   const dir = hour.swellDirection ?? hour.waveDirection
   const period = hour.swellPeakPeriod ?? hour.swellPeriod ?? hour.wavePeriod ?? 10
   const height = hour.swellHeight ?? hour.waveHeight ?? 0
+  const energy = waveEnergy(hour)
+  const color = energyColor(energy)
   useEffect(() => {
-    swell.current = { dir: dir ?? spot.facing, h: height, t: period }
+    swell.current = { dir: dir ?? spot.facing, h: height, t: period, c: color }
     spotRef.current = spot
-  }, [dir, height, period, spot])
+  }, [dir, height, period, color, spot])
 
   useEffect(() => {
     let cancelled = false
@@ -226,12 +243,36 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
           last = now
           const src = created?.getSource('waves') as GeoJSONSource | undefined
           if (!src) return
-          const { dir: d, h, t } = swell.current
+          const { dir: d, h, t, c } = swell.current
           const phase = reduce ? 0.5 : (((now - start) / 1000) % t) / t
-          src.setData(waveCrests(coastRef.current ?? spotRef.current, d, h, t, phase))
+          src.setData(swellArrows(coastRef.current ?? spotRef.current, d, h, t, phase, c))
         }
         created.once('load', () => {
-          if (cancelled) return
+          if (cancelled || !created) return
+          // setas do swell: ícone SDF colorido pela força, girado para onde a onda vai
+          created.addImage('swell-arrow', arrowImage(), { sdf: true, pixelRatio: 2 })
+          created.addLayer(
+            {
+              id: 'swell-arrows',
+              type: 'symbol',
+              source: 'waves',
+              layout: {
+                'icon-image': 'swell-arrow',
+                'icon-size': ['get', 's'],
+                'icon-rotate': ['get', 'r'],
+                'icon-rotation-alignment': 'map',
+                'icon-allow-overlap': true,
+                'icon-ignore-placement': true,
+              },
+              paint: {
+                'icon-color': ['get', 'c'],
+                'icon-opacity': ['get', 'o'],
+                'icon-halo-color': 'rgba(251,244,236,.9)',
+                'icon-halo-width': 1,
+              },
+            },
+            'building',
+          )
           setReady(true)
           raf = requestAnimationFrame(tick)
         })
@@ -281,25 +322,47 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
           '& .maplibregl-ctrl-group': { borderRadius: '10px', boxShadow: 'none', border: '1px solid rgba(75,29,90,.15)' },
         }}
       />
-      {dir != null && (
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 10,
-            top: 10,
-            px: 1.25,
-            py: 0.5,
-            borderRadius: 99,
-            bgcolor: 'rgba(251,244,236,.92)',
-            fontSize: 12,
-            fontWeight: 800,
-            color: brand.deepGreen,
-            pointerEvents: 'none',
-          }}
-        >
-          Swell {dirDeg(dir)} · {fmt.m(height)} · {fmt.s(period)}
+      {/* resumo do swell + legenda da força (cor das setas) */}
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 10,
+          bottom: 24,
+          px: 1.25,
+          py: 0.75,
+          borderRadius: '10px',
+          bgcolor: 'rgba(251,244,236,.92)',
+          pointerEvents: 'none',
+          width: 186,
+        }}
+      >
+        {dir != null && (
+          <Typography sx={{ fontSize: 11, fontWeight: 800, color: brand.deepGreen }}>
+            Swell {dirDeg(dir)} · {fmt.m(height)} · {fmt.s(period)}
+          </Typography>
+        )}
+        <Typography sx={{ fontSize: 11, fontWeight: 800, color: brand.purple }}>
+          Força: {fmtEnergy(energy)} · {energyLabel(energy)}
+        </Typography>
+        <Box sx={{ position: 'relative', height: 6, borderRadius: 3, background: ENERGY_GRADIENT, mt: 0.5 }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -3,
+              left: `calc(${energyRatio(energy) * 100}% - 6px)`,
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              bgcolor: color,
+              border: `2px solid ${brand.sand}`,
+            }}
+          />
         </Box>
-      )}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.25 }}>
+          <Typography sx={{ fontSize: 9, opacity: 0.6 }}>fraca</Typography>
+          <Typography sx={{ fontSize: 9, opacity: 0.6 }}>pesada</Typography>
+        </Box>
+      </Box>
       <Typography
         component="a"
         href="https://openfreemap.org"

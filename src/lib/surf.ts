@@ -207,3 +207,31 @@ export function weatherLabel(code: number | null | undefined) {
   if (code <= 86) return 'Neve'
   return 'Trovoadas'
 }
+
+/** Escala de cor da força (energia em kJ): verde claro (fraca) até roxo (pesada). */
+const ENERGY_STOPS: [number, [number, number, number]][] = [
+  [0, [143, 211, 182]], // #8FD3B6
+  [100, [47, 174, 123]], // #2FAE7B
+  [400, [15, 76, 58]], // #0F4C3A
+  [1000, [122, 46, 110]], // #7A2E6E
+  [2500, [75, 29, 90]], // #4B1D5A
+]
+
+export function energyColor(kj: number | null) {
+  const v = Math.max(0, kj ?? 0)
+  for (let i = 1; i < ENERGY_STOPS.length; i++) {
+    const [x1, c1] = ENERGY_STOPS[i]
+    const [x0, c0] = ENERGY_STOPS[i - 1]
+    if (v <= x1) {
+      const t = (v - x0) / (x1 - x0)
+      const c = c0.map((a, j) => Math.round(a + (c1[j] - a) * t))
+      return `rgb(${c[0]}, ${c[1]}, ${c[2]})`
+    }
+  }
+  const last = ENERGY_STOPS[ENERGY_STOPS.length - 1][1]
+  return `rgb(${last[0]}, ${last[1]}, ${last[2]})`
+}
+
+/** Gradiente CSS da escala de força (legendas). */
+// posições na mesma escala log de energyRatio (100 kJ ≈ 54%, 400 ≈ 70%, 1000 ≈ 81%, 2500 ≈ 92%)
+export const ENERGY_GRADIENT = 'linear-gradient(90deg, #8FD3B6 0%, #2FAE7B 54%, #0F4C3A 70%, #7A2E6E 81%, #4B1D5A 92%)'
