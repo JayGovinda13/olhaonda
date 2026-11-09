@@ -1,6 +1,6 @@
 import { Alert, Box, Container, Link, Skeleton, Stack, Typography } from '@mui/material'
 import { Suspense } from 'react'
-import { Link as RouterLink, Outlet } from 'react-router'
+import { Link as RouterLink, Outlet, ScrollRestoration } from 'react-router'
 import { backend } from '../backend'
 import { APP_ENV, FEATURES, HAS_COMMUNITY } from '../config/env'
 import { AdSlot } from '../components/AdSlot'
@@ -80,6 +80,8 @@ export function Layout() {
         </Container>
       </Box>
       <ConsentBanner />
+      {/* nova página começa do topo; voltar restaura a rolagem anterior */}
+      <ScrollRestoration />
     </Box>
   )
 }

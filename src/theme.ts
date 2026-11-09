@@ -36,13 +36,14 @@ export const theme = createTheme({
       styleOverrides: {
         body: {
           backgroundColor: brand.sand,
-          // onda tubular em traço fino (gerada por scripts/gen-wave.mjs), fixa no canto da tela
-          backgroundImage: 'url(/bg-wave.svg)',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed',
-          backgroundPosition: 'right -2vw bottom 0',
-          backgroundSize: 'min(56vw, 760px) auto',
-          '@media (max-width: 600px)': { backgroundSize: '110vw auto', backgroundPosition: 'right -12vw bottom 0' },
+          // sol fixo no canto superior direito + ondas pequenas repetidas em diagonal
+          // (gerados por scripts/gen-wave.mjs)
+          backgroundImage: 'url(/bg-sun.svg), url(/bg-waves-tile.svg)',
+          backgroundRepeat: 'no-repeat, repeat',
+          backgroundAttachment: 'fixed, fixed',
+          backgroundPosition: 'right 4vw top 72px, 0 0',
+          backgroundSize: 'clamp(110px, 16vw, 220px) auto, 300px 300px',
+          '@media (max-width: 600px)': { backgroundSize: '90px auto, 220px 220px', backgroundPosition: 'right -34px top 52px, 0 0' },
         },
       },
     },

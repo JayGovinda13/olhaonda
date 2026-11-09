@@ -40,8 +40,12 @@ const GUARUJA: Spot[] = [
   { id: 'gua-guaiuba', name: 'Guaiúba', ...G, lat: -24.01811, lon: -46.29233, facing: 233, kind: 'beach' },
   { id: 'gua-tombo', name: 'Praia do Tombo', ...G, lat: -24.01291, lon: -46.26979, facing: 173, kind: 'beach' },
   { id: 'gua-therock', name: 'The Rock', ...G, lat: -24.01305, lon: -46.26749, facing: 185, kind: 'reef' },
-  { id: 'gua-asturias', name: 'Astúrias', ...G, lat: -24.00184, lon: -46.26391, facing: 140, kind: 'beach' },
-  { id: 'gua-pitangueiras', name: 'Pitangueiras', ...G, lat: -23.99873, lon: -46.2566, facing: 148, kind: 'beach' },
+  { id: 'gua-ast-cantobarcos', name: 'Canto dos Barcos', ...G, lat: -24.0098, lon: -46.267, facing: 50, kind: 'beach' },
+  { id: 'gua-ast-sobreasondas', name: 'Sobre as Ondas', ...G, lat: -24.0073, lon: -46.2681, facing: 98, kind: 'beach' },
+  { id: 'gua-ast-beco', name: 'Astúrias Beco', ...G, lat: -24.0044, lon: -46.2667, facing: 125, kind: 'beach' },
+  { id: 'gua-pit-avelinos', name: 'Avelinos', ...G, lat: -24.002, lon: -46.2647, facing: 140, kind: 'beach' },
+  { id: 'gua-pit-ilha', name: 'Ilha', ...G, lat: -23.9984, lon: -46.2562, facing: 148, kind: 'beach' },
+  { id: 'gua-pit-maluf', name: 'Maluf', ...G, lat: -23.9962, lon: -46.2527, facing: 165, kind: 'beach' },
   { id: 'gua-enseada', name: 'Enseada', ...G, lat: -23.98801, lon: -46.22994, facing: 170, kind: 'beach' },
   { id: 'gua-pernambuco', name: 'Pernambuco', ...G, lat: -23.96741, lon: -46.1856, facing: 90, kind: 'beach' },
   { id: 'gua-marcasado', name: 'Mar Casado', ...G, lat: -23.96286, lon: -46.18399, facing: 123, kind: 'beach' },
@@ -51,13 +55,13 @@ const GUARUJA: Spot[] = [
   { id: 'gua-saopedro', name: 'São Pedro', ...G, lat: -23.908, lon: -46.145, facing: 100, kind: 'beach' },
   { id: 'gua-pereque', name: 'Perequê', ...G, lat: -23.937, lon: -46.18, facing: 60, kind: 'beach', sheltered: true },
   { id: 'gua-branca', name: 'Praia Branca', ...G, lat: -23.87238, lon: -46.1385, facing: 123, kind: 'beach' },
-  { id: 'gua-preta', name: 'Praia Preta', ...G, lat: -23.87215, lon: -46.13433, facing: 108, kind: 'beach' },
 ]
 
 /**
  * Baixada Santista: praias com onda, de sudoeste (Peruíbe) para nordeste (Bertioga).
  * Coordenadas conferidas no OpenStreetMap (nov/2026): ponto na linha d'água em frente ao bairro/praia
  * de mesmo nome, e `facing` medido pelo desenho real da costa. Pendentes: Iporanga e São Pedro.
+ * Pitangueiras (Avelinos, Ilha, Maluf) e Astúrias (Canto dos Barcos, Sobre as Ondas, Beco) divididas por pico.
  */
 const PERUIBE = bx('Peruíbe')
 const ITANHAEM = bx('Itanhaém')
@@ -135,7 +139,7 @@ const ALL_SPOTS: Spot[] = [
 export const SPOTS: Spot[] =
   SPOT_SCOPE === 'baixada' ? ALL_SPOTS.filter((s) => s.baixada && !s.sheltered) : ALL_SPOTS
 
-export const DEFAULT_SPOT_ID = SPOT_SCOPE === 'baixada' ? 'gua-pitangueiras' : 'itauna'
+export const DEFAULT_SPOT_ID = SPOT_SCOPE === 'baixada' ? 'gua-pit-ilha' : 'itauna'
 
 export const KIND_LABEL: Record<Spot['kind'], string> = {
   beach: 'Beach break',

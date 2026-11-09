@@ -68,3 +68,21 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">${s
 import { writeFileSync } from 'node:fs'
 writeFileSync(new URL('../public/bg-wave.svg', import.meta.url), svg)
 console.log('public/bg-wave.svg', svg.length, 'bytes')
+
+// ---------------------------------------------------------------------------
+// Fundo do site: ladrilho com ondas pequenas repetidas em diagonal + sol no canto.
+// Gera public/bg-waves-tile.svg e public/bg-sun.svg
+// ---------------------------------------------------------------------------
+const TILE = 300
+// só os traços (sem o preenchimento da face, que passaria da borda do ladrilho)
+const mini = (x, y, s, op) =>
+  `<g transform="translate(${x} ${y}) scale(${s})" opacity="${op}">${lines}${foam}</g>`
+// duas ondas por ladrilho, deslocadas meio ladrilho na diagonal -> fileiras diagonais ao repetir
+const tile = `<svg xmlns="http://www.w3.org/2000/svg" width="${TILE}" height="${TILE}" viewBox="0 0 ${TILE} ${TILE}">
+${mini(-6, 14, 0.18, 0.75)}
+${mini(TILE / 2 - 6, TILE / 2 + 14, 0.18, 0.75)}
+</svg>`
+writeFileSync(new URL('../public/bg-waves-tile.svg', import.meta.url), tile)
+const sunSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="96" fill="${C.plum}" fill-opacity="0.12"/></svg>`
+writeFileSync(new URL('../public/bg-sun.svg', import.meta.url), sunSvg)
+console.log('public/bg-waves-tile.svg e public/bg-sun.svg')

@@ -4,6 +4,7 @@ import { AuthProvider } from './auth/AuthProvider'
 import { FEATURES } from './config/env'
 import { Layout } from './layout/Layout'
 import ForecastPage from './pages/ForecastPage'
+import HomePage from './pages/HomePage'
 
 // Fórum e fotos carregam sob demanda: a previsão abre mais rápido.
 const ForumPage = lazy(() => import('./pages/forum/ForumPage'))
@@ -16,7 +17,8 @@ const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
 
 // Rotas desligadas no ambiente (ex.: fórum e fotos em produção) nem entram no roteador.
 const routes: RouteObject[] = [
-  { index: true, element: <ForecastPage /> },
+  { index: true, element: <HomePage /> },
+  { path: 'pico/:id', element: <ForecastPage /> },
   { path: 'privacidade', element: <PrivacyPage /> },
   ...(FEATURES.forum
     ? [

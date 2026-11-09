@@ -116,7 +116,7 @@ export default function ThreadPage() {
             <Stack direction="row" spacing={1} sx={{ mb: 1.5, flexWrap: 'wrap', rowGap: 1 }}>
               <Chip size="small" label={FORUM_CATEGORIES.find((c) => c.id === t.category)?.label} />
               {spot && (
-                <Chip size="small" variant="outlined" component={RouterLink} to={`/?pico=${spot.id}`} clickable label={`Previsão de ${spot.name}`} />
+                <Chip size="small" variant="outlined" component={RouterLink} to={`/pico/${spot.id}`} clickable label={`Previsão de ${spot.name}`} />
               )}
             </Stack>
             <Typography variant="h4" component="h1" sx={{ mb: 3, overflowWrap: 'anywhere' }}>

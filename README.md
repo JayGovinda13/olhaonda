@@ -20,7 +20,8 @@ Para ligar contas reais, siga "Colocando no ar" abaixo.
 
 | Área | Recursos |
 | --- | --- |
-| Previsão (`/`) | 65 picos (Baixada Santista completa, de Peruíbe a Bertioga, incluindo as 19 praias do Guarujá e o The Rock), altura, swell primário/secundário, **força da onda** em kJ, todas as direções em graus, vento terral/maral, nota 0–5, hora a hora, maré no padrão da Marinha (nível de redução), **tempo** (céu, chuva, UV, máx/mín, 7 dias), rosa dos ventos |
+| Início (`/`) | Tela de escolha da praia: busca, "perto de mim", atalho para o último pico e lista por cidade |
+| Previsão (`/pico/:id`) | 65 picos (Baixada Santista completa, de Peruíbe a Bertioga, incluindo as 19 praias do Guarujá e o The Rock), altura, swell primário/secundário, **força da onda** em kJ, todas as direções em graus, vento terral/maral, nota 0–5, hora a hora, maré no padrão da Marinha (nível de redução), **tempo** (céu, chuva, UV, máx/mín, 7 dias), rosa dos ventos |
 | Fórum (`/forum`) | Tópicos por categoria e por pico, respostas, apagar a própria mensagem, moderadores |
 | Fotos (`/fotos`) | Busca por pico e dia, prévias com marca d'água, seleção e compra (Pix/cartão), download do original |
 | Fotógrafo (`/fotos/vender`) | Ativar perfil, conectar Mercado Pago, criar sessão, enviar fotos (marca d'água gerada no navegador) |

@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Skeleton, Stack } from '@mui/material'
 import { Refresh } from 'iconoir-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Navigate, useNavigate, useParams } from 'react-router'
 import { AdSlot } from '../components/AdSlot'
 import { DayStrip } from '../components/DayStrip'
 import { HourlyChart } from '../components/HourlyChart'
@@ -19,15 +19,16 @@ import { summarizeDays } from '../lib/days'
 import { currentHourIndex } from '../lib/surf'
 
 export default function ForecastPage() {
-  const [params, setParams] = useSearchParams()
-  const [savedId, setSavedId] = useLocalState('olhaonda:spot', DEFAULT_SPOT_ID)
-  // ?pico=… na URL tem prioridade (links compartilháveis)
-  const spot =
-    SPOTS.find((s) => s.id === (params.get('pico') ?? savedId)) ?? SPOTS.find((s) => s.id === DEFAULT_SPOT_ID) ?? SPOTS[0]
-  const setSpot = (id: string) => {
-    setSavedId(id)
-    setParams({ pico: id }, { replace: true })
-  }
+  // o pico vem do endereço (/pico/:id), que é compartilhável
+  const { id = '' } = useParams()
+  const navigate = useNavigate()
+  const [, setSavedId] = useLocalState('olhaonda:spot', DEFAULT_SPOT_ID)
+  const found = SPOTS.find((s) => s.id === id)
+  const spot = found ?? SPOTS.find((s) => s.id === DEFAULT_SPOT_ID) ?? SPOTS[0]
+  useEffect(() => {
+    if (found) setSavedId(found.id) // lembra o último pico para a tela de início
+  }, [found, setSavedId])
+  const setSpot = (next: string) => navigate(`/pico/${next}`)
   const forecast = useForecast(spot)
 
   const hours = forecast.data?.hours
@@ -58,6 +59,9 @@ export default function ForecastPage() {
     const target = now.time.startsWith(date) ? now.time : `${date}T${hh}`
     setSelTime(hours.some((h) => h.time === target) ? target : `${date}T07:00`)
   }
+
+  // pico inexistente (ou que não está neste ambiente): volta para a escolha da praia
+  if (!found) return <Navigate to="/" replace />
 
   return (
     <Stack spacing={2}>

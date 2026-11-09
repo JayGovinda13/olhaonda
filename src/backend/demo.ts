@@ -70,7 +70,7 @@ function seed(): DB {
       title: 'Prancha para Pitangueiras em dia pequeno?',
       body: 'Peso 78 kg e estou pensando num fish 5\'10". Vale para o beach break do Guarujá ou melhor um funboard?',
       category: 'equipamento',
-      spotId: 'gua-pitangueiras',
+      spotId: 'gua-pit-ilha',
       authorId: 'u-ana',
       authorName: 'Ana Lima',
       createdAt: iso(60 * 26),
@@ -121,7 +121,7 @@ function seed(): DB {
     })
   }
   mk('s1', '@mar.lentes', 'gua-tombo', today(0), 'manha', 2500, 9)
-  mk('s2', '@fotosurfguaruja', 'gua-pitangueiras', today(0), 'tarde', 2000, 6)
+  mk('s2', '@fotosurfguaruja', 'gua-pit-ilha', today(0), 'tarde', 2000, 6)
   mk('s3', '@mar.lentes', 'gua-guaiuba', today(1), 'manha', 2500, 8)
   mk('s4', '@ondaclick', 'maresias', today(2), 'manha', 3000, 7)
   return { me: null, threads, posts, sessions, photos, purchases: [] }
