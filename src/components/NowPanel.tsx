@@ -6,6 +6,7 @@ import { KIND_LABEL, type Spot } from '../data/spots'
 import { dayLabel, dirDeg, energyLabel, energyRatio, faceRange, fmt, fmtEnergy, WIND_LABEL, waveEnergy, windKind, windStrength } from '../lib/surf'
 import { brand } from '../theme'
 import { DirArrow } from './bits'
+import { SpotMap } from './SpotMap'
 
 function Stat({ icon, label, value, sub }: { icon: ReactNode; label: string; value: ReactNode; sub?: ReactNode }) {
   return (
@@ -47,6 +48,9 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
         p: { xs: 3, md: 4 },
       }}
     >
+      {/* mapa do pico como marca d'água */}
+      <SpotMap spot={spot} />
+
       {/* ondas decorativas */}
       <Box
         component="svg"

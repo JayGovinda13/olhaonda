@@ -28,6 +28,10 @@ Para ligar contas reais, siga "Colocando no ar" abaixo.
 
 ## Soluções escolhidas
 
+**Mapa do pico: MapLibre + OpenFreeMap.** O fundo do card principal mostra a região do pico com um marcador. Os
+vetores vêm da OpenFreeMap (gratuita, sem chave, uso comercial liberado; atribuição exibida no card). O MapLibre é
+carregado só depois da previsão, para não atrasar a página.
+
 **Dados de onda e tempo: Open-Meteo.** Junta ECMWF WAM, Météo-France MFWAM e NOAA GFS-Wave, é gratuita para uso
 não comercial, sem chave, e chamada direto do navegador. Para uso comercial basta um plano pago (`VITE_OPEN_METEO_API_KEY`).
 Força da onda = energia de uma onda por metro de crista, em quilojoules: `E = ρ·g·Hs²·L / 8`, com `L = g·T²/2π`.
