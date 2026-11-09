@@ -1,5 +1,5 @@
-import { Box, Breadcrumbs, Button, ButtonBase, Link, Paper, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
+import { Box, Breadcrumbs, Button, ButtonBase, Link, Paper, Stack, Typography, useMediaQuery } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 import { ArrowLeft, ArrowRight, Position } from 'iconoir-react'
 import { useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
@@ -13,7 +13,7 @@ import { usePageMeta } from '../lib/meta'
 import { dirDeg } from '../lib/surf'
 import { brand } from '../theme'
 
-const MAP_H = { xs: 340, md: 520 }
+const MAP_H = 520
 
 /**
  * Tela de início: escolha da praia no mapa, em níveis.
@@ -25,6 +25,8 @@ export default function HomePage() {
   const [params, setParams] = useSearchParams()
   const [savedId] = useLocalState('olhaonda:spot', DEFAULT_SPOT_ID)
   const [locating, setLocating] = useState(false)
+  // no celular a tela de início é só a lista (o mapa nem carrega)
+  const showMap = useMediaQuery(useTheme().breakpoints.up('md'), { noSsr: true })
   const last = SPOTS.find((s) => s.id === savedId)
 
   const allStates = useMemo(() => states(), [])
@@ -83,15 +85,15 @@ export default function HomePage() {
   return (
     <Stack spacing={3}>
       {/* destaque */}
-      <Box sx={{ textAlign: 'center', pt: { xs: 1, md: 3 } }}>
-        <Box sx={{ display: 'inline-block', mb: 2 }}>
+      <Box sx={{ textAlign: 'center', pt: { xs: 0, md: 3 } }}>
+        <Box sx={{ display: { xs: 'none', md: 'inline-block' }, mb: 2 }}>
           <Wordmark height={48} />
         </Box>
-        <Typography variant="h3" component="h1" sx={{ fontSize: { xs: 28, md: 40 } }}>
+        <Typography variant="h3" component="h1" sx={{ fontSize: { xs: 26, md: 40 } }}>
           Onde você vai cair hoje?
         </Typography>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ justifyContent: 'center', alignItems: 'center', mt: 2.5 }}>
-          <Box sx={{ width: '100%', maxWidth: 420 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ justifyContent: 'center', alignItems: 'stretch', mt: { xs: 2, md: 2.5 } }}>
+          <Box sx={{ width: '100%', maxWidth: { sm: 420 } }}>
             <SpotPicker value={null} onChange={go} allowEmpty locate={false} placeholder="Buscar praia ou pico" width="100%" />
           </Box>
           <Button
@@ -99,23 +101,29 @@ export default function HomePage() {
             onClick={nearMe}
             disabled={locating}
             startIcon={<Position width={18} height={18} />}
-            sx={{ borderRadius: 99, whiteSpace: 'nowrap', bgcolor: 'background.paper' }}
+            sx={{ borderRadius: 99, whiteSpace: 'nowrap', bgcolor: 'background.paper', minHeight: 44 }}
           >
             Perto de mim
           </Button>
         </Stack>
         {last && (
-          <Button onClick={() => go(last)} endIcon={<ArrowRight width={16} height={16} />} sx={{ mt: 1.5, borderRadius: 99, fontWeight: 800 }}>
-            Continuar em {last.name} · {last.city}
+          <Button
+            onClick={() => go(last)}
+            endIcon={<ArrowRight width={16} height={16} />}
+            sx={{ mt: 1.25, borderRadius: 99, fontWeight: 800, maxWidth: '100%', '& .MuiButton-endIcon': { flexShrink: 0 } }}
+          >
+            <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              Continuar em {last.name} · {last.city}
+            </Box>
           </Button>
         )}
       </Box>
 
       {/* mapa + lista do nível atual */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0,1fr)', md: 'minmax(0,2fr) minmax(0,1fr)' }, gap: 2, alignItems: 'start' }}>
-        <HomeMap items={items} height={MAP_H} />
+        {showMap && <HomeMap items={items} height={MAP_H} />}
 
-        <Paper sx={{ p: { xs: 2, sm: 2.5 }, maxHeight: { md: MAP_H.md }, display: 'flex', flexDirection: 'column' }}>
+        <Paper sx={{ p: { xs: 2, sm: 2.5 }, maxHeight: { md: MAP_H }, display: 'flex', flexDirection: 'column' }}>
           <Breadcrumbs sx={{ fontSize: 13, mb: 0.5 }}>
             {!singleState && (
               <Link component="button" underline="hover" color="inherit" onClick={() => setLevel({})}>
@@ -173,6 +181,7 @@ function Row({ title, sub, onClick, active }: { title: string; sub: string; onCl
         width: '100%',
         px: 1.5,
         py: 1.25,
+        minHeight: 56,
         borderRadius: '12px',
         border: `1px solid ${alpha(brand.purple, active ? 0.4 : 0.1)}`,
         bgcolor: active ? alpha(brand.green, 0.1) : 'transparent',

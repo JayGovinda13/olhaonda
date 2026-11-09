@@ -1,6 +1,7 @@
-import { Box, ButtonBase, Paper, Stack, Typography } from '@mui/material'
+import { Box, ButtonBase, Collapse, Paper, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { DropletHalf, SunLight, Umbrella, Wind } from 'iconoir-react'
+import { useEffect, useRef, useState } from 'react'
 import type { DayWeather, HourPoint } from '../api/openMeteo'
 import { dayLabel, fmt, weatherLabel } from '../lib/surf'
 import { brand } from '../theme'
@@ -20,15 +21,30 @@ export function WeatherPanel({
   days,
   selectedDate,
   hour,
+  dayHours,
   onSelectDay,
+  onSelectHour,
 }: {
   days: DayWeather[]
   selectedDate: string
   hour: HourPoint
+  /** horas do dia escolhido */
+  dayHours: HourPoint[]
   onSelectDay: (date: string) => void
+  onSelectHour: (time: string) => void
 }) {
+  // as horas abrem só depois que a pessoa escolhe um dia; tocar de novo no mesmo dia fecha
+  const [openDate, setOpenDate] = useState<string | null>(null)
+  const strip = useRef<HTMLDivElement>(null)
+  // centraliza a hora escolhida na faixa (sem rolar a página)
+  useEffect(() => {
+    const c = strip.current
+    const el = c?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (c && el) c.scrollTo({ left: el.offsetLeft - c.clientWidth / 2 + el.clientWidth / 2, behavior: 'smooth' })
+  }, [openDate, hour.time])
   const day = days.find((d) => d.date === selectedDate) ?? days[0]
   if (!day) return null
+  const open = openDate === day.date && dayHours.length > 0
   const iconP = { width: 16, height: 16, color: brand.plum }
 
   return (
@@ -88,8 +104,13 @@ export function WeatherPanel({
           return (
             <ButtonBase
               key={d.date}
-              onClick={() => onSelectDay(d.date)}
+              onClick={() => {
+                if (active && openDate === d.date) return setOpenDate(null)
+                onSelectDay(d.date)
+                setOpenDate(d.date)
+              }}
               aria-pressed={active}
+              aria-expanded={active ? open : undefined}
               sx={{
                 flexDirection: 'column',
                 py: 1,
@@ -109,6 +130,41 @@ export function WeatherPanel({
           )
         })}
       </Box>
+
+      <Collapse in={open} unmountOnExit>
+        <Typography sx={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', opacity: 0.6, mt: 2, mb: 1 }}>
+          Hora a hora · {dayLabel(day.date).wd} {dayLabel(day.date).dm}
+        </Typography>
+        <Box ref={strip} sx={{ position: 'relative', display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '56px', gap: 0.5, overflowX: 'auto', pb: 0.5 }}>
+          {dayHours.map((h) => {
+            const active = h.time === hour.time
+            return (
+              <ButtonBase
+                key={h.time}
+                onClick={() => onSelectHour(h.time)}
+                aria-pressed={active}
+                sx={{
+                  flexDirection: 'column',
+                  py: 1,
+                  borderRadius: '12px',
+                  border: `1px solid ${alpha(brand.purple, active ? 0.35 : 0.08)}`,
+                  bgcolor: active ? alpha(brand.green, 0.12) : 'transparent',
+                }}
+              >
+                <Typography sx={{ fontSize: 11, fontWeight: 800, opacity: 0.65 }}>{fmt.hour(h.time)}</Typography>
+                <Box sx={{ my: 0.5, color: brand.deepGreen }}>
+                  <WeatherIcon code={h.weatherCode} size={20} />
+                </Box>
+                <Typography sx={{ fontSize: 13, fontWeight: 800 }}>{h.airTemp == null ? '—' : Math.round(h.airTemp)}°</Typography>
+                <Typography sx={{ fontSize: 11, opacity: 0.6, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                  <Umbrella width={10} height={10} />
+                  {h.rainChance ?? 0}%
+                </Typography>
+              </ButtonBase>
+            )
+          })}
+        </Box>
+      </Collapse>
     </Paper>
   )
 }

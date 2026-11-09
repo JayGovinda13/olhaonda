@@ -200,7 +200,7 @@ export default function SellPage() {
 }
 
 function NewSessionForm({ onCreated }: { onCreated: (s: PhotoSession) => void }) {
-  const [spotId, setSpotId] = useState<string | null>('gua-tombo')
+  const [spotId, setSpotId] = useState<string | null>('gua-tombo-palanque')
   const [date, setDate] = useState(todayIso())
   const [period, setPeriod] = useState<Period>('manha')
   const [price, setPrice] = useState('25')

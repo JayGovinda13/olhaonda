@@ -58,7 +58,7 @@ function seed(): DB {
       title: 'Tombo hoje cedo: séries de 1,5 m com terral',
       body: 'Entrou bem o swell de sul. Até umas 9h estava liso, depois o vento virou. Alguém foi na Guaiúba?',
       category: 'condicoes',
-      spotId: 'gua-tombo',
+      spotId: 'gua-tombo-palanque',
       authorId: 'u-rafa',
       authorName: 'Rafa Bodyboard',
       createdAt: iso(180),
@@ -120,7 +120,7 @@ function seed(): DB {
       createdAt: iso(),
     })
   }
-  mk('s1', '@mar.lentes', 'gua-tombo', today(0), 'manha', 2500, 9)
+  mk('s1', '@mar.lentes', 'gua-tombo-palanque', today(0), 'manha', 2500, 9)
   mk('s2', '@fotosurfguaruja', 'gua-pit-ilha', today(0), 'tarde', 2000, 6)
   mk('s3', '@mar.lentes', 'gua-guaiuba', today(1), 'manha', 2500, 8)
   mk('s4', '@ondaclick', 'maresias', today(2), 'manha', 3000, 7)

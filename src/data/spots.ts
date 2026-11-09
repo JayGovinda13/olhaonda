@@ -38,17 +38,21 @@ const GUARUJA: Spot[] = [
   { id: 'gua-sangava', name: 'Sangava', ...G, lat: -24.012, lon: -46.321, facing: 220, kind: 'beach', sheltered: true },
   { id: 'gua-monduba', name: 'Monduba', ...G, lat: -24.009, lon: -46.296, facing: 200, kind: 'beach', sheltered: true },
   { id: 'gua-guaiuba', name: 'Guaiúba', ...G, lat: -24.01811, lon: -46.29233, facing: 233, kind: 'beach' },
-  { id: 'gua-tombo', name: 'Praia do Tombo', ...G, lat: -24.01291, lon: -46.26979, facing: 173, kind: 'beach' },
+  // Tombo, olhando para o mar: Bostrô (canto esquerdo, lado do The Rock), Palanque (meio), Canto do Forte (direito)
+  { id: 'gua-tombo-forte', name: 'Tombo - Canto do Forte', ...G, lat: -24.0163, lon: -46.276, facing: 140, kind: 'beach' },
+  { id: 'gua-tombo-palanque', name: 'Tombo - Palanque', ...G, lat: -24.0147, lon: -46.2737, facing: 150, kind: 'beach' },
+  { id: 'gua-tombo-bostro', name: 'Tombo - Bostrô', ...G, lat: -24.0129, lon: -46.2702, facing: 163, kind: 'beach' },
   { id: 'gua-therock', name: 'The Rock', ...G, lat: -24.01305, lon: -46.26749, facing: 185, kind: 'reef' },
   { id: 'gua-ast-cantobarcos', name: 'Astúrias - Canto dos Barcos', ...G, lat: -24.0098, lon: -46.267, facing: 50, kind: 'beach' },
-  { id: 'gua-ast-sobreasondas', name: 'Astúrias - Sobre as Ondas', ...G, lat: -24.0073, lon: -46.2681, facing: 98, kind: 'beach' },
-  { id: 'gua-ast-beco', name: 'Astúrias - Beco', ...G, lat: -24.0044, lon: -46.2667, facing: 125, kind: 'beach' },
+  { id: 'gua-ast-beco', name: 'Astúrias - Beco', ...G, lat: -24.0073, lon: -46.2681, facing: 98, kind: 'beach' },
+  { id: 'gua-ast-sobreasondas', name: 'Astúrias - Sobre as Ondas', ...G, lat: -24.0044, lon: -46.2667, facing: 125, kind: 'beach' },
   { id: 'gua-pit-avelinos', name: 'Pitangueiras - Avelinos', ...G, lat: -24.002, lon: -46.2647, facing: 140, kind: 'beach' },
   { id: 'gua-pit-ilha', name: 'Pitangueiras - Ilha', ...G, lat: -23.9984, lon: -46.2562, facing: 148, kind: 'beach' },
   { id: 'gua-pit-maluf', name: 'Pitangueiras - Maluf', ...G, lat: -23.9954, lon: -46.2518, facing: 165, kind: 'beach' },
+  { id: 'gua-ens-caveira', name: 'Enseada - Caveira', ...G, lat: -23.9932, lon: -46.2478, facing: 150, kind: 'beach' },
   { id: 'gua-enseada', name: 'Enseada', ...G, lat: -23.98801, lon: -46.22994, facing: 170, kind: 'beach' },
-  { id: 'gua-pernambuco', name: 'Pernambuco', ...G, lat: -23.96741, lon: -46.1856, facing: 90, kind: 'beach' },
-  { id: 'gua-marcasado', name: 'Mar Casado', ...G, lat: -23.96286, lon: -46.18399, facing: 123, kind: 'beach' },
+  { id: 'gua-marcasado', name: 'Mar Casado', ...G, lat: -23.96741, lon: -46.1856, facing: 90, kind: 'beach' },
+  { id: 'gua-pernambuco', name: 'Pernambuco', ...G, lat: -23.96286, lon: -46.18399, facing: 123, kind: 'beach' },
   { id: 'gua-sorocotuba', name: 'Sorocotuba', ...G, lat: -23.951, lon: -46.175, facing: 110, kind: 'beach', sheltered: true },
   { id: 'gua-eden', name: 'Praia do Éden', ...G, lat: -23.943, lon: -46.168, facing: 110, kind: 'beach', sheltered: true },
   { id: 'gua-iporanga', name: 'Iporanga', ...G, lat: -23.90234, lon: -46.15279, facing: 83, kind: 'beach' },
@@ -138,6 +142,9 @@ const ALL_SPOTS: Spot[] = [
  */
 export const SPOTS: Spot[] =
   SPOT_SCOPE === 'baixada' ? ALL_SPOTS.filter((s) => s.baixada && !s.sheltered) : ALL_SPOTS
+
+/** ids antigos que viraram outros picos (links salvos continuam funcionando) */
+export const SPOT_ALIASES: Record<string, string> = { 'gua-tombo': 'gua-tombo-palanque' }
 
 export const DEFAULT_SPOT_ID = SPOT_SCOPE === 'baixada' ? 'gua-pit-ilha' : 'itauna'
 

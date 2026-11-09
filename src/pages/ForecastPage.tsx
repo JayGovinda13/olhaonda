@@ -12,7 +12,7 @@ import { PicoPanel } from '../components/pico/PicoPanel'
 import { SpotPicker } from '../components/SpotPicker'
 import { TidePanel } from '../components/TidePanel'
 import { WeatherPanel } from '../components/WeatherPanel'
-import { DEFAULT_SPOT_ID, SPOTS } from '../data/spots'
+import { DEFAULT_SPOT_ID, SPOT_ALIASES, SPOTS } from '../data/spots'
 import { useForecast } from '../hooks/useForecast'
 import { useLocalState } from '../hooks/useLocalState'
 import { summarizeDays } from '../lib/days'
@@ -64,7 +64,7 @@ export default function ForecastPage() {
   }
 
   // pico inexistente (ou que não está neste ambiente): volta para a escolha da praia
-  if (!found) return <Navigate to="/" replace />
+  if (!found) return <Navigate to={SPOT_ALIASES[id] ? `/pico/${SPOT_ALIASES[id]}` : '/'} replace />
 
   return (
     <Stack spacing={2}>
@@ -101,7 +101,14 @@ export default function ForecastPage() {
           <AdSlot format="inline" />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
             <TidePanel spot={spot} hours={dayHours} selected={selected.time} sun={dayWeather} onSelect={setSelTime} />
-            <WeatherPanel days={weather} selectedDate={selDate} hour={selected} onSelectDay={pickDay} />
+            <WeatherPanel
+              days={weather}
+              selectedDate={selDate}
+              hour={selected}
+              dayHours={dayHours}
+              onSelectDay={pickDay}
+              onSelectHour={setSelTime}
+            />
           </Box>
         </>
       )}
