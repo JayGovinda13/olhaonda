@@ -22,8 +22,8 @@ export type Spot = {
   tidePort?: string
 }
 
-/** Cidade da Baixada Santista: grupo no seletor, maré pelo Porto de Santos. */
-const bx = (city: string) => ({ city, state: 'SP', region: `Baixada Santista · ${city}`, baixada: true, tidePort: 'santos' }) as const
+/** Cidade da Baixada Santista: o grupo no seletor é só o nome da cidade; maré pelo Porto de Santos. */
+const bx = (city: string) => ({ city, state: 'SP', region: city, baixada: true, tidePort: 'santos' }) as const
 
 const G = bx('Guarujá')
 
@@ -71,7 +71,7 @@ const BAIXADA_SUL: Spot[] = [
   { id: 'per-centro', name: 'Peruíbe (Centro)', ...PERUIBE, lat: -24.32, lon: -46.995, facing: 140, kind: 'beach' },
   { id: 'ita-cibratel', name: 'Cibratel', ...ITANHAEM, lat: -24.215, lon: -46.84, facing: 145, kind: 'beach' },
   { id: 'ita-sonhos', name: 'Praia dos Sonhos', ...ITANHAEM, lat: -24.188, lon: -46.795, facing: 145, kind: 'beach' },
-  { id: 'ita-suarao', name: 'Suarão', ...ITANHAEM, lat: -24.165, lon: -46.76, facing: 145, kind: 'beach' },
+  { id: 'ita-suarao', name: 'Praião (Suarão)', ...ITANHAEM, lat: -24.165, lon: -46.76, facing: 145, kind: 'beach' },
   { id: 'mon-agenor', name: 'Agenor de Campos', ...MONGAGUA, lat: -24.118, lon: -46.66, facing: 145, kind: 'beach' },
   { id: 'mon-centro', name: 'Mongaguá (Plataforma)', ...MONGAGUA, lat: -24.095, lon: -46.62, facing: 145, kind: 'beach' },
   { id: 'pg-solemar', name: 'Solemar', ...PG, lat: -24.09, lon: -46.55, facing: 140, kind: 'beach' },
@@ -82,6 +82,7 @@ const BAIXADA_SUL: Spot[] = [
   { id: 'pg-cantodoforte', name: 'Canto do Forte', ...PG, lat: -24.006, lon: -46.403, facing: 150, kind: 'beach' },
   { id: 'sv-itarare', name: 'Itararé', ...SV, lat: -23.977, lon: -46.369, facing: 170, kind: 'beach' },
   { id: 'san-josemenino', name: 'José Menino (Quebra-Mar)', ...SANTOS, lat: -23.975, lon: -46.352, facing: 175, kind: 'beach' },
+  { id: 'san-pompeia', name: 'Pompéia', ...SANTOS, lat: -23.972, lon: -46.343, facing: 180, kind: 'beach' },
 ]
 
 const BAIXADA_NORTE: Spot[] = [
