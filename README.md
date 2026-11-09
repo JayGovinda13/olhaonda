@@ -28,7 +28,9 @@ Para ligar contas reais, siga "Colocando no ar" abaixo.
 
 ## Soluções escolhidas
 
-**Mapa do pico: MapLibre + OpenFreeMap.** O fundo do card principal mostra a região do pico com um marcador. Os
+**Mapa do pico: MapLibre + OpenFreeMap.** O fundo do card principal mostra a região do pico com um marcador, e o
+card "O pico" tem um mapa detalhado com as cristas do swell chegando na direção prevista, no ritmo do período real.
+O marcador é sempre ajustado para a linha da costa (a coordenada cadastrada pode cair um pouco dentro da terra ou no mar). Os
 vetores vêm da OpenFreeMap (gratuita, sem chave, uso comercial liberado; atribuição exibida no card). O MapLibre é
 carregado só depois da previsão, para não atrasar a página.
 

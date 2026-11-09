@@ -51,18 +51,6 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
       {/* mapa do pico como marca d'água */}
       <SpotMap spot={spot} />
 
-      {/* ondas decorativas */}
-      <Box
-        component="svg"
-        viewBox="0 0 600 120"
-        preserveAspectRatio="none"
-        aria-hidden
-        sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: 90, opacity: 0.18 }}
-      >
-        <path d="M0 60 C 100 20, 200 20, 300 60 S 500 100, 600 60 L600 120 L0 120 Z" fill={brand.green} />
-        <path d="M0 85 C 120 55, 220 60, 320 85 S 520 110, 600 85 L600 120 L0 120 Z" fill={brand.green} />
-      </Box>
-
       <Box sx={{ position: 'relative' }}>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}

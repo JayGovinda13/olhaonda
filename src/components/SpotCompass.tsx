@@ -3,6 +3,7 @@ import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
 import { angleDiff, dirDeg, WIND_LABEL, windKind } from '../lib/surf'
 import { brand } from '../theme'
+import { SpotDetailMap } from './SpotDetailMap'
 
 /** Rosa dos ventos: setor de exposição da praia, swell e vento chegando. */
 export function SpotCompass({ spot, hour }: { spot: Spot; hour: HourPoint }) {
@@ -36,6 +37,9 @@ export function SpotCompass({ spot, hour }: { spot: Spot; hour: HourPoint }) {
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
       <Typography variant="h6">O pico</Typography>
+      <Box sx={{ mt: 1.5 }}>
+        <SpotDetailMap spot={spot} hour={hour} />
+      </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '200px 1fr' }, gap: 3, alignItems: 'center', mt: 1.5 }}>
         <Box component="svg" viewBox="-24 -24 248 248" sx={{ width: 200, maxWidth: '100%', mx: 'auto', display: 'block' }}>
           <circle cx={C} cy={C} r={R} fill="none" stroke={brand.purple} strokeOpacity="0.14" strokeWidth="2" />

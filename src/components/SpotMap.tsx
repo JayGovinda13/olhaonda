@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import type { Map as MLMap, Marker as MLMarker, StyleSpecification } from 'maplibre-gl'
 import type { Spot } from '../data/spots'
+import { loadMapLibre, OFM_ATTRIBUTION, OFM_SOURCE, snapToCoast } from '../lib/maplibre'
 import { brand } from '../theme'
 
 /**
@@ -19,7 +20,7 @@ const LAND = '#1A6A4E'
 const STYLE: StyleSpecification = {
   version: 8,
   sources: {
-    ofm: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' },
+    ofm: OFM_SOURCE,
   },
   layers: [
     { id: 'land', type: 'background', paint: { 'background-color': LAND } },
@@ -43,20 +44,27 @@ export function SpotMap({ spot }: { spot: Spot }) {
   const marker = useRef<MLMarker | null>(null)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
+  const spotRef = useRef(spot)
+
+  /** Depois que os tiles do pico desenham, põe o marcador (e o centro) na linha da costa. */
+  const placeOnCoast = () => {
+    const m = map.current
+    if (!m) return
+    m.once('idle', () => {
+      const coast = snapToCoast(m, spotRef.current)
+      if (!coast) return
+      marker.current?.setLngLat(coast)
+      m.jumpTo({ center: coast })
+    })
+  }
 
   // cria o mapa uma vez (carregando o MapLibre sob demanda)
   useEffect(() => {
     let cancelled = false
     let created: MLMap | null = null
-    Promise.all([
-      import('maplibre-gl'),
-      import('maplibre-gl/dist/maplibre-gl.css'),
-      // o worker é montado por URL em tempo de execução; aqui o Vite copia o arquivo e devolve o endereço
-      import('maplibre-gl/dist/maplibre-gl-worker.mjs?url'),
-    ])
-      .then(([ml, , worker]) => {
+    loadMapLibre()
+      .then((ml) => {
         if (cancelled || !ref.current) return
-        ml.setWorkerUrl(worker.default)
         try {
           created = new ml.Map({
             container: ref.current,
@@ -87,6 +95,7 @@ export function SpotMap({ spot }: { spot: Spot }) {
         const el = document.createElement('div')
         el.className = 'olhaonda-pin'
         marker.current = new ml.Marker({ element: el }).setLngLat([spot.lon, spot.lat]).addTo(created)
+        placeOnCoast()
       })
       .catch(() => setFailed(true))
     return () => {
@@ -99,13 +108,16 @@ export function SpotMap({ spot }: { spot: Spot }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // troca de pico: move o mapa e o marcador
+  // troca de pico: move o mapa e o marcador, depois ajusta para a costa
   useEffect(() => {
+    spotRef.current = spot
     const m = map.current
     if (!m) return
     m.easeTo({ center: [spot.lon, spot.lat], zoom: ZOOM, duration: 900 })
     marker.current?.setLngLat([spot.lon, spot.lat])
-  }, [spot.lat, spot.lon])
+    placeOnCoast()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spot])
 
   if (failed) return null
 
@@ -162,7 +174,7 @@ export function SpotMap({ spot }: { spot: Spot }) {
             '&:hover': { opacity: 0.8 },
           }}
         >
-          OpenFreeMap © OpenMapTiles © OpenStreetMap
+          {OFM_ATTRIBUTION}
         </Typography>
       )}
     </>
