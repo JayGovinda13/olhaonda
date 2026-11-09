@@ -37,26 +37,27 @@ const GUARUJA: Spot[] = [
   { id: 'gua-cheiralimao', name: 'Cheira Limão', ...G, lat: -24.001, lon: -46.318, facing: 290, kind: 'beach', sheltered: true },
   { id: 'gua-sangava', name: 'Sangava', ...G, lat: -24.012, lon: -46.321, facing: 220, kind: 'beach', sheltered: true },
   { id: 'gua-monduba', name: 'Monduba', ...G, lat: -24.009, lon: -46.296, facing: 200, kind: 'beach', sheltered: true },
-  { id: 'gua-guaiuba', name: 'Guaiúba', ...G, lat: -24.0178, lon: -46.2923, facing: 180, kind: 'beach' },
-  { id: 'gua-tombo', name: 'Praia do Tombo', ...G, lat: -24.011, lon: -46.271, facing: 165, kind: 'beach' },
-  { id: 'gua-therock', name: 'The Rock', ...G, lat: -24.01238, lon: -46.26743, facing: 160, kind: 'reef' },
-  { id: 'gua-asturias', name: 'Astúrias', ...G, lat: -24.001, lon: -46.265, facing: 150, kind: 'beach' },
-  { id: 'gua-pitangueiras', name: 'Pitangueiras', ...G, lat: -23.997, lon: -46.257, facing: 150, kind: 'beach' },
-  { id: 'gua-enseada', name: 'Enseada', ...G, lat: -23.991, lon: -46.225, facing: 160, kind: 'beach' },
-  { id: 'gua-pernambuco', name: 'Pernambuco', ...G, lat: -23.968, lon: -46.193, facing: 140, kind: 'beach' },
-  { id: 'gua-marcasado', name: 'Mar Casado', ...G, lat: -23.962, lon: -46.186, facing: 130, kind: 'beach' },
+  { id: 'gua-guaiuba', name: 'Guaiúba', ...G, lat: -24.01811, lon: -46.29233, facing: 233, kind: 'beach' },
+  { id: 'gua-tombo', name: 'Praia do Tombo', ...G, lat: -24.01291, lon: -46.26979, facing: 173, kind: 'beach' },
+  { id: 'gua-therock', name: 'The Rock', ...G, lat: -24.01305, lon: -46.26749, facing: 185, kind: 'reef' },
+  { id: 'gua-asturias', name: 'Astúrias', ...G, lat: -24.00184, lon: -46.26391, facing: 140, kind: 'beach' },
+  { id: 'gua-pitangueiras', name: 'Pitangueiras', ...G, lat: -23.99873, lon: -46.2566, facing: 148, kind: 'beach' },
+  { id: 'gua-enseada', name: 'Enseada', ...G, lat: -23.98801, lon: -46.22994, facing: 170, kind: 'beach' },
+  { id: 'gua-pernambuco', name: 'Pernambuco', ...G, lat: -23.96741, lon: -46.1856, facing: 90, kind: 'beach' },
+  { id: 'gua-marcasado', name: 'Mar Casado', ...G, lat: -23.96286, lon: -46.18399, facing: 123, kind: 'beach' },
   { id: 'gua-sorocotuba', name: 'Sorocotuba', ...G, lat: -23.951, lon: -46.175, facing: 110, kind: 'beach', sheltered: true },
   { id: 'gua-eden', name: 'Praia do Éden', ...G, lat: -23.943, lon: -46.168, facing: 110, kind: 'beach', sheltered: true },
   { id: 'gua-iporanga', name: 'Iporanga', ...G, lat: -23.917, lon: -46.15, facing: 100, kind: 'beach' },
   { id: 'gua-saopedro', name: 'São Pedro', ...G, lat: -23.908, lon: -46.145, facing: 100, kind: 'beach' },
   { id: 'gua-pereque', name: 'Perequê', ...G, lat: -23.937, lon: -46.18, facing: 60, kind: 'beach', sheltered: true },
-  { id: 'gua-branca', name: 'Praia Branca', ...G, lat: -23.87, lon: -46.14, facing: 120, kind: 'beach' },
-  { id: 'gua-preta', name: 'Praia Preta', ...G, lat: -23.873, lon: -46.133, facing: 100, kind: 'beach' },
+  { id: 'gua-branca', name: 'Praia Branca', ...G, lat: -23.87238, lon: -46.1385, facing: 123, kind: 'beach' },
+  { id: 'gua-preta', name: 'Praia Preta', ...G, lat: -23.87215, lon: -46.13433, facing: 108, kind: 'beach' },
 ]
 
 /**
  * Baixada Santista: praias com onda, de sudoeste (Peruíbe) para nordeste (Bertioga).
- * Coordenadas e orientação aproximadas: confira com quem surfa lá.
+ * Coordenadas conferidas no OpenStreetMap (nov/2026): ponto na linha d'água em frente ao bairro/praia
+ * de mesmo nome, e `facing` medido pelo desenho real da costa. Pendentes: Iporanga e São Pedro.
  */
 const PERUIBE = bx('Peruíbe')
 const ITANHAEM = bx('Itanhaém')
@@ -67,30 +68,30 @@ const SANTOS = bx('Santos')
 const BERTIOGA = bx('Bertioga')
 
 const BAIXADA_SUL: Spot[] = [
-  { id: 'per-guarau', name: 'Guaraú', ...PERUIBE, lat: -24.373, lon: -47.01, facing: 130, kind: 'beach' },
-  { id: 'per-centro', name: 'Peruíbe (Centro)', ...PERUIBE, lat: -24.32, lon: -46.995, facing: 140, kind: 'beach' },
-  { id: 'ita-cibratel', name: 'Cibratel', ...ITANHAEM, lat: -24.215, lon: -46.84, facing: 145, kind: 'beach' },
-  { id: 'ita-sonhos', name: 'Praia dos Sonhos', ...ITANHAEM, lat: -24.188, lon: -46.795, facing: 145, kind: 'beach' },
-  { id: 'ita-suarao', name: 'Praião (Suarão)', ...ITANHAEM, lat: -24.165, lon: -46.76, facing: 145, kind: 'beach' },
-  { id: 'mon-agenor', name: 'Agenor de Campos', ...MONGAGUA, lat: -24.118, lon: -46.66, facing: 145, kind: 'beach' },
-  { id: 'mon-centro', name: 'Mongaguá (Plataforma)', ...MONGAGUA, lat: -24.095, lon: -46.62, facing: 145, kind: 'beach' },
-  { id: 'pg-solemar', name: 'Solemar', ...PG, lat: -24.09, lon: -46.55, facing: 140, kind: 'beach' },
-  { id: 'pg-caicara', name: 'Vila Caiçara', ...PG, lat: -24.065, lon: -46.5, facing: 140, kind: 'beach' },
-  { id: 'pg-ocian', name: 'Ocian', ...PG, lat: -24.037, lon: -46.455, facing: 145, kind: 'beach' },
-  { id: 'pg-guilhermina', name: 'Guilhermina', ...PG, lat: -24.025, lon: -46.432, facing: 145, kind: 'beach' },
-  { id: 'pg-boqueirao', name: 'Boqueirão', ...PG, lat: -24.014, lon: -46.414, facing: 145, kind: 'beach' },
-  { id: 'pg-cantodoforte', name: 'Canto do Forte', ...PG, lat: -24.006, lon: -46.403, facing: 150, kind: 'beach' },
-  { id: 'sv-itarare', name: 'Itararé', ...SV, lat: -23.977, lon: -46.369, facing: 170, kind: 'beach' },
-  { id: 'san-josemenino', name: 'José Menino (Quebra-Mar)', ...SANTOS, lat: -23.975, lon: -46.352, facing: 175, kind: 'beach' },
-  { id: 'san-pompeia', name: 'Pompéia', ...SANTOS, lat: -23.972, lon: -46.343, facing: 180, kind: 'beach' },
+  { id: 'per-guarau', name: 'Guaraú', ...PERUIBE, lat: -24.36969, lon: -47.01174, facing: 123, kind: 'beach' },
+  { id: 'per-centro', name: 'Peruíbe (Centro)', ...PERUIBE, lat: -24.32431, lon: -46.99382, facing: 133, kind: 'beach' },
+  { id: 'ita-cibratel', name: 'Cibratel', ...ITANHAEM, lat: -24.21523, lon: -46.83964, facing: 145, kind: 'beach' },
+  { id: 'ita-sonhos', name: 'Praia dos Sonhos', ...ITANHAEM, lat: -24.1912, lon: -46.79254, facing: 131, kind: 'beach' },
+  { id: 'ita-suarao', name: 'Praião (Suarão)', ...ITANHAEM, lat: -24.16681, lon: -46.74959, facing: 150, kind: 'beach' },
+  { id: 'mon-agenor', name: 'Agenor de Campos', ...MONGAGUA, lat: -24.13201, lon: -46.68809, facing: 148, kind: 'beach' },
+  { id: 'mon-centro', name: 'Mongaguá (Plataforma)', ...MONGAGUA, lat: -24.09782, lon: -46.62199, facing: 153, kind: 'beach' },
+  { id: 'pg-solemar', name: 'Solemar', ...PG, lat: -24.07991, lon: -46.58556, facing: 150, kind: 'beach' },
+  { id: 'pg-caicara', name: 'Vila Caiçara', ...PG, lat: -24.05176, lon: -46.52507, facing: 155, kind: 'beach' },
+  { id: 'pg-ocian', name: 'Ocian', ...PG, lat: -24.03054, lon: -46.47406, facing: 160, kind: 'beach' },
+  { id: 'pg-guilhermina', name: 'Guilhermina', ...PG, lat: -24.01596, lon: -46.42592, facing: 170, kind: 'beach' },
+  { id: 'pg-boqueirao', name: 'Boqueirão', ...PG, lat: -24.01487, lon: -46.41443, facing: 180, kind: 'beach' },
+  { id: 'pg-cantodoforte', name: 'Canto do Forte', ...PG, lat: -24.01621, lon: -46.40514, facing: 197, kind: 'beach' },
+  { id: 'sv-itarare', name: 'Itararé', ...SV, lat: -23.97133, lon: -46.36122, facing: 163, kind: 'beach' },
+  { id: 'san-josemenino', name: 'José Menino (Quebra-Mar)', ...SANTOS, lat: -23.97039, lon: -46.34932, facing: 170, kind: 'beach' },
+  { id: 'san-pompeia', name: 'Pompéia', ...SANTOS, lat: -23.97061, lon: -46.34183, facing: 185, kind: 'beach' },
 ]
 
 const BAIXADA_NORTE: Spot[] = [
-  { id: 'ber-enseada', name: 'Enseada de Bertioga', ...BERTIOGA, lat: -23.822, lon: -46.105, facing: 150, kind: 'beach' },
-  { id: 'ber-riviera', name: 'Riviera de São Lourenço', ...BERTIOGA, lat: -23.798, lon: -46.025, facing: 155, kind: 'beach' },
-  { id: 'ber-itaguare', name: 'Itaguaré', ...BERTIOGA, lat: -23.782, lon: -45.99, facing: 160, kind: 'beach' },
-  { id: 'ber-guaratuba', name: 'Guaratuba', ...BERTIOGA, lat: -23.771, lon: -45.913, facing: 165, kind: 'beach' },
-  { id: 'ber-boraceia', name: 'Boracéia', ...BERTIOGA, lat: -23.763, lon: -45.858, facing: 160, kind: 'beach' },
+  { id: 'ber-enseada', name: 'Enseada de Bertioga', ...BERTIOGA, lat: -23.82718, lon: -46.10173, facing: 155, kind: 'beach' },
+  { id: 'ber-riviera', name: 'Riviera de São Lourenço', ...BERTIOGA, lat: -23.80338, lon: -46.02007, facing: 158, kind: 'beach' },
+  { id: 'ber-itaguare', name: 'Itaguaré', ...BERTIOGA, lat: -23.78944, lon: -45.98531, facing: 155, kind: 'beach' },
+  { id: 'ber-guaratuba', name: 'Guaratuba', ...BERTIOGA, lat: -23.77641, lon: -45.94927, facing: 165, kind: 'beach' },
+  { id: 'ber-boraceia', name: 'Boracéia', ...BERTIOGA, lat: -23.75867, lon: -45.85189, facing: 173, kind: 'beach' },
 ]
 
 /**

@@ -53,6 +53,15 @@ const STYLE: StyleSpecification = {
       paint: { 'fill-color': '#F1DFC2' },
     },
     { id: 'water', type: 'fill', source: 'ofm', 'source-layer': 'water', paint: { 'fill-color': C.water } },
+    // só o oceano (invisível): usado para achar a linha da costa sem confundir com piscinas, lagos e rios
+    {
+      id: 'ocean-query',
+      type: 'fill',
+      source: 'ofm',
+      'source-layer': 'water',
+      filter: ['==', ['get', 'class'], 'ocean'],
+      paint: { 'fill-opacity': 0 },
+    },
     {
       id: 'building',
       type: 'fill',
@@ -115,6 +124,7 @@ function swellArrows(
   periodS: number,
   phase: number,
   color: string,
+  isSea: (p: [number, number]) => boolean = () => true,
 ) {
   const L = Math.min(420, Math.max(160, 1.56 * periodS * periodS)) // comprimento de onda em águas profundas (m)
   const step = Math.max(L * 1.6, 420) // espaço entre setas na mesma faixa
@@ -132,6 +142,7 @@ function swellArrows(
       if (d > maxDist) break
       const onLine = offsetLngLat(base.lat, base.lon, fromDeg, d)
       const p = offsetLngLat(onLine[1], onLine[0], fromDeg + 90, lane * laneGap)
+      if (!isSea(p)) continue // nada de setas sobre ilhas e costões
       const near = Math.min(1, (d - minDist) / step) // some ao chegar na praia
       const far = Math.min(1, (maxDist - d) / (step * 1.5)) // surge lá fora
       const edge = 1 - Math.abs(lane) / (lanes.length / 2 + 1) // faixas das pontas mais suaves
@@ -245,7 +256,12 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
           if (!src) return
           const { dir: d, h, t, c } = swell.current
           const phase = reduce ? 0.5 : (((now - start) / 1000) % t) / t
-          src.setData(swellArrows(coastRef.current ?? spotRef.current, d, h, t, phase, c))
+          const m = created!
+          const isSea = (p: [number, number]) => {
+            const px = m.project(p)
+            return m.queryRenderedFeatures([px.x, px.y], { layers: ['ocean-query'] }).length > 0
+          }
+          src.setData(swellArrows(coastRef.current ?? spotRef.current, d, h, t, phase, c, isSea))
         }
         created.once('load', () => {
           if (cancelled || !created) return

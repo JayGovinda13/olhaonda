@@ -38,13 +38,13 @@ type QueryableMap = {
 
 /**
  * Leva o pico para a linha da costa: anda pela perpendicular à praia (rumo `facing`) a partir
- * da coordenada cadastrada até achar a fronteira terra/água da camada `waterLayer` já desenhada.
+ * da coordenada cadastrada até achar a fronteira terra/oceano da camada `waterLayer` (só oceano).
  * Devolve null se não achar (ex.: tiles ainda não carregados).
  */
 export function snapToCoast(
   map: QueryableMap,
   spot: { lat: number; lon: number; facing: number },
-  waterLayer = 'water',
+  waterLayer = 'ocean-query',
 ): [number, number] | null {
   const isWater = (p: [number, number]) => {
     const px = map.project(p)

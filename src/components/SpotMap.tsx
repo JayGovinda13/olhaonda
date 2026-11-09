@@ -25,6 +25,15 @@ const STYLE: StyleSpecification = {
   layers: [
     { id: 'land', type: 'background', paint: { 'background-color': LAND } },
     { id: 'water', type: 'fill', source: 'ofm', 'source-layer': 'water', paint: { 'fill-color': WATER } },
+    // só o oceano (invisível): usado para achar a linha da costa sem confundir com piscinas, lagos e rios
+    {
+      id: 'ocean-query',
+      type: 'fill',
+      source: 'ofm',
+      'source-layer': 'water',
+      filter: ['==', ['get', 'class'], 'ocean'],
+      paint: { 'fill-opacity': 0 },
+    },
     {
       id: 'roads',
       type: 'line',
