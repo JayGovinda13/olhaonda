@@ -121,25 +121,7 @@ npm run build:staging      # build de staging
 npm run build:production   # build de produção
 ```
 
-### Deploy automático na hospedagem Hostinger (olhaonda.com.br)
-
-O workflow `.github/workflows/deploy-hostinger.yml` gera o site e envia por FTP a cada push:
-`main` → produção (olhaonda.com.br), `staging` → staging (staging.olhaonda.com.br).
-
-1. hPanel → **Sites**: confirme que `olhaonda.com.br` está no plano; em **Segurança → SSL**, instale o SSL grátis.
-   Crie o subdomínio `staging` (Domínios → Subdomínios) e anote a pasta dele.
-2. hPanel → **Arquivos → Contas FTP**: anote servidor (host/IP), usuário e senha.
-3. GitHub → Settings → **Environments** → crie `production` e `staging`. Em cada um:
-   - Secret `FTP_PASSWORD`
-   - Variables `FTP_SERVER`, `FTP_USERNAME` e `FTP_SERVER_DIR` (pasta do site, terminando em `/`; ex.:
-     `public_html/` na produção e a pasta do subdomínio no staging)
-   - Variables `VITE_*` do `.env.production.example` (production) ou `.env.staging.example` (staging)
-4. Faça um push na `main` (ou rode o workflow em Actions → Deploy Hostinger → *Run workflow*).
-
-O `public/.htaccess` força HTTPS, tira o `www`, faz as rotas do app funcionarem ao recarregar e ajusta o cache.
-Se o FTP recusar a conexão segura, crie a variável `FTP_PROTOCOL` = `ftp`.
-
-### Alternativa: Cloudflare Pages
+### Deploy automático: Cloudflare Pages + domínio da Hostinger (olhaonda.com.br)
 
 Recomendado: Cloudflare Pages (grátis, uso comercial liberado, deploy a cada push).
 
