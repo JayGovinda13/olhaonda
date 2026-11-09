@@ -4,6 +4,7 @@ import { Link as RouterLink, Outlet } from 'react-router'
 import { backend } from '../backend'
 import { APP_ENV, FEATURES, HAS_COMMUNITY } from '../config/env'
 import { AdSlot } from '../components/AdSlot'
+import { ConsentBanner } from '../components/ConsentBanner'
 import { Header } from '../components/Header'
 import { LogoMark } from '../components/Logo'
 
@@ -72,9 +73,13 @@ export function Layout() {
             <Link href="mailto:anuncie@olhaonda.com.br" color="inherit" variant="body2">
               Anuncie
             </Link>
+            <Link component={RouterLink} to="/privacidade" color="inherit" variant="body2">
+              Privacidade
+            </Link>
           </Stack>
         </Container>
       </Box>
+      <ConsentBanner />
     </Box>
   )
 }

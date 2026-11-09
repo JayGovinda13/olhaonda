@@ -123,6 +123,21 @@ em cada projeto com `supabase secrets set`.
 
 **CI:** `.github/workflows/ci.yml` roda tipos, lint e os dois builds em todo push e pull request.
 
+## Google AdSense (publicidade)
+
+O site já está preparado; falta só a conta:
+
+1. Publique a produção no domínio definitivo (o AdSense não aprova `*.vercel.app`).
+2. Crie a conta em adsense.google.com com o domínio.
+3. Na Vercel (ambiente Production), defina `VITE_ADSENSE_CLIENT=ca-pub-…` e publique de novo. O build gera
+   sozinho a meta tag `google-adsense-account` (verificação) e o arquivo `/ads.txt`.
+4. Peça a revisão no painel. Depois de aprovado, crie três blocos de anúncio e preencha
+   `VITE_ADSENSE_SLOT_LEADERBOARD`, `VITE_ADSENSE_SLOT_RECTANGLE` e `VITE_ADSENSE_SLOT_INLINE`.
+
+Privacidade: com o AdSense ligado aparece um aviso de cookies (LGPD). Nenhum script do Google carrega antes da
+escolha; quem recusa recebe só anúncios não personalizados. A página `/privacidade` traz os textos que o AdSense
+exige: revise com um(a) advogado(a) e ajuste `VITE_PRIVACY_CONTACT`. Em staging o AdSense nunca carrega.
+
 ## Estrutura
 
 ```

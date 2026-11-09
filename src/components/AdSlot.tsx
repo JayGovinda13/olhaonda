@@ -2,7 +2,8 @@ import { Box, Link, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { Megaphone } from 'iconoir-react'
 import { useEffect, useRef } from 'react'
-import { IS_PRODUCTION } from '../config/env'
+import { ADSENSE_CLIENT } from '../config/ads'
+import { useConsent, type Consent } from '../lib/consent'
 import { brand } from '../theme'
 
 /**
@@ -22,8 +23,6 @@ type HouseAd = { image: string; href: string; alt: string }
 /** Anúncios vendidos diretamente, por formato. Ex.: { leaderboard: [{ image: '/ads/loja.jpg', href: 'https://…', alt: 'Loja X' }] } */
 const HOUSE_ADS: Partial<Record<AdFormat, HouseAd[]>> = {}
 
-// AdSense só em produção: cliques de teste em staging podem suspender a conta
-const ADSENSE_CLIENT = IS_PRODUCTION ? (import.meta.env.VITE_ADSENSE_CLIENT as string | undefined) : undefined
 const ADSENSE_SLOTS: Record<AdFormat, string | undefined> = {
   leaderboard: import.meta.env.VITE_ADSENSE_SLOT_LEADERBOARD,
   rectangle: import.meta.env.VITE_ADSENSE_SLOT_RECTANGLE,
@@ -38,10 +37,16 @@ const SIZE: Record<AdFormat, { minHeight: { xs: number; md: number }; label: str
 
 const CONTACT = (import.meta.env.VITE_ADS_CONTACT as string | undefined) ?? 'mailto:anuncie@olhaonda.com.br'
 
+type AdsQueue = unknown[] & { requestNonPersonalizedAds?: number }
+
 let adsenseLoaded = false
-function loadAdsense() {
+/** Carrega o AdSense só depois da escolha de cookies; "recusar" pede anúncios não personalizados. */
+function loadAdsense(consent: Exclude<Consent, null>) {
   if (adsenseLoaded || !ADSENSE_CLIENT) return
   adsenseLoaded = true
+  const w = window as unknown as { adsbygoogle?: AdsQueue }
+  w.adsbygoogle = w.adsbygoogle || ([] as AdsQueue)
+  if (consent === 'denied') w.adsbygoogle.requestNonPersonalizedAds = 1
   const s = document.createElement('script')
   s.async = true
   s.crossOrigin = 'anonymous'
@@ -54,17 +59,20 @@ export function AdSlot({ format = 'leaderboard', seed = 0 }: { format?: AdFormat
   const slot = ADSENSE_SLOTS[format]
   const insRef = useRef<HTMLModElement>(null)
   const size = SIZE[format]
+  const consent = useConsent()
+  const pushed = useRef(false)
 
   useEffect(() => {
-    if (house?.length || !ADSENSE_CLIENT || !slot || !insRef.current) return
-    loadAdsense()
+    if (house?.length || !ADSENSE_CLIENT || !slot || !insRef.current || !consent || pushed.current) return
+    pushed.current = true // cada <ins> só pode pedir anúncio uma vez
+    loadAdsense(consent)
     try {
       const w = window as unknown as { adsbygoogle?: unknown[] }
       ;(w.adsbygoogle = w.adsbygoogle || []).push({})
     } catch {
       /* bloqueador de anúncios */
     }
-  }, [house, slot])
+  }, [house, slot, consent])
 
   const frame = {
     position: 'relative',
