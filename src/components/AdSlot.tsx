@@ -2,6 +2,7 @@ import { Box, Link, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { Megaphone } from 'iconoir-react'
 import { useEffect, useRef } from 'react'
+import { IS_PRODUCTION } from '../config/env'
 import { brand } from '../theme'
 
 /**
@@ -21,7 +22,8 @@ type HouseAd = { image: string; href: string; alt: string }
 /** Anúncios vendidos diretamente, por formato. Ex.: { leaderboard: [{ image: '/ads/loja.jpg', href: 'https://…', alt: 'Loja X' }] } */
 const HOUSE_ADS: Partial<Record<AdFormat, HouseAd[]>> = {}
 
-const ADSENSE_CLIENT = import.meta.env.VITE_ADSENSE_CLIENT as string | undefined
+// AdSense só em produção: cliques de teste em staging podem suspender a conta
+const ADSENSE_CLIENT = IS_PRODUCTION ? (import.meta.env.VITE_ADSENSE_CLIENT as string | undefined) : undefined
 const ADSENSE_SLOTS: Record<AdFormat, string | undefined> = {
   leaderboard: import.meta.env.VITE_ADSENSE_SLOT_LEADERBOARD,
   rectangle: import.meta.env.VITE_ADSENSE_SLOT_RECTANGLE,

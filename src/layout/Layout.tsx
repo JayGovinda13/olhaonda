@@ -2,6 +2,7 @@ import { Alert, Box, Container, Link, Skeleton, Stack, Typography } from '@mui/m
 import { Suspense } from 'react'
 import { Link as RouterLink, Outlet } from 'react-router'
 import { backend } from '../backend'
+import { APP_ENV } from '../config/env'
 import { AdSlot } from '../components/AdSlot'
 import { Header } from '../components/Header'
 import { LogoMark } from '../components/Logo'
@@ -9,6 +10,22 @@ import { LogoMark } from '../components/Logo'
 export function Layout() {
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {APP_ENV !== 'production' && (
+        <Box
+          role="note"
+          sx={{
+            bgcolor: APP_ENV === 'staging' ? '#7A2E6E' : '#0F4C3A',
+            color: '#F5E6D3',
+            textAlign: 'center',
+            fontSize: 12,
+            fontWeight: 800,
+            letterSpacing: '.08em',
+            py: 0.5,
+          }}
+        >
+          {APP_ENV === 'staging' ? 'STAGING · ambiente de testes, pagamentos de teste' : 'DESENVOLVIMENTO · local'}
+        </Box>
+      )}
       <Header />
       {backend.mode === 'demo' && (
         <Alert severity="info" sx={{ borderRadius: 0, py: 0, justifyContent: 'center', '& .MuiAlert-message': { fontSize: 13 } }}>

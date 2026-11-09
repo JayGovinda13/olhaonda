@@ -19,7 +19,7 @@ export type Spot = {
 const G = { city: 'Guarujá', state: 'SP', region: 'SP · Guarujá' } as const
 
 /**
- * Todas as praias do Guarujá (e o The Rock, fundo de pedra em frente ao Mirante do Galhetas), de oeste (canal de Santos) para leste (canal de Bertioga).
+ * Todas as praias do Guarujá (e o The Rock, fundo de pedra), de oeste (canal de Santos) para leste (canal de Bertioga).
  * As do canal e as enseadas fechadas estão marcadas como abrigadas.
  */
 const GUARUJA: Spot[] = [
@@ -30,7 +30,7 @@ const GUARUJA: Spot[] = [
   { id: 'gua-monduba', name: 'Monduba', ...G, lat: -24.009, lon: -46.296, facing: 200, kind: 'beach', sheltered: true },
   { id: 'gua-guaiuba', name: 'Guaiúba', ...G, lat: -24.011, lon: -46.277, facing: 180, kind: 'beach' },
   { id: 'gua-tombo', name: 'Praia do Tombo', ...G, lat: -24.011, lon: -46.271, facing: 165, kind: 'beach' },
-  { id: 'gua-therock', name: 'The Rock', ...G, lat: -24.01238, lon: -46.26743, facing: 160, kind: 'reef', note: 'Em frente ao Mirante do Galhetas' },
+  { id: 'gua-therock', name: 'The Rock', ...G, lat: -24.01238, lon: -46.26743, facing: 160, kind: 'reef' },
   { id: 'gua-asturias', name: 'Astúrias', ...G, lat: -24.001, lon: -46.265, facing: 150, kind: 'beach' },
   { id: 'gua-pitangueiras', name: 'Pitangueiras', ...G, lat: -23.997, lon: -46.257, facing: 150, kind: 'beach' },
   { id: 'gua-enseada', name: 'Enseada', ...G, lat: -23.991, lon: -46.225, facing: 160, kind: 'beach' },

@@ -1,0 +1,39 @@
+# Publica banco (migrações) e Edge Functions no projeto Supabase do ambiente:
+#   push em `staging` -> projeto de STAGING
+#   push em `main`    -> projeto de PRODUÇÃO (exige aprovação no environment "production")
+#
+# Segredos por environment no GitHub (Settings > Environments > staging / production):
+#   SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF, SUPABASE_DB_PASSWORD
+name: Supabase deploy
+
+on:
+  push:
+    branches: [main, staging]
+    paths: ['supabase/**']
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase link --project-ref "$PROJECT_REF"
+      - name: Migrações do banco
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
+      - name: Edge Functions
+        run: |
+          supabase functions deploy create-checkout --project-ref "$PROJECT_REF"
+          supabase functions deploy mp-webhook --no-verify-jwt --project-ref "$PROJECT_REF"
+          supabase functions deploy mp-oauth --no-verify-jwt --project-ref "$PROJECT_REF"

@@ -5,8 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:staging": "vite --mode staging",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "build:staging": "tsc -b && vite build --mode staging",
+    "build:production": "tsc -b && vite build --mode production",
+    "lint": "oxlint src",
+    "typecheck": "tsc -b",
     "preview": "vite preview"
   },
   "dependencies": {

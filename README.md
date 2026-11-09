@@ -20,7 +20,7 @@ Para ligar contas reais, siga "Colocando no ar" abaixo.
 
 | Área | Recursos |
 | --- | --- |
-| Previsão (`/`) | 44 picos (todas as 19 praias do Guarujá + The Rock), altura, swell primário/secundário, **força da onda** em kJ, todas as direções em graus, vento terral/maral, nota 0–5, hora a hora, maré, **tempo** (céu, chuva, UV, máx/mín, 7 dias), rosa dos ventos |
+| Previsão (`/`) | 44 picos (todas as 19 praias do Guarujá + The Rock), altura, swell primário/secundário, **força da onda** em kJ, todas as direções em graus, vento terral/maral, nota 0–5, hora a hora, maré no padrão da Marinha (nível de redução), **tempo** (céu, chuva, UV, máx/mín, 7 dias), rosa dos ventos |
 | Fórum (`/forum`) | Tópicos por categoria e por pico, respostas, apagar a própria mensagem, moderadores |
 | Fotos (`/fotos`) | Busca por pico e dia, prévias com marca d'água, seleção e compra (Pix/cartão), download do original |
 | Fotógrafo (`/fotos/vender`) | Ativar perfil, conectar Mercado Pago, criar sessão, enviar fotos (marca d'água gerada no navegador) |
@@ -85,6 +85,38 @@ supabase functions deploy mp-oauth --no-verify-jwt
 
 Qualquer hospedagem estática: Vercel (`vercel.json` incluso), Netlify (`public/_redirects`) ou Cloudflare Pages.
 Build: `npm run build`, pasta `dist`.
+
+## Ambientes: staging e produção
+
+| | Staging (homologação) | Produção |
+| --- | --- | --- |
+| Branch | `staging` | `main` |
+| Endereço | `staging.olhaonda.com.br` | `olhaonda.com.br` |
+| Supabase | projeto `olhaonda-staging` | projeto `olhaonda` |
+| Mercado Pago | credenciais **de teste** (`MP_SANDBOX=true`) | credenciais reais |
+| Anúncios | só espaços "Anuncie aqui" (sem AdSense) | AdSense e venda direta |
+| Google | `noindex` (não aparece em buscas) | indexado |
+| Aviso no topo | faixa "STAGING" | nenhum |
+
+Fluxo: trabalho novo vai para `staging`, é testado no endereço de staging e, aprovado, é mesclado em `main`.
+
+```bash
+npm run dev:staging        # roda local usando .env.staging
+npm run build:staging      # build de staging
+npm run build:production   # build de produção
+```
+
+**Vercel (site):** um único projeto. Em Settings > Git, *Production Branch* = `main`. Em Domains, aponte
+`staging.olhaonda.com.br` para a branch `staging`. Em Environment Variables, cadastre as variáveis de
+`.env.production.example` em *Production* e as de `.env.staging.example` em *Preview* restrito à branch `staging`.
+
+**Supabase (banco e funções):** dois projetos. O workflow `.github/workflows/supabase-deploy.yml` aplica as
+migrações e publica as funções no projeto certo a cada push em `staging` ou `main`. Crie no GitHub os environments
+`staging` e `production` (este com aprovação obrigatória) com os segredos `SUPABASE_ACCESS_TOKEN`,
+`SUPABASE_PROJECT_REF` e `SUPABASE_DB_PASSWORD`. Os segredos das funções (`SITE_URL`, `MP_*`) são configurados
+em cada projeto com `supabase secrets set`.
+
+**CI:** `.github/workflows/ci.yml` roda tipos, lint e os dois builds em todo push e pull request.
 
 ## Estrutura
 

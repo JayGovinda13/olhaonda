@@ -3,6 +3,8 @@
 import { admin, env, handle, HttpError, json, mpFetch, requireUser, sellerToken } from '../_shared/util.ts'
 
 const FEE_PERCENT = Number(Deno.env.get('PLATFORM_FEE_PERCENT') ?? '20')
+// Em staging use credenciais de teste do Mercado Pago e MP_SANDBOX=true
+const SANDBOX = Deno.env.get('MP_SANDBOX') === 'true'
 
 Deno.serve(
   handle(async (req) => {
@@ -48,7 +50,7 @@ Deno.serve(
 
     const site = env('SITE_URL')
     const back = `${site}/fotos/compras`
-    const pref = await mpFetch<{ id: string; init_point: string }>('/checkout/preferences', seller.access_token, {
+    const pref = await mpFetch<{ id: string; init_point: string; sandbox_init_point?: string }>('/checkout/preferences', seller.access_token, {
       method: 'POST',
       headers: { 'X-Idempotency-Key': order.id },
       body: JSON.stringify({
@@ -72,6 +74,6 @@ Deno.serve(
     })
 
     await db.from('orders').update({ mp_preference_id: pref.id }).eq('id', order.id)
-    return json({ url: pref.init_point })
+    return json({ url: SANDBOX && pref.sandbox_init_point ? pref.sandbox_init_point : pref.init_point })
   }),
 )

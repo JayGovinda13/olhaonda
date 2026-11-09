@@ -3,12 +3,15 @@ import { alpha } from '@mui/material/styles'
 import { ArrowDown, ArrowUp, HalfMoon, SunLight } from 'iconoir-react'
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { DayWeather, HourPoint } from '../api/openMeteo'
+import type { Spot } from '../data/spots'
+import { tidePortFor } from '../data/tidePorts'
 import { fmt } from '../lib/surf'
 import { brand } from '../theme'
 
 type Extreme = { time: string; level: number; kind: 'alta' | 'baixa' }
 
-const m2 = (v: number) => `${v.toFixed(2).replace('.', ',')} m`
+/** Padrão das tábuas da Marinha: metros com uma casa decimal. */
+const m1 = (v: number) => `${v.toFixed(1).replace('.', ',')} m`
 
 /**
  * Preamares e baixa-mares com precisão de minutos: ajusta uma parábola pelos três pontos
@@ -33,16 +36,21 @@ function extremes(hours: HourPoint[]): Extreme[] {
 }
 
 export function TidePanel({
-  hours,
+  spot,
+  hours: rawHours,
   selected,
   sun,
   onSelect,
 }: {
+  spot: Spot
   hours: HourPoint[]
   selected: string
   sun?: DayWeather
   onSelect: (time: string) => void
 }) {
+  // Converte do nível médio (modelo) para o nível de redução da Marinha: altura = nível + Z0
+  const port = tidePortFor(spot)
+  const hours = rawHours.map((h) => ({ ...h, seaLevel: h.seaLevel == null ? null : h.seaLevel + port.z0 }))
   const grad = useId()
   const svgRef = useRef<SVGSVGElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -76,7 +84,7 @@ export function TidePanel({
     .join(' ')
   const baseY = H - BOTTOM
   const area = pts.length ? `${line} L${pts[pts.length - 1][0]} ${baseY} L${pts[0][0]} ${baseY} Z` : ''
-  const zeroY = min < 0 && max > 0 ? y(0) : null
+  const meanY = port.z0 > min && port.z0 < max ? y(port.z0) : null
 
   const selIdx = hours.findIndex((h) => h.time === selected)
   const sel = selIdx >= 0 ? hours[selIdx].seaLevel : null
@@ -137,7 +145,7 @@ export function TidePanel({
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: trend === 'up' ? brand.green : brand.plum }}>
             {trend === 'up' ? <ArrowUp width={16} height={16} /> : <ArrowDown width={16} height={16} />}
             <Typography variant="body2" sx={{ fontWeight: 800 }}>
-              {trend === 'up' ? 'enchendo' : 'secando'} · {m2(sel)}
+              {trend === 'up' ? 'enchendo' : 'secando'} · {m1(sel)}
             </Typography>
           </Stack>
         )}
@@ -154,7 +162,7 @@ export function TidePanel({
           aria-valuemin={0}
           aria-valuemax={23}
           aria-valuenow={selIdx}
-          aria-valuetext={sel != null ? `${fmt.hour(selected)}, ${m2(sel)}` : undefined}
+          aria-valuetext={sel != null ? `${fmt.hour(selected)}, ${m1(sel)}` : undefined}
           onPointerDown={onDown}
           onPointerMove={onMove}
           onPointerUp={() => setDragging(false)}
@@ -190,10 +198,10 @@ export function TidePanel({
               </g>
             ) : null,
           )}
-          {zeroY != null && (
+          {meanY != null && (
             <g>
-              <line x1={PAD_X} x2={W - PAD_X} y1={zeroY} y2={zeroY} stroke={brand.purple} strokeOpacity="0.25" strokeDasharray="2 4" />
-              <text x={W - PAD_X} y={zeroY - 4} textAnchor="end" fontSize="13" fill={brand.purple} opacity="0.5">
+              <line x1={PAD_X} x2={W - PAD_X} y1={meanY} y2={meanY} stroke={brand.purple} strokeOpacity="0.25" strokeDasharray="2 4" />
+              <text x={W - PAD_X} y={meanY - 4} textAnchor="end" fontSize="13" fill={brand.purple} opacity="0.5">
                 nível médio
               </text>
             </g>
@@ -209,7 +217,7 @@ export function TidePanel({
               <circle cx={x(selIdx)} cy={y(sel)} r={dragging ? 9 : 7} fill={brand.purple} stroke={brand.sand} strokeWidth="3" />
               <rect x={labelX - 60} y={0} width="120" height="28" rx="14" fill={brand.purple} />
               <text x={labelX} y={19} textAnchor="middle" fontSize="15" fontWeight="800" fill={brand.sand}>
-                {fmt.hour(selected)} · {sel.toFixed(2).replace('.', ',')} m
+                {fmt.hour(selected)} · {sel.toFixed(1).replace('.', ',')} m
               </text>
             </g>
           )}
@@ -234,7 +242,7 @@ export function TidePanel({
           >
             <Typography sx={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', opacity: 0.7 }}>{e.kind}</Typography>
             <Typography sx={{ fontSize: 14, fontWeight: 800 }}>
-              {fmt.hour(e.time)} · {m2(e.level)}
+              {fmt.hour(e.time)} · {m1(e.level)}
             </Typography>
           </Box>
         ))}
@@ -274,7 +282,7 @@ export function TidePanel({
             >
               <Typography sx={{ fontSize: 11, fontWeight: 700, opacity: 0.75 }}>{fmt.hour(h.time)}</Typography>
               <Typography sx={{ fontSize: 13, fontWeight: 800 }}>
-                {h.seaLevel == null ? '—' : h.seaLevel.toFixed(2).replace('.', ',')}
+                {h.seaLevel == null ? '—' : h.seaLevel.toFixed(1).replace('.', ',')}
               </Typography>
               <Box sx={{ display: 'flex', color: active ? brand.sand : t === 'up' ? brand.green : brand.plum }}>
                 {t === 'up' ? <ArrowUp width={12} height={12} /> : t === 'down' ? <ArrowDown width={12} height={12} /> : null}
@@ -301,8 +309,9 @@ export function TidePanel({
         </Stack>
       )}
       <Typography variant="caption" sx={{ display: 'block', mt: 1.5, opacity: 0.6 }}>
-        Arraste no gráfico para mudar a hora. Alturas em metros em relação ao nível médio do mar (0 m), de um modelo
-        oceânico global. Tábuas da Marinha usam outro zero (nível de redução), por isso os números diferem.
+        Padrão Marinha (DHN): alturas em metros acima do nível de redução, porto de referência {port.name}, nível
+        médio a {port.z0.toFixed(2).replace('.', ',')} m{port.verified ? '' : ' (estimado)'}. Arraste no gráfico para mudar a
+        hora.
       </Typography>
     </Paper>
   )
