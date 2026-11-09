@@ -3,7 +3,8 @@ import { alpha } from '@mui/material/styles'
 import { Megaphone } from 'iconoir-react'
 import { useEffect, useRef } from 'react'
 import { ADSENSE_CLIENT } from '../config/ads'
-import { useConsent, type Consent } from '../lib/consent'
+import { loadAdsense } from '../lib/adsense'
+import { useConsent } from '../lib/consent'
 import { brand } from '../theme'
 
 /**
@@ -36,23 +37,6 @@ const SIZE: Record<AdFormat, { minHeight: { xs: number; md: number }; label: str
 }
 
 const CONTACT = (import.meta.env.VITE_ADS_CONTACT as string | undefined) ?? 'mailto:anuncie@olhaonda.com'
-
-type AdsQueue = unknown[] & { requestNonPersonalizedAds?: number }
-
-let adsenseLoaded = false
-/** Carrega o AdSense só depois da escolha de cookies; "recusar" pede anúncios não personalizados. */
-function loadAdsense(consent: Exclude<Consent, null>) {
-  if (adsenseLoaded || !ADSENSE_CLIENT) return
-  adsenseLoaded = true
-  const w = window as unknown as { adsbygoogle?: AdsQueue }
-  w.adsbygoogle = w.adsbygoogle || ([] as AdsQueue)
-  if (consent === 'denied') w.adsbygoogle.requestNonPersonalizedAds = 1
-  const s = document.createElement('script')
-  s.async = true
-  s.crossOrigin = 'anonymous'
-  s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`
-  document.head.appendChild(s)
-}
 
 export function AdSlot({ format = 'leaderboard', seed = 0 }: { format?: AdFormat; seed?: number }) {
   const house = HOUSE_ADS[format]

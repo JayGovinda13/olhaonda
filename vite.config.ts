@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv, type Plugin } from 'vite'
+import { readFileSync } from 'node:fs'
 
 /** Fora de produção, pede aos buscadores para não indexar (staging não pode aparecer no Google). */
 function noindexOutsideProduction(mode: string): Plugin {
@@ -103,6 +104,9 @@ function canonical(mode: string, siteUrl: string): Plugin {
   }
 }
 
+/** ID de editor padrão, lido de src/config/adsenseId.ts (fonte única, usada também pelo app). */
+const ADSENSE_PUBLISHER = readFileSync(new URL('./src/config/adsenseId.ts', import.meta.url), 'utf8').match(/ca-pub-\d+/)?.[0]
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
@@ -111,7 +115,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       noindexOutsideProduction(mode),
-      adsense(mode, env.VITE_ADSENSE_CLIENT),
+      adsense(mode, env.VITE_ADSENSE_CLIENT || ADSENSE_PUBLISHER),
       seo(mode, siteUrl),
       canonical(mode, siteUrl),
     ],

@@ -1,6 +1,8 @@
 import { Box, Button, Link, Paper, Stack, Typography } from '@mui/material'
+import { useEffect } from 'react'
 import { Link as RouterLink } from 'react-router'
 import { ADS_ENABLED } from '../config/ads'
+import { loadAdsense } from '../lib/adsense'
 import { consentStore, useConsent, type Consent } from '../lib/consent'
 import { brand } from '../theme'
 
@@ -10,6 +12,10 @@ import { brand } from '../theme'
  */
 export function ConsentBanner() {
   const consent = useConsent()
+  // depois da escolha, carrega o AdSense em todas as páginas (anúncios automáticos e blocos)
+  useEffect(() => {
+    if (ADS_ENABLED && consent) loadAdsense(consent)
+  }, [consent])
   if (!ADS_ENABLED || consent) return null
 
   const choose = (v: Exclude<Consent, null>) => {
