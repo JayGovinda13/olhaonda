@@ -20,7 +20,7 @@ Para ligar contas reais, siga "Colocando no ar" abaixo.
 
 | Área | Recursos |
 | --- | --- |
-| Previsão (`/`) | 44 picos (todas as 19 praias do Guarujá + Galhetas), altura, swell primário/secundário, **força da onda** em kJ, todas as direções em graus, vento terral/maral, nota 0–5, hora a hora, maré, **tempo** (céu, chuva, UV, máx/mín, 7 dias), rosa dos ventos |
+| Previsão (`/`) | 44 picos (todas as 19 praias do Guarujá + The Rock), altura, swell primário/secundário, **força da onda** em kJ, todas as direções em graus, vento terral/maral, nota 0–5, hora a hora, maré, **tempo** (céu, chuva, UV, máx/mín, 7 dias), rosa dos ventos |
 | Fórum (`/forum`) | Tópicos por categoria e por pico, respostas, apagar a própria mensagem, moderadores |
 | Fotos (`/fotos`) | Busca por pico e dia, prévias com marca d'água, seleção e compra (Pix/cartão), download do original |
 | Fotógrafo (`/fotos/vender`) | Ativar perfil, conectar Mercado Pago, criar sessão, enviar fotos (marca d'água gerada no navegador) |
