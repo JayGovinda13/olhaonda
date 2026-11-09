@@ -45,14 +45,14 @@ const GUARUJA: Spot[] = [
   { id: 'gua-ast-beco', name: 'Astúrias - Beco', ...G, lat: -24.0044, lon: -46.2667, facing: 125, kind: 'beach' },
   { id: 'gua-pit-avelinos', name: 'Pitangueiras - Avelinos', ...G, lat: -24.002, lon: -46.2647, facing: 140, kind: 'beach' },
   { id: 'gua-pit-ilha', name: 'Pitangueiras - Ilha', ...G, lat: -23.9984, lon: -46.2562, facing: 148, kind: 'beach' },
-  { id: 'gua-pit-maluf', name: 'Pitangueiras - Maluf', ...G, lat: -23.9962, lon: -46.2527, facing: 165, kind: 'beach' },
+  { id: 'gua-pit-maluf', name: 'Pitangueiras - Maluf', ...G, lat: -23.9954, lon: -46.2518, facing: 165, kind: 'beach' },
   { id: 'gua-enseada', name: 'Enseada', ...G, lat: -23.98801, lon: -46.22994, facing: 170, kind: 'beach' },
   { id: 'gua-pernambuco', name: 'Pernambuco', ...G, lat: -23.96741, lon: -46.1856, facing: 90, kind: 'beach' },
   { id: 'gua-marcasado', name: 'Mar Casado', ...G, lat: -23.96286, lon: -46.18399, facing: 123, kind: 'beach' },
   { id: 'gua-sorocotuba', name: 'Sorocotuba', ...G, lat: -23.951, lon: -46.175, facing: 110, kind: 'beach', sheltered: true },
   { id: 'gua-eden', name: 'Praia do Éden', ...G, lat: -23.943, lon: -46.168, facing: 110, kind: 'beach', sheltered: true },
-  { id: 'gua-iporanga', name: 'Iporanga', ...G, lat: -23.917, lon: -46.15, facing: 100, kind: 'beach' },
-  { id: 'gua-saopedro', name: 'São Pedro', ...G, lat: -23.908, lon: -46.145, facing: 100, kind: 'beach' },
+  { id: 'gua-iporanga', name: 'Iporanga', ...G, lat: -23.90234, lon: -46.15279, facing: 83, kind: 'beach' },
+  { id: 'gua-saopedro', name: 'São Pedro', ...G, lat: -23.8811, lon: -46.1409, facing: 85, kind: 'beach' },
   { id: 'gua-pereque', name: 'Perequê', ...G, lat: -23.937, lon: -46.18, facing: 60, kind: 'beach', sheltered: true },
   { id: 'gua-branca', name: 'Praia Branca', ...G, lat: -23.87238, lon: -46.1385, facing: 123, kind: 'beach' },
 ]
@@ -60,7 +60,7 @@ const GUARUJA: Spot[] = [
 /**
  * Baixada Santista: praias com onda, de sudoeste (Peruíbe) para nordeste (Bertioga).
  * Coordenadas conferidas no OpenStreetMap (nov/2026): ponto na linha d'água em frente ao bairro/praia
- * de mesmo nome, e `facing` medido pelo desenho real da costa. Pendentes: Iporanga e São Pedro.
+ * de mesmo nome, e `facing` medido pelo desenho real da costa. Iporanga pelo ponto da CETESB (meio da praia); São Pedro estimado pela enseada ao norte do Iporanga (confirmar).
  * Pitangueiras (Avelinos, Ilha, Maluf) e Astúrias (Canto dos Barcos, Sobre as Ondas, Beco) divididas por pico.
  */
 const PERUIBE = bx('Peruíbe')
