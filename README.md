@@ -20,7 +20,7 @@ Para ligar contas reais, siga "Colocando no ar" abaixo.
 
 | Área | Recursos |
 | --- | --- |
-| Previsão (`/`) | 44 picos (todas as 19 praias do Guarujá + The Rock), altura, swell primário/secundário, **força da onda** em kJ, todas as direções em graus, vento terral/maral, nota 0–5, hora a hora, maré no padrão da Marinha (nível de redução), **tempo** (céu, chuva, UV, máx/mín, 7 dias), rosa dos ventos |
+| Previsão (`/`) | 64 picos (Baixada Santista completa, de Peruíbe a Bertioga, incluindo as 19 praias do Guarujá e o The Rock), altura, swell primário/secundário, **força da onda** em kJ, todas as direções em graus, vento terral/maral, nota 0–5, hora a hora, maré no padrão da Marinha (nível de redução), **tempo** (céu, chuva, UV, máx/mín, 7 dias), rosa dos ventos |
 | Fórum (`/forum`) | Tópicos por categoria e por pico, respostas, apagar a própria mensagem, moderadores |
 | Fotos (`/fotos`) | Busca por pico e dia, prévias com marca d'água, seleção e compra (Pix/cartão), download do original |
 | Fotógrafo (`/fotos/vender`) | Ativar perfil, conectar Mercado Pago, criar sessão, enviar fotos (marca d'água gerada no navegador) |
@@ -98,6 +98,7 @@ Build: `npm run build`, pasta `dist`.
 | Google | `noindex` (não aparece em buscas) | indexado |
 | Aviso no topo | faixa "STAGING" | nenhum |
 | Seções | previsão, fórum e fotos | **só previsão** (fórum e fotos desligados) |
+| Picos | todos (64) | **só Baixada Santista com onda** (32: Peruíbe a Bertioga, sem as abrigadas) |
 
 Para ligar fórum ou fotos em produção, defina `VITE_FEATURE_FORUM=true` e/ou `VITE_FEATURE_PHOTOS=true` nas variáveis
 de produção e publique de novo. Desligados, os endereços `/forum` e `/fotos` voltam para a previsão e o login some.

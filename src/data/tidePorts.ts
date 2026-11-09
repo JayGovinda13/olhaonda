@@ -42,6 +42,8 @@ export const TIDE_PORTS: TidePort[] = [
 
 /** Porto de referência mais próximo do pico. */
 export function tidePortFor(spot: Spot): TidePort {
+  const fixed = spot.tidePort && TIDE_PORTS.find((p) => p.id === spot.tidePort)
+  if (fixed) return fixed
   return TIDE_PORTS.reduce((best, p) =>
     distanceKm(spot.lat, spot.lon, p.lat, p.lon) < distanceKm(spot.lat, spot.lon, best.lat, best.lon) ? p : best,
   )

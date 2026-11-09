@@ -58,6 +58,10 @@ export const theme = createTheme({
         },
       },
     },
+    // Camadas sobrepostas (listas, menus, diálogos) precisam ser opacas para ficarem legíveis
+    MuiAutocomplete: { styleOverrides: { paper: { backgroundColor: '#FBF4EC', backdropFilter: 'none' } } },
+    MuiPopover: { styleOverrides: { paper: { backgroundColor: '#FBF4EC', backdropFilter: 'none' } } },
+    MuiDialog: { styleOverrides: { paper: { backgroundColor: '#FBF4EC', backdropFilter: 'none' } } },
     MuiButton: { defaultProps: { disableElevation: true } },
     MuiChip: { styleOverrides: { root: { fontWeight: 700 } } },
     MuiTooltip: {

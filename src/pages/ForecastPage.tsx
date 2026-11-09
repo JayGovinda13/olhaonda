@@ -22,7 +22,8 @@ export default function ForecastPage() {
   const [params, setParams] = useSearchParams()
   const [savedId, setSavedId] = useLocalState('olhaonda:spot', DEFAULT_SPOT_ID)
   // ?pico=… na URL tem prioridade (links compartilháveis)
-  const spot = SPOTS.find((s) => s.id === (params.get('pico') ?? savedId)) ?? SPOTS[0]
+  const spot =
+    SPOTS.find((s) => s.id === (params.get('pico') ?? savedId)) ?? SPOTS.find((s) => s.id === DEFAULT_SPOT_ID) ?? SPOTS[0]
   const setSpot = (id: string) => {
     setSavedId(id)
     setParams({ pico: id }, { replace: true })

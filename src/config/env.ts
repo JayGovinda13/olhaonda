@@ -29,3 +29,10 @@ export const FEATURES = {
 
 /** Algum recurso que exige conta (login) está ligado. */
 export const HAS_COMMUNITY = FEATURES.forum || FEATURES.photos
+
+/**
+ * Quais picos aparecem: 'baixada' = só praias com onda da Baixada Santista; 'all' = todos.
+ * Padrão: 'baixada' em produção, 'all' nos outros ambientes.
+ */
+export const SPOT_SCOPE: 'baixada' | 'all' =
+  (import.meta.env.VITE_SPOT_SCOPE as 'baixada' | 'all' | undefined) || (IS_PRODUCTION ? 'baixada' : 'all')

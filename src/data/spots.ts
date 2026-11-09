@@ -1,3 +1,5 @@
+import { SPOT_SCOPE } from '../config/env'
+
 export type Spot = {
   id: string
   name: string
@@ -14,9 +16,16 @@ export type Spot = {
   note?: string
   /** Praia abrigada: só quebra com swell grande ou de direção específica. */
   sheltered?: boolean
+  /** Faz parte da Baixada Santista (lista de produção). */
+  baixada?: boolean
+  /** Porto de referência da maré (id em tidePorts.ts); padrão: o mais próximo. */
+  tidePort?: string
 }
 
-const G = { city: 'Guarujá', state: 'SP', region: 'SP · Guarujá' } as const
+/** Cidade da Baixada Santista: grupo no seletor, maré pelo Porto de Santos. */
+const bx = (city: string) => ({ city, state: 'SP', region: `Baixada Santista · ${city}`, baixada: true, tidePort: 'santos' }) as const
+
+const G = bx('Guarujá')
 
 /**
  * Todas as praias do Guarujá (e o The Rock, fundo de pedra), de oeste (canal de Santos) para leste (canal de Bertioga).
@@ -46,10 +55,48 @@ const GUARUJA: Spot[] = [
 ]
 
 /**
+ * Baixada Santista: praias com onda, de sudoeste (Peruíbe) para nordeste (Bertioga).
+ * Coordenadas e orientação aproximadas: confira com quem surfa lá.
+ */
+const PERUIBE = bx('Peruíbe')
+const ITANHAEM = bx('Itanhaém')
+const MONGAGUA = bx('Mongaguá')
+const PG = bx('Praia Grande')
+const SV = bx('São Vicente')
+const SANTOS = bx('Santos')
+const BERTIOGA = bx('Bertioga')
+
+const BAIXADA_SUL: Spot[] = [
+  { id: 'per-guarau', name: 'Guaraú', ...PERUIBE, lat: -24.373, lon: -47.01, facing: 130, kind: 'beach' },
+  { id: 'per-centro', name: 'Peruíbe (Centro)', ...PERUIBE, lat: -24.32, lon: -46.995, facing: 140, kind: 'beach' },
+  { id: 'ita-cibratel', name: 'Cibratel', ...ITANHAEM, lat: -24.215, lon: -46.84, facing: 145, kind: 'beach' },
+  { id: 'ita-sonhos', name: 'Praia dos Sonhos', ...ITANHAEM, lat: -24.188, lon: -46.795, facing: 145, kind: 'beach' },
+  { id: 'ita-suarao', name: 'Suarão', ...ITANHAEM, lat: -24.165, lon: -46.76, facing: 145, kind: 'beach' },
+  { id: 'mon-agenor', name: 'Agenor de Campos', ...MONGAGUA, lat: -24.118, lon: -46.66, facing: 145, kind: 'beach' },
+  { id: 'mon-centro', name: 'Mongaguá (Plataforma)', ...MONGAGUA, lat: -24.095, lon: -46.62, facing: 145, kind: 'beach' },
+  { id: 'pg-solemar', name: 'Solemar', ...PG, lat: -24.09, lon: -46.55, facing: 140, kind: 'beach' },
+  { id: 'pg-caicara', name: 'Vila Caiçara', ...PG, lat: -24.065, lon: -46.5, facing: 140, kind: 'beach' },
+  { id: 'pg-ocian', name: 'Ocian', ...PG, lat: -24.037, lon: -46.455, facing: 145, kind: 'beach' },
+  { id: 'pg-guilhermina', name: 'Guilhermina', ...PG, lat: -24.025, lon: -46.432, facing: 145, kind: 'beach' },
+  { id: 'pg-boqueirao', name: 'Boqueirão', ...PG, lat: -24.014, lon: -46.414, facing: 145, kind: 'beach' },
+  { id: 'pg-cantodoforte', name: 'Canto do Forte', ...PG, lat: -24.006, lon: -46.403, facing: 150, kind: 'beach' },
+  { id: 'sv-itarare', name: 'Itararé', ...SV, lat: -23.977, lon: -46.369, facing: 170, kind: 'beach' },
+  { id: 'san-josemenino', name: 'José Menino (Quebra-Mar)', ...SANTOS, lat: -23.975, lon: -46.352, facing: 175, kind: 'beach' },
+]
+
+const BAIXADA_NORTE: Spot[] = [
+  { id: 'ber-enseada', name: 'Enseada de Bertioga', ...BERTIOGA, lat: -23.822, lon: -46.105, facing: 150, kind: 'beach' },
+  { id: 'ber-riviera', name: 'Riviera de São Lourenço', ...BERTIOGA, lat: -23.798, lon: -46.025, facing: 155, kind: 'beach' },
+  { id: 'ber-itaguare', name: 'Itaguaré', ...BERTIOGA, lat: -23.782, lon: -45.99, facing: 160, kind: 'beach' },
+  { id: 'ber-guaratuba', name: 'Guaratuba', ...BERTIOGA, lat: -23.771, lon: -45.913, facing: 165, kind: 'beach' },
+  { id: 'ber-boraceia', name: 'Boracéia', ...BERTIOGA, lat: -23.763, lon: -45.858, facing: 160, kind: 'beach' },
+]
+
+/**
  * Picos do litoral brasileiro, do Sul ao Nordeste.
  * Coordenadas e orientação aproximadas; ajuste conforme o conhecimento local.
  */
-export const SPOTS: Spot[] = [
+const ALL_SPOTS: Spot[] = [
   { id: 'torres', name: 'Praia da Cal', city: 'Torres', state: 'RS', lat: -29.344, lon: -49.722, facing: 110, kind: 'beach' },
   { id: 'silveira', name: 'Silveira', city: 'Garopaba', state: 'SC', lat: -28.033, lon: -48.616, facing: 110, kind: 'point' },
   { id: 'imbituba', name: 'Praia da Vila', city: 'Imbituba', state: 'SC', lat: -28.236, lon: -48.656, facing: 130, kind: 'beach' },
@@ -57,7 +104,9 @@ export const SPOTS: Spot[] = [
   { id: 'joaquina', name: 'Joaquina', city: 'Florianópolis', state: 'SC', lat: -27.629, lon: -48.448, facing: 100, kind: 'beach' },
   { id: 'mole', name: 'Praia Mole', city: 'Florianópolis', state: 'SC', lat: -27.603, lon: -48.432, facing: 90, kind: 'beach' },
   { id: 'matinhos', name: 'Matinhos', city: 'Matinhos', state: 'PR', lat: -25.82, lon: -48.53, facing: 110, kind: 'beach' },
+  ...BAIXADA_SUL,
   ...GUARUJA,
+  ...BAIXADA_NORTE,
   { id: 'maresias', name: 'Maresias', city: 'São Sebastião', state: 'SP', lat: -23.79, lon: -45.56, facing: 170, kind: 'beach' },
   { id: 'juquehy', name: 'Juquehy', city: 'São Sebastião', state: 'SP', lat: -23.77, lon: -45.73, facing: 165, kind: 'beach' },
   { id: 'itamambuca', name: 'Itamambuca', city: 'Ubatuba', state: 'SP', lat: -23.4, lon: -45.01, facing: 140, kind: 'beach' },
@@ -74,10 +123,17 @@ export const SPOTS: Spot[] = [
   { id: 'pipa', name: 'Praia do Amor', city: 'Pipa', state: 'RN', lat: -6.23, lon: -35.04, facing: 90, kind: 'reef' },
   { id: 'paracuru', name: 'Paracuru', city: 'Paracuru', state: 'CE', lat: -3.4, lon: -39.03, facing: 0, kind: 'reef' },
   { id: 'jeri', name: 'Jericoacoara', city: 'Jijoca', state: 'CE', lat: -2.79, lon: -40.51, facing: 350, kind: 'point' },
-  { id: 'cacimba', name: 'Cacimba do Padre', city: 'Fernando de Noronha', state: 'PE', lat: -3.85, lon: -32.44, facing: 330, kind: 'beach' },
+  { id: 'cacimba', name: 'Cacimba do Padre', city: 'Fernando de Noronha', state: 'PE', region: 'PE · Fernando de Noronha', lat: -3.85, lon: -32.44, facing: 330, kind: 'beach' },
 ]
 
-export const DEFAULT_SPOT_ID = 'itauna'
+/**
+ * Picos visíveis neste ambiente. Em produção (VITE_SPOT_SCOPE=baixada): só a Baixada Santista,
+ * sem as praias abrigadas. Em staging/dev: todos.
+ */
+export const SPOTS: Spot[] =
+  SPOT_SCOPE === 'baixada' ? ALL_SPOTS.filter((s) => s.baixada && !s.sheltered) : ALL_SPOTS
+
+export const DEFAULT_SPOT_ID = SPOT_SCOPE === 'baixada' ? 'gua-pitangueiras' : 'itauna'
 
 export const KIND_LABEL: Record<Spot['kind'], string> = {
   beach: 'Beach break',
