@@ -117,6 +117,27 @@ npm run build:staging      # build de staging
 npm run build:production   # build de produção
 ```
 
+### Deploy automático com domínio da Hostinger (Cloudflare Pages)
+
+Recomendado: Cloudflare Pages (grátis, uso comercial liberado, deploy a cada push).
+
+1. Em dash.cloudflare.com: *Add a site* com o domínio. A Cloudflare mostra dois *nameservers*.
+2. No hPanel da Hostinger: Domínios > seu domínio > DNS / Nameservers > *Alterar nameservers* e cole os dois da
+   Cloudflare. A troca leva de minutos a algumas horas.
+3. Na Cloudflare: Workers & Pages > Create > Pages > *Connect to Git* > repositório `olhaonda`.
+   - Production branch: `main`
+   - Build command: `npm run build:ci` (escolhe produção na `main` e staging nas outras branches)
+   - Build output directory: `dist`
+4. Variáveis: Settings > Environment variables. Em **Production** as de `.env.production.example`; em **Preview**
+   as de `.env.staging.example`. Depois de mudar variáveis, refaça o último deploy.
+5. Domínios: Custom domains > `olhaonda.com.br` (e `www`). Para staging, crie o domínio `staging.olhaonda.com.br`
+   apontando (CNAME) para `staging.<projeto>.pages.dev`.
+
+Pronto: todo push na `main` publica a produção; todo push na `staging` publica o staging.
+
+Alternativa: Vercel (`vercel.json` já configurado). No plano gratuito (Hobby) a Vercel só permite uso não
+comercial; com anúncios, o plano é o Pro.
+
 **Vercel (site):** um único projeto. Em Settings > Git, *Production Branch* = `main`. Em Domains, aponte
 `staging.olhaonda.com.br` para a branch `staging`. Em Environment Variables, cadastre as variáveis de
 `.env.production.example` em *Production* e as de `.env.staging.example` em *Preview* restrito à branch `staging`.
