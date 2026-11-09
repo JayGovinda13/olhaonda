@@ -3,7 +3,7 @@ import type { GeoJSONSource, Map as MLMap, Marker as MLMarker, StyleSpecificatio
 import { useEffect, useRef, useState } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
-import { loadMapLibre, OFM_ATTRIBUTION, OFM_GLYPHS, OFM_SOURCE, offsetLngLat, snapToCoast } from '../lib/maplibre'
+import { arrowImage, loadMapLibre, OFM_ATTRIBUTION, OFM_GLYPHS, OFM_SOURCE, offsetLngLat, snapToCoast } from '../lib/maplibre'
 import { dirDeg, ENERGY_GRADIENT, energyColor, energyLabel, energyRatio, fmt, fmtEnergy, waveEnergy } from '../lib/surf'
 import { brand } from '../theme'
 
@@ -156,28 +156,21 @@ function swellArrows(
   return { type: 'FeatureCollection' as const, features }
 }
 
-/** Seta (apontando para o norte) desenhada em canvas, usada como ícone SDF para poder colorir. */
-function arrowImage() {
-  const S = 64
-  const c = document.createElement('canvas')
-  c.width = S
-  c.height = S
-  const g = c.getContext('2d')!
-  g.fillStyle = '#fff'
-  g.beginPath()
-  g.moveTo(S / 2, 4) // ponta
-  g.lineTo(S - 12, 30)
-  g.lineTo(S / 2 + 7, 26)
-  g.lineTo(S / 2 + 7, S - 6)
-  g.lineTo(S / 2 - 7, S - 6)
-  g.lineTo(S / 2 - 7, 26)
-  g.lineTo(12, 30)
-  g.closePath()
-  g.fill()
-  return g.getImageData(0, 0, S, S)
-}
-
-export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
+export function SpotDetailMap({
+  spot,
+  hour,
+  spectral = false,
+  mapHeight = { xs: 260, md: 300 },
+}: {
+  spot: Spot
+  hour: HourPoint
+  /** fundo do gráfico espectral: sem setas animadas nem legenda, pico no centro */
+  spectral?: boolean
+  mapHeight?: number | { xs: number; md: number }
+}) {
+  const zoom = spectral ? 12.4 : ZOOM
+  const centerOf = (p: { lat: number; lon: number }, facing: number) =>
+    spectral ? ([p.lon, p.lat] as [number, number]) : viewCenter(p, facing)
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
   const marker = useRef<MLMarker | null>(null)
@@ -199,7 +192,7 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
       if (!c) return
       coastRef.current = { lon: c[0], lat: c[1] }
       marker.current?.setLngLat(c)
-      m.easeTo({ center: viewCenter(coastRef.current, sp.facing), duration: 300 })
+      m.easeTo({ center: centerOf(coastRef.current, sp.facing), duration: 300 })
     })
   }
 
@@ -228,8 +221,8 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
           created = new ml.Map({
             container: ref.current,
             style: STYLE,
-            center: viewCenter(spot, spot.facing),
-            zoom: ZOOM,
+            center: centerOf(spot, spot.facing),
+            zoom,
             attributionControl: false,
             cooperativeGestures: true, // rolar a página não dá zoom sem querer
             dragRotate: false,
@@ -250,7 +243,7 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
         let last = 0
         const tick = (now: number) => {
           raf = requestAnimationFrame(tick)
-          if (!visible || now - last < 33) return // ~30 fps e só quando visível
+          if (spectral || !visible || now - last < 33) return // ~30 fps e só quando visível
           last = now
           const src = created?.getSource('waves') as GeoJSONSource | undefined
           if (!src) return
@@ -310,7 +303,7 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
 
   useEffect(() => {
     if (!map.current) return
-    map.current.easeTo({ center: viewCenter(spot, spot.facing), zoom: ZOOM, duration: 900 })
+    map.current.easeTo({ center: centerOf(spot, spot.facing), zoom, duration: 900 })
     marker.current?.setLngLat([spot.lon, spot.lat])
     placeOnCoast()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -319,12 +312,15 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
   if (failed) return null
 
   return (
-    <Box sx={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', height: { xs: 260, md: 300 }, bgcolor: C.water }}>
+    <Box sx={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', height: mapHeight, bgcolor: C.water }}>
       <Box
         ref={ref}
         sx={{
           position: 'absolute',
           inset: 0,
+          // o CSS do MapLibre força position: relative; largura/altura explícitas evitam o colapso
+          width: '100%',
+          height: '100%',
           opacity: ready ? 1 : 0,
           transition: 'opacity .6s ease',
           '& .olhaonda-detail-pin': {
@@ -339,6 +335,7 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
         }}
       />
       {/* resumo do swell + legenda da força (cor das setas) */}
+      {!spectral && (
       <Box
         sx={{
           position: 'absolute',
@@ -379,6 +376,7 @@ export function SpotDetailMap({ spot, hour }: { spot: Spot; hour: HourPoint }) {
           <Typography sx={{ fontSize: 9, opacity: 0.6 }}>pesada</Typography>
         </Box>
       </Box>
+      )}
       <Typography
         component="a"
         href="https://openfreemap.org"

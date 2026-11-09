@@ -1,6 +1,6 @@
 import { Alert, Box, Button, Skeleton, Stack } from '@mui/material'
 import { Refresh } from 'iconoir-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { AdSlot } from '../components/AdSlot'
 import { DayStrip } from '../components/DayStrip'
@@ -8,7 +8,7 @@ import { HourlyChart } from '../components/HourlyChart'
 import { NowPanel } from '../components/NowPanel'
 import { SpotCommunity } from '../components/SpotCommunity'
 import { HAS_COMMUNITY } from '../config/env'
-import { SpotCompass } from '../components/SpotCompass'
+import { PicoPanel } from '../components/pico/PicoPanel'
 import { SpotPicker } from '../components/SpotPicker'
 import { TidePanel } from '../components/TidePanel'
 import { WeatherPanel } from '../components/WeatherPanel'
@@ -38,7 +38,7 @@ export default function ForecastPage() {
   // a hora escolhida vale só para o pico em que foi escolhida
   const [pick, setPick] = useState<{ spot: string; time: string } | null>(null)
   const selTime = pick?.spot === spot.id ? pick.time : null
-  const setSelTime = (time: string) => setPick({ spot: spot.id, time })
+  const setSelTime = useCallback((time: string) => setPick({ spot: spot.id, time }), [spot.id])
 
   const selected = hours ? (hours.find((h) => h.time === selTime) ?? hours[nowIdx]) : undefined
   const selDate = selected?.time.slice(0, 10) ?? ''
@@ -89,15 +89,12 @@ export default function ForecastPage() {
         <>
           <NowPanel spot={spot} hour={selected} isNow={selected.time === hours[nowIdx].time} />
           <DayStrip days={days} selected={selDate} onSelect={pickDay} />
+          <PicoPanel spot={spot} hours={hours} selected={selected} onSelect={setSelTime} />
           <HourlyChart spot={spot} hours={dayHours} scaleMax={weekMax} selected={selected.time} onSelect={setSelTime} />
           <AdSlot format="inline" />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
             <TidePanel spot={spot} hours={dayHours} selected={selected.time} sun={dayWeather} onSelect={setSelTime} />
             <WeatherPanel days={weather} selectedDate={selDate} hour={selected} onSelectDay={pickDay} />
-          </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 2fr) minmax(0, 1fr)' }, gap: 2 }}>
-            <SpotCompass spot={spot} hour={selected} />
-            <AdSlot format="rectangle" />
           </Box>
         </>
       )}

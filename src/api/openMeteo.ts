@@ -11,10 +11,10 @@
  */
 
 const API_KEY = import.meta.env.VITE_OPEN_METEO_API_KEY as string | undefined
-const MARINE_URL = API_KEY
+export const MARINE_URL = API_KEY
   ? 'https://customer-marine-api.open-meteo.com/v1/marine'
   : 'https://marine-api.open-meteo.com/v1/marine'
-const WEATHER_URL = API_KEY
+export const WEATHER_URL = API_KEY
   ? 'https://customer-api.open-meteo.com/v1/forecast'
   : 'https://api.open-meteo.com/v1/forecast'
 
@@ -30,6 +30,8 @@ const MARINE_HOURLY = [
   'secondary_swell_wave_direction',
   'secondary_swell_wave_period',
   'wind_wave_height',
+  'wind_wave_direction',
+  'wind_wave_period',
   'sea_surface_temperature',
   'sea_level_height_msl',
 ] as const
@@ -71,6 +73,8 @@ export type HourPoint = {
   swell2Direction: number | null
   swell2Period: number | null
   windWaveHeight: number | null
+  windWaveDirection: number | null
+  windWavePeriod: number | null
   waterTemp: number | null
   seaLevel: number | null
   windSpeed: number | null
@@ -171,6 +175,8 @@ export function fetchForecast(lat: number, lon: number, signal?: AbortSignal): P
         swell2Direction: mv('secondary_swell_wave_direction'),
         swell2Period: mv('secondary_swell_wave_period'),
         windWaveHeight: mv('wind_wave_height'),
+        windWaveDirection: mv('wind_wave_direction'),
+        windWavePeriod: mv('wind_wave_period'),
         waterTemp: mv('sea_surface_temperature'),
         seaLevel: mv('sea_level_height_msl'),
         windSpeed: wv('wind_speed_10m'),

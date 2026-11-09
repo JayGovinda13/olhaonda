@@ -66,3 +66,25 @@ export function snapToCoast(
   }
   return null
 }
+
+/** Seta (apontando para o norte) desenhada em canvas, usada como ícone SDF para poder colorir. */
+export function arrowImage() {
+  const S = 64
+  const c = document.createElement('canvas')
+  c.width = S
+  c.height = S
+  const g = c.getContext('2d')!
+  g.fillStyle = '#fff'
+  g.beginPath()
+  g.moveTo(S / 2, 4) // ponta
+  g.lineTo(S - 12, 30)
+  g.lineTo(S / 2 + 7, 26)
+  g.lineTo(S / 2 + 7, S - 6)
+  g.lineTo(S / 2 - 7, S - 6)
+  g.lineTo(S / 2 - 7, 26)
+  g.lineTo(12, 30)
+  g.closePath()
+  g.fill()
+  return g.getImageData(0, 0, S, S)
+}
+

@@ -34,6 +34,13 @@ O marcador é sempre ajustado para a linha da costa (a coordenada cadastrada pod
 vetores vêm da OpenFreeMap (gratuita, sem chave, uso comercial liberado; atribuição exibida no card). O MapLibre é
 carregado só depois da previsão, para não atrasar a página.
 
+**Painel de mapas ("O pico"):** abas Altura, Período, Vento, Tempo (nuvens e chuva), Ar, CAPE e Pressão, com mapa
+regional e mapa amplo (Brasil/Atlântico Sul) e uma visão espectral (rosa polar com mar de vento, swell 1 e swell 2 por
+direção e período). Linha do tempo com play, ligada à hora selecionada na página. Os campos vêm de uma grade de pontos
+da Open-Meteo (`src/api/grid.ts`, 81 pontos na região e 100 no mapa amplo), com cache de 1 h no navegador.
+**Atenção à cota:** cada ponto da grade conta como uma chamada da Open-Meteo. Com tráfego real, gere a grade no servidor
+(ex.: Cloudflare Worker com cron a cada hora salvando um JSON) ou use o plano pago da Open-Meteo.
+
 **Dados de onda e tempo: Open-Meteo.** Junta ECMWF WAM, Météo-France MFWAM e NOAA GFS-Wave, é gratuita para uso
 não comercial, sem chave, e chamada direto do navegador. Para uso comercial basta um plano pago (`VITE_OPEN_METEO_API_KEY`).
 Força da onda = energia de uma onda por metro de crista, em quilojoules: `E = ρ·g·Hs²·L / 8`, com `L = g·T²/2π`.
