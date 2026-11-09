@@ -34,7 +34,29 @@ const MARINE_HOURLY = [
   'sea_level_height_msl',
 ] as const
 
-const WEATHER_HOURLY = ['wind_speed_10m', 'wind_direction_10m', 'wind_gusts_10m', 'temperature_2m'] as const
+const WEATHER_HOURLY = [
+  'wind_speed_10m',
+  'wind_direction_10m',
+  'wind_gusts_10m',
+  'temperature_2m',
+  'weather_code',
+  'precipitation_probability',
+  'precipitation',
+  'cloud_cover',
+  'uv_index',
+] as const
+
+const WEATHER_DAILY = [
+  'sunrise',
+  'sunset',
+  'weather_code',
+  'temperature_2m_max',
+  'temperature_2m_min',
+  'precipitation_probability_max',
+  'precipitation_sum',
+  'uv_index_max',
+  'wind_speed_10m_max',
+] as const
 
 export type HourPoint = {
   time: string // ISO local (America/Sao_Paulo)
@@ -55,11 +77,27 @@ export type HourPoint = {
   windDirection: number | null
   windGusts: number | null
   airTemp: number | null
+  weatherCode: number | null
+  rainChance: number | null
+  rain: number | null
+  cloudCover: number | null
+  uv: number | null
 }
 
-export type DaySun = { date: string; sunrise: string; sunset: string }
+export type DayWeather = {
+  date: string
+  sunrise: string
+  sunset: string
+  weatherCode: number | null
+  tMax: number | null
+  tMin: number | null
+  rainChance: number | null
+  rainSum: number | null
+  uvMax: number | null
+  windMax: number | null
+}
 
-export type Forecast = { hours: HourPoint[]; sun: DaySun[]; fetchedAt: number }
+export type Forecast = { hours: HourPoint[]; sun: DayWeather[]; fetchedAt: number }
 
 type Hourly = Record<string, (number | null)[]> & { time: string[] }
 
@@ -102,13 +140,13 @@ export function fetchForecast(lat: number, lon: number, signal?: AbortSignal): P
   const weatherUrl = buildUrl(WEATHER_URL, {
     ...common,
     hourly: WEATHER_HOURLY.join(','),
-    daily: 'sunrise,sunset',
+    daily: WEATHER_DAILY.join(','),
     wind_speed_unit: 'kmh',
   })
 
   const p = Promise.all([
     getJson<{ hourly: Hourly }>(marineUrl, signal),
-    getJson<{ hourly: Hourly; daily: { time: string[]; sunrise: string[]; sunset: string[] } }>(
+    getJson<{ hourly: Hourly; daily: Record<string, (number | string | null)[]> & { time: string[] } }>(
       weatherUrl,
       signal,
     ),
@@ -139,10 +177,27 @@ export function fetchForecast(lat: number, lon: number, signal?: AbortSignal): P
         windDirection: wv('wind_direction_10m'),
         windGusts: wv('wind_gusts_10m'),
         airTemp: wv('temperature_2m'),
+        weatherCode: wv('weather_code'),
+        rainChance: wv('precipitation_probability'),
+        rain: wv('precipitation'),
+        cloudCover: wv('cloud_cover'),
+        uv: wv('uv_index'),
       }
     })
     const d = weather.daily
-    const sun = d.time.map((date, i) => ({ date, sunrise: d.sunrise[i], sunset: d.sunset[i] }))
+    const num = (k: string, i: number) => (d[k]?.[i] ?? null) as number | null
+    const sun: DayWeather[] = d.time.map((date, i) => ({
+      date,
+      sunrise: String(d.sunrise?.[i] ?? ''),
+      sunset: String(d.sunset?.[i] ?? ''),
+      weatherCode: num('weather_code', i),
+      tMax: num('temperature_2m_max', i),
+      tMin: num('temperature_2m_min', i),
+      rainChance: num('precipitation_probability_max', i),
+      rainSum: num('precipitation_sum', i),
+      uvMax: num('uv_index_max', i),
+      windMax: num('wind_speed_10m_max', i),
+    }))
     return { hours, sun, fetchedAt: Date.now() }
   })
 

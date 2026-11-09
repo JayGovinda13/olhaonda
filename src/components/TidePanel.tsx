@@ -1,7 +1,7 @@
 import { Box, Paper, Stack, Typography } from '@mui/material'
 import { HalfMoon, SunLight } from 'iconoir-react'
 import { useId } from 'react'
-import type { DaySun, HourPoint } from '../api/openMeteo'
+import type { DayWeather, HourPoint } from '../api/openMeteo'
 import { fmt } from '../lib/surf'
 import { brand } from '../theme'
 
@@ -18,7 +18,7 @@ function extremes(hours: HourPoint[]): Extreme[] {
   return out
 }
 
-export function TidePanel({ hours, selected, sun }: { hours: HourPoint[]; selected: string; sun?: DaySun }) {
+export function TidePanel({ hours, selected, sun }: { hours: HourPoint[]; selected: string; sun?: DayWeather }) {
   const grad = useId()
   const levels = hours.map((h) => h.seaLevel)
   const valid = levels.filter((v): v is number => v != null)

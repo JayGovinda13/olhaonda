@@ -8,7 +8,39 @@ export type Spot = {
   /** Direção (graus) para onde a praia está voltada, ou seja, de onde vem o swell "de frente". */
   facing: number
   kind: 'beach' | 'reef' | 'point'
+  /** Grupo no seletor de picos (padrão: o estado). */
+  region?: string
+  /** Praia abrigada: só quebra com swell grande ou de direção específica. */
+  sheltered?: boolean
 }
+
+const G = { city: 'Guarujá', state: 'SP', region: 'SP · Guarujá' } as const
+
+/**
+ * Todas as praias do Guarujá, de oeste (canal de Santos) para leste (canal de Bertioga).
+ * As do canal e as enseadas fechadas estão marcadas como abrigadas.
+ */
+const GUARUJA: Spot[] = [
+  { id: 'gua-goes', name: 'Praia do Góes', ...G, lat: -23.998, lon: -46.334, facing: 300, kind: 'beach', sheltered: true },
+  { id: 'gua-santacruz', name: 'Santa Cruz dos Navegantes', ...G, lat: -23.992, lon: -46.307, facing: 330, kind: 'beach', sheltered: true },
+  { id: 'gua-cheiralimao', name: 'Cheira Limão', ...G, lat: -24.001, lon: -46.318, facing: 290, kind: 'beach', sheltered: true },
+  { id: 'gua-sangava', name: 'Sangava', ...G, lat: -24.012, lon: -46.321, facing: 220, kind: 'beach', sheltered: true },
+  { id: 'gua-monduba', name: 'Monduba', ...G, lat: -24.009, lon: -46.296, facing: 200, kind: 'beach', sheltered: true },
+  { id: 'gua-guaiuba', name: 'Guaiúba', ...G, lat: -24.011, lon: -46.277, facing: 180, kind: 'beach' },
+  { id: 'gua-tombo', name: 'Praia do Tombo', ...G, lat: -24.011, lon: -46.271, facing: 165, kind: 'beach' },
+  { id: 'gua-asturias', name: 'Astúrias', ...G, lat: -24.001, lon: -46.265, facing: 150, kind: 'beach' },
+  { id: 'gua-pitangueiras', name: 'Pitangueiras', ...G, lat: -23.997, lon: -46.257, facing: 150, kind: 'beach' },
+  { id: 'gua-enseada', name: 'Enseada', ...G, lat: -23.991, lon: -46.225, facing: 160, kind: 'beach' },
+  { id: 'gua-pernambuco', name: 'Pernambuco', ...G, lat: -23.968, lon: -46.193, facing: 140, kind: 'beach' },
+  { id: 'gua-marcasado', name: 'Mar Casado', ...G, lat: -23.962, lon: -46.186, facing: 130, kind: 'beach' },
+  { id: 'gua-sorocotuba', name: 'Sorocotuba', ...G, lat: -23.951, lon: -46.175, facing: 110, kind: 'beach', sheltered: true },
+  { id: 'gua-eden', name: 'Praia do Éden', ...G, lat: -23.943, lon: -46.168, facing: 110, kind: 'beach', sheltered: true },
+  { id: 'gua-iporanga', name: 'Iporanga', ...G, lat: -23.917, lon: -46.15, facing: 100, kind: 'beach' },
+  { id: 'gua-saopedro', name: 'São Pedro', ...G, lat: -23.908, lon: -46.145, facing: 100, kind: 'beach' },
+  { id: 'gua-pereque', name: 'Perequê', ...G, lat: -23.937, lon: -46.18, facing: 60, kind: 'beach', sheltered: true },
+  { id: 'gua-branca', name: 'Praia Branca', ...G, lat: -23.87, lon: -46.14, facing: 120, kind: 'beach' },
+  { id: 'gua-preta', name: 'Praia Preta', ...G, lat: -23.873, lon: -46.133, facing: 100, kind: 'beach' },
+]
 
 /**
  * Picos do litoral brasileiro, do Sul ao Nordeste.
@@ -22,7 +54,7 @@ export const SPOTS: Spot[] = [
   { id: 'joaquina', name: 'Joaquina', city: 'Florianópolis', state: 'SC', lat: -27.629, lon: -48.448, facing: 100, kind: 'beach' },
   { id: 'mole', name: 'Praia Mole', city: 'Florianópolis', state: 'SC', lat: -27.603, lon: -48.432, facing: 90, kind: 'beach' },
   { id: 'matinhos', name: 'Matinhos', city: 'Matinhos', state: 'PR', lat: -25.82, lon: -48.53, facing: 110, kind: 'beach' },
-  { id: 'pitangueiras', name: 'Pitangueiras', city: 'Guarujá', state: 'SP', lat: -24.0, lon: -46.26, facing: 170, kind: 'beach' },
+  ...GUARUJA,
   { id: 'maresias', name: 'Maresias', city: 'São Sebastião', state: 'SP', lat: -23.79, lon: -45.56, facing: 170, kind: 'beach' },
   { id: 'juquehy', name: 'Juquehy', city: 'São Sebastião', state: 'SP', lat: -23.77, lon: -45.73, facing: 165, kind: 'beach' },
   { id: 'itamambuca', name: 'Itamambuca', city: 'Ubatuba', state: 'SP', lat: -23.4, lon: -45.01, facing: 140, kind: 'beach' },

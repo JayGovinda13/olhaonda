@@ -1,0 +1,101 @@
+import { Box, Button, ButtonBase, Paper, Stack, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
+import { Camera, ChatLines } from 'iconoir-react'
+import { useEffect, useState } from 'react'
+import { Link as RouterLink } from 'react-router'
+import { backend, PERIOD_LABEL, type PhotoSession, type Thread } from '../backend'
+import type { Spot } from '../data/spots'
+import { timeAgo } from '../lib/time'
+import { dayLabel } from '../lib/surf'
+import { brand } from '../theme'
+
+/** Tópicos e fotos recentes do pico selecionado. */
+export function SpotCommunity({ spot }: { spot: Spot }) {
+  const [data, setData] = useState<{ spot: string; threads: Thread[]; sessions: PhotoSession[] } | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    Promise.all([backend.forum.listThreads({ spotId: spot.id }), backend.photos.listSessions({ spotId: spot.id })])
+      .then(([threads, sessions]) => alive && setData({ spot: spot.id, threads: threads.slice(0, 3), sessions: sessions.slice(0, 4) }))
+      .catch(() => alive && setData({ spot: spot.id, threads: [], sessions: [] }))
+    return () => {
+      alive = false
+    }
+  }, [spot.id])
+
+  const current = data?.spot === spot.id ? data : null
+
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
+      <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+          <Typography variant="h6">Papo no pico</Typography>
+          <Button component={RouterLink} to={`/forum?pico=${spot.id}`} size="small" startIcon={<ChatLines width={16} height={16} />}>
+            Ver fórum
+          </Button>
+        </Stack>
+        {current && current.threads.length === 0 && (
+          <Typography variant="body2" sx={{ opacity: 0.7 }}>
+            Ninguém comentou sobre {spot.name} ainda.{' '}
+            <RouterLink to={`/forum?pico=${spot.id}&novo=1`} style={{ color: brand.plum, fontWeight: 700 }}>
+              Conte como está o mar
+            </RouterLink>
+            .
+          </Typography>
+        )}
+        <Stack spacing={0.5}>
+          {current?.threads.map((t) => (
+            <ButtonBase
+              key={t.id}
+              component={RouterLink}
+              to={`/forum/${t.id}`}
+              sx={{ display: 'block', textAlign: 'left', p: 1.25, mx: -1.25, borderRadius: '12px', '&:hover': { bgcolor: alpha(brand.purple, 0.05) } }}
+            >
+              <Typography sx={{ fontWeight: 700 }} noWrap>
+                {t.title}
+              </Typography>
+              <Typography variant="caption" sx={{ opacity: 0.65 }}>
+                {t.authorName} · {timeAgo(t.lastActivityAt)} · {t.replyCount} respostas
+              </Typography>
+            </ButtonBase>
+          ))}
+        </Stack>
+      </Paper>
+
+      <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+          <Typography variant="h6">Fotos da sessão</Typography>
+          <Button component={RouterLink} to={`/fotos?pico=${spot.id}`} size="small" startIcon={<Camera width={16} height={16} />}>
+            Ver todas
+          </Button>
+        </Stack>
+        {current && current.sessions.length === 0 && (
+          <Typography variant="body2" sx={{ opacity: 0.7 }}>
+            Nenhum fotógrafo publicou fotos de {spot.name} ainda.
+          </Typography>
+        )}
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 1 }}>
+          {current?.sessions.map((s) => {
+            const { wd, dm } = dayLabel(s.date)
+            return (
+              <ButtonBase
+                key={s.id}
+                component={RouterLink}
+                to={`/fotos/sessao/${s.id}`}
+                sx={{ display: 'block', borderRadius: '12px', overflow: 'hidden', position: 'relative', aspectRatio: '3 / 2' }}
+              >
+                {s.coverUrl && <Box component="img" src={s.coverUrl} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                <Box sx={{ position: 'absolute', inset: 'auto 0 0 0', p: 1, background: 'linear-gradient(transparent, rgba(15,76,58,.85))', color: brand.sand, textAlign: 'left' }}>
+                  <Typography sx={{ fontSize: 12, fontWeight: 800 }}>
+                    {wd} {dm} · {PERIOD_LABEL[s.period]}
+                  </Typography>
+                  <Typography sx={{ fontSize: 11, opacity: 0.85 }}>{s.photographerName}</Typography>
+                </Box>
+              </ButtonBase>
+            )
+          })}
+        </Box>
+      </Paper>
+    </Box>
+  )
+}

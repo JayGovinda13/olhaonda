@@ -1,25 +1,26 @@
-import { Autocomplete, Box, Container, IconButton, TextField, Tooltip } from '@mui/material'
+import { Avatar, Box, Button, Container, Divider, IconButton, ListItemIcon, Menu, MenuItem, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { Position, Search } from 'iconoir-react'
-import { useState } from 'react'
-import { nearestSpot, SPOTS, type Spot } from '../data/spots'
+import { Camera, ChatLines, LogIn, LogOut, SeaWaves, ShoppingBag, Upload } from 'iconoir-react'
+import { useState, type ReactNode } from 'react'
+import { NavLink, useNavigate } from 'react-router'
+import { backend } from '../backend'
+import { useAuth } from '../auth/context'
 import { brand } from '../theme'
 import { LogoMark, Wordmark } from './Logo'
 
-export function Header({ spot, onChange }: { spot: Spot; onChange: (s: Spot) => void }) {
-  const [locating, setLocating] = useState(false)
+const NAV: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
+  { to: '/', label: 'Previsão', icon: <SeaWaves width={18} height={18} />, end: true },
+  { to: '/forum', label: 'Fórum', icon: <ChatLines width={18} height={18} /> },
+  { to: '/fotos', label: 'Fotos', icon: <Camera width={18} height={18} /> },
+]
 
-  const locate = () => {
-    if (!navigator.geolocation) return
-    setLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocating(false)
-        onChange(nearestSpot(pos.coords.latitude, pos.coords.longitude))
-      },
-      () => setLocating(false),
-      { timeout: 8000 },
-    )
+export function Header() {
+  const { user, requireLogin } = useAuth()
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null)
+  const navigate = useNavigate()
+  const go = (to: string) => {
+    setAnchor(null)
+    navigate(to)
   }
 
   return (
@@ -34,60 +35,95 @@ export function Header({ spot, onChange }: { spot: Spot; onChange: (s: Spot) => 
         borderBottom: `1px solid ${alpha(brand.purple, 0.08)}`,
       }}
     >
-      <Container
-        maxWidth="lg"
-        sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, px: { xs: 2, sm: 3 } }}
-      >
-        <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
-          <LogoMark size={30} />
+      <Container maxWidth="lg" sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, py: 1.25, px: { xs: 2, sm: 3 } }}>
+        <Box component={NavLink} to="/" aria-label="OlhaOnda, início" sx={{ display: 'flex', mr: { md: 2 } }}>
+          <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+            <LogoMark size={28} />
+          </Box>
+          <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+            <Wordmark height={28} />
+          </Box>
         </Box>
-        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-          <Wordmark height={30} />
-        </Box>
-        <Box sx={{ flex: 1 }} />
-        <Autocomplete
-          size="small"
-          options={SPOTS}
-          value={spot}
-          disableClearable
-          groupBy={(s) => s.state}
-          getOptionLabel={(s) => `${s.name} · ${s.city}`}
-          isOptionEqualToValue={(a, b) => a.id === b.id}
-          onChange={(_, s) => s && onChange(s)}
-          sx={{ width: { xs: '100%', sm: 320 }, maxWidth: 360 }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              placeholder="Buscar pico"
-              aria-label="Buscar pico"
-              slotProps={{
-                ...params.slotProps,
-                input: {
-                  ...params.slotProps.input,
-                  startAdornment: (
-                    <Box sx={{ display: 'flex', pl: 0.5, color: 'text.secondary' }}>
-                      <Search width={18} height={18} />
-                    </Box>
-                  ),
-                },
-              }}
+
+        <Stack component="nav" direction="row" spacing={0.5} sx={{ flex: 1, justifyContent: { xs: 'center', md: 'flex-start' } }}>
+          {NAV.map((n) => (
+            <Button
+              key={n.to}
+              component={NavLink}
+              to={n.to}
+              end={n.end}
+              startIcon={n.icon}
+              color="primary"
               sx={{
-                '& .MuiOutlinedInput-root': { borderRadius: 99, bgcolor: 'background.paper' },
-                '& fieldset': { borderColor: alpha(brand.purple, 0.14) },
+                borderRadius: 99,
+                px: { xs: 1.25, sm: 2 },
+                minWidth: 0,
+                '& .MuiButton-startIcon': { mr: { xs: 0.5, sm: 1 } },
+                '&.active': { bgcolor: brand.purple, color: brand.sand },
+                fontSize: { xs: 13, sm: 14 },
               }}
-            />
-          )}
-        />
-        <Tooltip title="Pico mais perto de mim">
-          <IconButton
-            onClick={locate}
-            disabled={locating}
-            aria-label="Usar minha localização"
-            sx={{ bgcolor: 'background.paper', border: `1px solid ${alpha(brand.purple, 0.14)}` }}
-          >
-            <Position width={20} height={20} />
-          </IconButton>
-        </Tooltip>
+            >
+              {n.label}
+            </Button>
+          ))}
+        </Stack>
+
+        {user ? (
+          <>
+            <IconButton onClick={(e) => setAnchor(e.currentTarget)} aria-label="Minha conta" sx={{ p: 0.25 }}>
+              <Avatar src={user.avatarUrl ?? undefined} sx={{ width: 36, height: 36, bgcolor: brand.plum, color: brand.sand, fontWeight: 800 }}>
+                {user.name.slice(0, 1).toUpperCase()}
+              </Avatar>
+            </IconButton>
+            <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)} slotProps={{ paper: { sx: { borderRadius: '16px', minWidth: 220 } } }}>
+              <Box sx={{ px: 2, py: 1 }}>
+                <Typography sx={{ fontWeight: 800 }}>{user.name}</Typography>
+                <Typography variant="caption" sx={{ opacity: 0.6 }}>
+                  {user.isPhotographer ? 'Fotógrafo' : 'Surfista'}
+                </Typography>
+              </Box>
+              <Divider />
+              <MenuItem onClick={() => go('/fotos/compras')}>
+                <ListItemIcon>
+                  <ShoppingBag width={18} height={18} />
+                </ListItemIcon>
+                Minhas fotos
+              </MenuItem>
+              <MenuItem onClick={() => go('/fotos/vender')}>
+                <ListItemIcon>
+                  <Upload width={18} height={18} />
+                </ListItemIcon>
+                {user.isPhotographer ? 'Painel do fotógrafo' : 'Vender fotos'}
+              </MenuItem>
+              <Divider />
+              <MenuItem
+                onClick={() => {
+                  setAnchor(null)
+                  void backend.auth.signOut()
+                }}
+              >
+                <ListItemIcon>
+                  <LogOut width={18} height={18} />
+                </ListItemIcon>
+                Sair
+              </MenuItem>
+            </Menu>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="outlined"
+              onClick={() => void requireLogin()}
+              startIcon={<LogIn width={18} height={18} />}
+              sx={{ borderRadius: 99, display: { xs: 'none', sm: 'inline-flex' } }}
+            >
+              Entrar
+            </Button>
+            <IconButton onClick={() => void requireLogin()} aria-label="Entrar" sx={{ display: { sm: 'none' } }}>
+              <LogIn width={20} height={20} />
+            </IconButton>
+          </>
+        )}
       </Container>
     </Box>
   )

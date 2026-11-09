@@ -1,10 +1,10 @@
 # OlhaOnda
 
-Previsão de ondas para surf e bodyboard no litoral brasileiro.
+Previsão de ondas para surf e bodyboard no litoral brasileiro, com fórum e marketplace de fotos.
 
 ![OlhaOnda](docs/preview-desktop.png)
 
-**Stack:** Vite + React + TypeScript · MUI · Iconoir · fonte Manrope
+**Stack:** Vite + React + TypeScript · MUI · Iconoir · React Router · Supabase · Mercado Pago
 
 ## Rodando
 
@@ -13,36 +13,101 @@ npm install
 npm run dev
 ```
 
-## Dados — Open-Meteo
+Sem configuração nenhuma, a previsão funciona e o fórum/fotos rodam em **modo demonstração** (dados só no navegador).
+Para ligar contas reais, siga "Colocando no ar" abaixo.
 
-| API | O que traz |
+## O que tem
+
+| Área | Recursos |
 | --- | --- |
-| [Marine API](https://open-meteo.com/en/docs/marine-weather-api) | Altura significativa, swell primário e secundário (altura, período, período de pico e direção), mar de vento, temperatura da água, nível do mar (maré) |
-| [Forecast API](https://open-meteo.com/en/docs) | Vento a 10 m, rajadas, temperatura do ar, nascer/pôr do sol |
+| Previsão (`/`) | 43 picos (todas as 19 praias do Guarujá), altura, swell primário/secundário, **força da onda** (kW/m), vento terral/maral, nota 0–5, hora a hora, maré, **tempo** (céu, chuva, UV, máx/mín, 7 dias), rosa dos ventos |
+| Fórum (`/forum`) | Tópicos por categoria e por pico, respostas, apagar a própria mensagem, moderadores |
+| Fotos (`/fotos`) | Busca por pico e dia, prévias com marca d'água, seleção e compra (Pix/cartão), download do original |
+| Fotógrafo (`/fotos/vender`) | Ativar perfil, conectar Mercado Pago, criar sessão, enviar fotos (marca d'água gerada no navegador) |
+| Publicidade | Espaços em todas as páginas: venda direta (`HOUSE_ADS`) ou Google AdSense |
 
-O `best_match` combina **ECMWF WAM**, **Météo-France MFWAM** e **NOAA GFS-Wave**. A API é gratuita para uso não comercial, sem chave e com CORS, por isso o app roda 100% no navegador.
-Para uso comercial, contrate um plano e defina `VITE_OPEN_METEO_API_KEY` no `.env`; o cliente troca sozinho para os endpoints `customer-*`.
+## Soluções escolhidas
 
-Alternativa paga: [Stormglass](https://stormglass.io) agrega NOAA, Météo-France, DWD, UK Met Office e outros, mas o plano grátis tem só 10 requisições por dia e exige um backend para guardar a chave.
+**Dados de onda e tempo: Open-Meteo.** Junta ECMWF WAM, Météo-France MFWAM e NOAA GFS-Wave, é gratuita para uso
+não comercial, sem chave, e chamada direto do navegador. Para uso comercial basta um plano pago (`VITE_OPEN_METEO_API_KEY`).
+Força da onda = fluxo de energia `P ≈ 0,49 · Hs² · Te` (kW por metro de crista).
+
+**Contas, fórum e fotos: Supabase.** Um só serviço entrega login (Google e link por e-mail), Postgres, armazenamento
+de arquivos e funções de servidor. As permissões ficam no próprio banco (Row Level Security), então o site não precisa
+de servidor próprio. O plano gratuito aguenta o começo; o Pro (US$ 25/mês) quando crescer.
+
+**Pagamentos das fotos: Mercado Pago (Checkout Pro + OAuth de marketplace).** Pix e cartão, conhecido por todo
+brasileiro, e o **split** é automático: o dinheiro cai na conta do fotógrafo e a comissão da plataforma
+(`marketplace_fee`) cai na sua. Isso evita que a plataforma receba e repasse dinheiro de terceiros, o que traria
+obrigações fiscais e de intermediação. Alternativa: Stripe Connect, se no futuro quiser vender fora do Brasil.
+
+**Fórum próprio (em vez de Discourse/Discord).** Fica integrado à previsão (tópicos por pico aparecem na página do pico),
+usa a mesma conta das fotos e não tem custo extra. Se o volume crescer muito, dá para migrar para Discourse.
+
+**Publicidade: venda direta primeiro, AdSense para completar.** Surf shops, escolas, pousadas e marcas locais pagam
+melhor por um público tão segmentado do que o AdSense. Os espaços aceitam os dois.
+
+## Colocando no ar
+
+### 1. Supabase
+
+1. Crie um projeto em [supabase.com](https://supabase.com) (região São Paulo).
+2. Aplique o banco: `supabase link` e `supabase db push` (ou cole `supabase/migrations/*.sql` no SQL Editor).
+3. Auth → Providers: ative **Email** e **Google**. Em URL Configuration, coloque a URL do site.
+4. Copie `URL` e `anon key` para `.env.local` (veja `.env.example`).
+5. Para tornar alguém moderador: `update profiles set role = 'moderator' where id = '…';`
+
+### 2. Mercado Pago
+
+1. Crie uma aplicação em *Suas integrações* (Checkout Pro, modelo marketplace).
+2. Redirect URL do OAuth: `https://<projeto>.supabase.co/functions/v1/mp-oauth`
+3. Webhooks: `https://<projeto>.supabase.co/functions/v1/mp-webhook`, evento **Pagamentos**; copie a assinatura secreta.
+4. Configure os segredos e publique as funções:
+
+```bash
+supabase secrets set SITE_URL=https://olhaonda.com.br MP_CLIENT_ID=... MP_CLIENT_SECRET=... MP_WEBHOOK_SECRET=... PLATFORM_FEE_PERCENT=20
+```
+
+```bash
+supabase functions deploy create-checkout
+```
+
+```bash
+supabase functions deploy mp-webhook --no-verify-jwt
+```
+
+```bash
+supabase functions deploy mp-oauth --no-verify-jwt
+```
+
+### 3. Hospedagem
+
+Qualquer hospedagem estática: Vercel (`vercel.json` incluso), Netlify (`public/_redirects`) ou Cloudflare Pages.
+Build: `npm run build`, pasta `dist`.
 
 ## Estrutura
 
 ```
 src/
-  api/openMeteo.ts      cliente da API (+ cache de 30 min)
-  data/spots.ts         picos (lat/lon, orientação da praia, tipo de fundo)
-  lib/surf.ts           nota da sessão, terral/maral, formatação
-  components/Logo.tsx   logo: os dois "O" são as lentes de um binóculo
-  components/…          painel atual, dias, hora a hora, maré, rosa dos ventos
-  theme.ts              paleta e tema MUI
+  api/openMeteo.ts        previsão (onda, vento, tempo, maré)
+  data/spots.ts           picos (lat/lon, orientação, abrigada)
+  lib/surf.ts             nota da sessão, terral/maral, força da onda
+  backend/                interface única + Supabase + modo demonstração + marca d'água
+  auth/                   login (Google, link mágico)
+  pages/                  previsão, fórum, fotos
+  components/AdSlot.tsx   espaços publicitários
+supabase/
+  migrations/             tabelas, RLS, storage, gatilhos
+  functions/              create-checkout, mp-webhook, mp-oauth
 ```
 
-### Nota da sessão (0–5)
+### Como a foto fica protegida
 
-Heurística aberta em `src/lib/surf.ts`: altura do swell ponderada pela exposição da praia
-(ângulo entre a direção do swell e `facing`), bônus pelo período e penalidade de vento
-maral/lateral proporcional à velocidade. Ajuste a orientação (`facing`) de cada pico em `src/data/spots.ts`.
+1. O fotógrafo escolhe as fotos; o navegador gera uma prévia reduzida com marca d'água.
+2. A prévia vai para o bucket público `previews`; o original para o bucket privado `originals`.
+3. A política de Storage só libera o original para o próprio fotógrafo ou para quem tem um pedido **pago** com aquela foto.
+4. O pedido só vira "pago" pelo webhook do Mercado Pago, com assinatura verificada e valor conferido.
 
 ### Paleta
 
-`#4B1D5A` roxo (marca/texto) · `#7A2E6E` vinho · `#0F4C3A` verde profundo · `#2FAE7B` verde (dados bons) · `#F5E6D3` areia (fundo)
+`#4B1D5A` roxo · `#7A2E6E` vinho · `#0F4C3A` verde profundo · `#2FAE7B` verde · `#F5E6D3` areia

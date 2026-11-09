@@ -1,9 +1,9 @@
 import { Box, Chip, Paper, Stack, Typography } from '@mui/material'
-import { Droplet, SeaWaves, Timer, Wind } from 'iconoir-react'
+import { Droplet, Flash, SeaWaves, Timer, Wind } from 'iconoir-react'
 import type { ReactNode } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import { KIND_LABEL, type Spot } from '../data/spots'
-import { compass, dayLabel, faceRange, fmt, rate, WIND_LABEL, windKind } from '../lib/surf'
+import { compass, dayLabel, faceRange, fmt, powerLabel, powerRatio, rate, WIND_LABEL, wavePower, windKind } from '../lib/surf'
 import { brand } from '../theme'
 import { DirArrow, RatingDots } from './bits'
 
@@ -22,7 +22,7 @@ function Stat({ icon, label, value, sub }: { icon: ReactNode; label: string; val
         </Typography>
       </Stack>
       {sub && (
-        <Typography variant="body2" sx={{ opacity: 0.72, mt: 0.25 }}>
+        <Typography variant="body2" component="div" sx={{ opacity: 0.72, mt: 0.25 }}>
           {sub}
         </Typography>
       )}
@@ -35,6 +35,7 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
   const wk = windKind(spot, hour.windDirection, hour.windSpeed)
   const { wd, dm } = dayLabel(hour.time.slice(0, 10))
   const iconProps = { width: 16, height: 16, strokeWidth: 2 }
+  const power = wavePower(hour)
 
   return (
     <Paper
@@ -79,6 +80,14 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
               label={isNow ? 'Agora' : `${wd} ${dm} · ${fmt.hour(hour.time)}`}
               sx={{ bgcolor: brand.green, color: '#fff' }}
             />
+            {spot.sheltered && (
+              <Chip
+                size="small"
+                label="Abrigada"
+                variant="outlined"
+                sx={{ color: brand.sand, borderColor: 'rgba(245,230,211,.35)' }}
+              />
+            )}
             <Chip
               size="small"
               label={KIND_LABEL[spot.kind]}
@@ -112,7 +121,7 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', lg: 'repeat(5, 1fr)' },
               gap: { xs: 2.5, sm: 3 },
             }}
           >
@@ -145,6 +154,19 @@ export function NowPanel({ spot, hour, isNow }: { spot: Spot; hour: HourPoint; i
                 </>
               }
               sub={`${WIND_LABEL[wk]} · ${compass(hour.windDirection)} · raj. ${fmt.kmh(hour.windGusts)}`}
+            />
+            <Stat
+              icon={<Flash {...iconProps} />}
+              label="Força"
+              value={power == null ? '—' : `${Math.round(power)} kW/m`}
+              sub={
+                <Box component="span" sx={{ display: 'block' }}>
+                  {powerLabel(power)}
+                  <Box component="span" sx={{ display: 'block', mt: 0.75, height: 4, borderRadius: 2, bgcolor: 'rgba(245,230,211,.2)', overflow: 'hidden' }}>
+                    <Box component="span" sx={{ display: 'block', height: '100%', width: `${powerRatio(power) * 100}%`, bgcolor: brand.green }} />
+                  </Box>
+                </Box>
+              }
             />
             <Stat
               icon={<Droplet {...iconProps} />}

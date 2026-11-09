@@ -57,7 +57,8 @@ export function rate(spot: Spot, h: HourPoint): Rating {
 
   // Exposição: swell chegando de frente vale 1, a 90° ou mais quase nada.
   const exposure = swellDir == null ? 0.6 : Math.max(0, Math.cos((angleDiff(swellDir, spot.facing) * Math.PI) / 180))
-  const effective = Math.max(swellH * (0.35 + 0.65 * exposure), (h.windWaveHeight ?? 0) * 0.5)
+  const shelter = spot.sheltered ? 0.45 : 1
+  const effective = shelter * Math.max(swellH * (0.35 + 0.65 * exposure), (h.windWaveHeight ?? 0) * 0.5)
 
   // Tamanho útil (m) -> pontos (curva suave, satura ~2,5 m e cai no "mar grosso" de beach break)
   let size = 0
@@ -133,4 +134,50 @@ export function currentHourIndex(hours: HourPoint[]) {
   const key = `${parts.slice(0, 10)}T${parts.slice(11, 13)}:00`
   const idx = hours.findIndex((h) => h.time === key)
   return idx >= 0 ? idx : 0
+}
+
+/**
+ * Força da onda: fluxo de energia por metro de crista (kW/m), P ≈ 0,49 · Hs² · Te.
+ * Te (período de energia) ≈ 0,9 × período de pico do swell; sem ele, usa o período médio.
+ */
+export function wavePower(h: HourPoint) {
+  const hs = h.waveHeight
+  const tp = h.swellPeakPeriod ?? h.swellPeriod
+  const te = tp != null ? tp * 0.9 : h.wavePeriod
+  if (hs == null || te == null) return null
+  return 0.49 * hs * hs * te
+}
+
+export const POWER_LEVELS = [
+  { max: 4, label: 'Fraca' },
+  { max: 12, label: 'Moderada' },
+  { max: 30, label: 'Forte' },
+  { max: 60, label: 'Muito forte' },
+  { max: Infinity, label: 'Pesada' },
+] as const
+
+export function powerLabel(kw: number | null) {
+  if (kw == null) return '—'
+  return POWER_LEVELS.find((l) => kw < l.max)!.label
+}
+
+/** 0–1 para barras (escala log, satura em ~100 kW/m). */
+export function powerRatio(kw: number | null) {
+  if (kw == null || kw <= 0) return 0
+  return Math.min(1, Math.log10(1 + kw) / 2)
+}
+
+/** Códigos WMO usados pela Open-Meteo -> descrição curta. */
+export function weatherLabel(code: number | null | undefined) {
+  if (code == null) return '—'
+  if (code === 0) return 'Céu limpo'
+  if (code <= 2) return 'Parcialmente nublado'
+  if (code === 3) return 'Nublado'
+  if (code <= 48) return 'Neblina'
+  if (code <= 57) return 'Garoa'
+  if (code <= 67) return 'Chuva'
+  if (code <= 77) return 'Neve'
+  if (code <= 82) return 'Pancadas de chuva'
+  if (code <= 86) return 'Neve'
+  return 'Trovoadas'
 }
