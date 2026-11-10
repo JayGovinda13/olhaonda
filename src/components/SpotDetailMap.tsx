@@ -3,7 +3,7 @@ import type { GeoJSONSource, Map as MLMap, Marker as MLMarker, StyleSpecificatio
 import { useEffect, useRef, useState } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
-import { arrowImage, loadMapLibre, OFM_ATTRIBUTION, OFM_GLYPHS, OFM_SOURCE, offsetLngLat, snapToCoast } from '../lib/maplibre'
+import { arrowImage, loadMapLibre, OFM_ATTRIBUTION, OFM_GLYPHS, OFM_SOURCE, cachedCoast, offsetLngLat, rememberCoast, SNAP_ZOOM } from '../lib/maplibre'
 import { dirDeg, ENERGY_GRADIENT, energyColor, energyLabel, energyRatio, fmt, fmtEnergy, waveEnergy, WIND_LABEL, windKind } from '../lib/surf'
 import { brand } from '../theme'
 
@@ -108,7 +108,7 @@ const STYLE: StyleSpecification = {
   ],
 }
 
-const ZOOM = 13.2
+const ZOOM = SNAP_ZOOM
 
 /** Centro do mapa ~700 m mar adentro: o pico fica perto da borda e as ondas chegando ganham espaço. */
 const viewCenter = (p: { lat: number; lon: number }, facing: number) => offsetLngLat(p.lat, p.lon, facing, 700)
@@ -225,14 +225,15 @@ export function SpotDetailMap({ spot, hour, mode = 'ondas' }: { spot: Spot; hour
     const m = map.current
     if (!m) return
     coastRef.current = null
-    m.once('idle', () => {
+    const apply = () => {
       const sp = spotRef.current
-      const c = snapToCoast(m, sp)
-      if (!c) return
+      const c = cachedCoast(sp.id) ?? rememberCoast(m, sp)
       coastRef.current = { lon: c[0], lat: c[1] }
       marker.current?.setLngLat(c)
       m.easeTo({ center: viewCenter(coastRef.current, sp.facing), duration: 300 })
-    })
+    }
+    if (cachedCoast(spotRef.current.id)) apply()
+    else m.once('idle', apply)
   }
 
   const dir = hour.swellDirection ?? hour.waveDirection

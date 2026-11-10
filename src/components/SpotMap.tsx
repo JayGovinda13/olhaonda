@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import type { Map as MLMap, Marker as MLMarker, StyleSpecification } from 'maplibre-gl'
 import type { Spot } from '../data/spots'
-import { loadMapLibre, OFM_ATTRIBUTION, OFM_SOURCE, snapToCoast } from '../lib/maplibre'
+import { cachedCoast, loadMapLibre, OFM_ATTRIBUTION, OFM_SOURCE, rememberCoast, SNAP_ZOOM } from '../lib/maplibre'
 import { brand } from '../theme'
 
 /**
@@ -53,17 +53,33 @@ export function SpotMap({ spot }: { spot: Spot }) {
   const marker = useRef<MLMarker | null>(null)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
+  /** escondido enquanto calcula a posição na costa (o mapa passa rapidamente pelo zoom do "O pico") */
+  const [snapping, setSnapping] = useState(false)
   const spotRef = useRef(spot)
 
-  /** Depois que os tiles do pico desenham, põe o marcador (e o centro) na linha da costa. */
-  const placeOnCoast = () => {
+  /**
+   * Põe o marcador (e o centro) na linha da costa, pelo mesmo cálculo e no mesmo zoom do card "O pico",
+   * para os dois mapas mostrarem exatamente o mesmo ponto.
+   */
+  const placeOnCoast = (animate: boolean) => {
     const m = map.current
     if (!m) return
+    const sp = spotRef.current
+    const show = (c: [number, number]) => {
+      marker.current?.setLngLat(c)
+      if (animate) m.easeTo({ center: c, zoom: ZOOM, duration: 900 })
+      else m.jumpTo({ center: c, zoom: ZOOM })
+    }
+    const hit = cachedCoast(sp.id)
+    if (hit) return show(hit)
+    setSnapping(true)
+    m.jumpTo({ center: [sp.lon, sp.lat], zoom: SNAP_ZOOM })
     m.once('idle', () => {
-      const coast = snapToCoast(m, spotRef.current)
-      if (!coast) return
-      marker.current?.setLngLat(coast)
-      m.jumpTo({ center: coast })
+      if (spotRef.current.id !== sp.id) return
+      const c = rememberCoast(m, sp)
+      marker.current?.setLngLat(c)
+      m.jumpTo({ center: c, zoom: ZOOM })
+      setSnapping(false)
     })
   }
 
@@ -104,7 +120,7 @@ export function SpotMap({ spot }: { spot: Spot }) {
         const el = document.createElement('div')
         el.className = 'olhaonda-pin'
         marker.current = new ml.Marker({ element: el }).setLngLat([spot.lon, spot.lat]).addTo(created)
-        placeOnCoast()
+        placeOnCoast(false)
       })
       .catch(() => setFailed(true))
     return () => {
@@ -122,9 +138,7 @@ export function SpotMap({ spot }: { spot: Spot }) {
     spotRef.current = spot
     const m = map.current
     if (!m) return
-    m.easeTo({ center: [spot.lon, spot.lat], zoom: ZOOM, duration: 900 })
-    marker.current?.setLngLat([spot.lon, spot.lat])
-    placeOnCoast()
+    placeOnCoast(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spot])
 
@@ -139,7 +153,7 @@ export function SpotMap({ spot }: { spot: Spot }) {
           position: 'absolute',
           inset: 0,
           pointerEvents: 'none',
-          opacity: ready ? 0.7 : 0,
+          opacity: ready && !snapping ? 0.7 : 0,
           transition: 'opacity .8s ease',
           // some à esquerda para não competir com os números
           maskImage: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,.25) 30%, #000 65%)',

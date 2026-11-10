@@ -34,6 +34,7 @@ export function offsetLngLat(lat: number, lon: number, bearing: number, dist: nu
 type QueryableMap = {
   project(lngLat: [number, number]): { x: number; y: number }
   queryRenderedFeatures(point: [number, number], options: { layers: string[] }): unknown[]
+  getZoom?(): number
 }
 
 /**
@@ -88,3 +89,27 @@ export function arrowImage() {
   return g.getImageData(0, 0, S, S)
 }
 
+
+/**
+ * Zoom em que a posição do pico na costa é calculada. Precisa ser o mesmo nos dois mapas
+ * (card verde e "O pico"): em zoom mais afastado o contorno da costa é simplificado e o pino
+ * cairia em outro lugar.
+ */
+export const SNAP_ZOOM = 13.2
+
+/** posição na costa já calculada, por pico (os dois mapas mostram exatamente o mesmo ponto) */
+const coastCache = new Map<string, [number, number]>()
+
+export function cachedCoast(id: string) {
+  return coastCache.get(id) ?? null
+}
+
+/** Calcula (no zoom padrão) e guarda a posição do pico na costa. O mapa precisa estar em SNAP_ZOOM e ocioso. */
+export function rememberCoast(map: QueryableMap, spot: { id: string; lat: number; lon: number; facing: number }) {
+  const hit = coastCache.get(spot.id)
+  if (hit) return hit
+  const c = snapToCoast(map, spot) ?? ([spot.lon, spot.lat] as [number, number])
+  // só guarda se foi calculado no zoom padrão (a pessoa pode ter dado zoom no mapa do "O pico")
+  if (!map.getZoom || Math.abs(map.getZoom() - SNAP_ZOOM) < 0.1) coastCache.set(spot.id, c)
+  return c
+}
