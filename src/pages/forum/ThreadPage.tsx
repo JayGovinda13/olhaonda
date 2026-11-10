@@ -5,16 +5,23 @@ import { Link as RouterLink, useParams } from 'react-router'
 import { useAuth } from '../../auth/context'
 import { backend, FORUM_CATEGORIES, type Post, type Thread } from '../../backend'
 import { AdSlot } from '../../components/AdSlot'
+import { LogoMark } from '../../components/Logo'
 import { SPOTS } from '../../data/spots'
 import { timeAgo } from '../../lib/time'
 import { brand } from '../../theme'
 
-function Message({ name, at, body, onDelete }: { name: string; at: string; body: string; onDelete?: () => void }) {
+function Message({ name, at, body, onDelete, official }: { name: string; at: string; body: string; onDelete?: () => void; official?: boolean }) {
   return (
     <Stack direction="row" spacing={1.5}>
-      <Avatar sx={{ width: 36, height: 36, bgcolor: brand.plum, color: brand.sand, fontWeight: 800, fontSize: 15 }}>
-        {name.slice(0, 1).toUpperCase()}
-      </Avatar>
+      {official ? (
+        <Avatar sx={{ width: 36, height: 36, bgcolor: brand.sand, border: `1px solid ${brand.purple}22` }}>
+          <LogoMark size={22} />
+        </Avatar>
+      ) : (
+        <Avatar sx={{ width: 36, height: 36, bgcolor: brand.plum, color: brand.sand, fontWeight: 800, fontSize: 15 }}>
+          {name.slice(0, 1).toUpperCase()}
+        </Avatar>
+      )}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline' }}>
           <Typography sx={{ fontWeight: 800 }}>{name}</Typography>
@@ -99,8 +106,13 @@ export default function ThreadPage() {
   return (
     <Stack spacing={2}>
       <Box>
-        <Button component={RouterLink} to="/forum" startIcon={<ArrowLeft width={16} height={16} />} size="small">
-          Fórum
+        <Button
+          component={RouterLink}
+          to={current?.thread.spotId ? `/pico/${current.thread.spotId}/forum` : '/forum'}
+          startIcon={<ArrowLeft width={16} height={16} />}
+          size="small"
+        >
+          {current?.thread.spotId ? `Fórum de ${SPOTS.find((s) => s.id === current.thread.spotId)?.name ?? 'pico'}` : 'Fórum'}
         </Button>
       </Box>
 
@@ -116,13 +128,20 @@ export default function ThreadPage() {
             <Stack direction="row" spacing={1} sx={{ mb: 1.5, flexWrap: 'wrap', rowGap: 1 }}>
               <Chip size="small" label={FORUM_CATEGORIES.find((c) => c.id === t.category)?.label} />
               {spot && (
-                <Chip size="small" variant="outlined" component={RouterLink} to={`/pico/${spot.id}`} clickable label={`Previsão de ${spot.name}`} />
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  component={RouterLink}
+                  to={`/pico/${spot.id}${t.forecastDate ? `?t=${t.forecastDate}T07:00` : ''}`}
+                  clickable
+                  label={`Previsão de ${spot.name}`}
+                />
               )}
             </Stack>
             <Typography variant="h4" component="h1" sx={{ mb: 3, overflowWrap: 'anywhere' }}>
               {t.title}
             </Typography>
-            <Message name={t.authorName} at={t.createdAt} body={t.body} />
+            <Message name={t.authorName} at={t.createdAt} body={t.body} official={t.kind === 'daily'} />
           </>
         )}
       </Paper>

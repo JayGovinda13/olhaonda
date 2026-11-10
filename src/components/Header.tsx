@@ -1,6 +1,6 @@
 import { Avatar, Box, Button, Container, Divider, IconButton, ListItemIcon, Menu, MenuItem, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { Camera, ChatLines, LogIn, LogOut, SeaWaves, ShoppingBag, Upload } from 'iconoir-react'
+import { Camera, ChatLines, LogIn, LogOut, SeaWaves, ShoppingBag, Star, Upload, User } from 'iconoir-react'
 import { useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 import { backend } from '../backend'
@@ -8,6 +8,7 @@ import { FEATURES, HAS_COMMUNITY } from '../config/env'
 import { useAuth } from '../auth/context'
 import { brand } from '../theme'
 import { LogoMark, Wordmark } from './Logo'
+import { NotificationsBell } from './community/NotificationsBell'
 
 const NAV: { to: string; label: string; icon: ReactNode; end?: boolean; on: boolean }[] = [
   { to: '/', label: 'Previsão', icon: <SeaWaves width={18} height={18} />, end: true, on: true },
@@ -71,6 +72,7 @@ export function Header() {
 
         {!HAS_COMMUNITY ? null : user ? (
           <>
+            <NotificationsBell />
             <IconButton onClick={(e) => setAnchor(e.currentTarget)} aria-label="Minha conta" sx={{ p: 0.25 }}>
               <Avatar src={user.avatarUrl ?? undefined} sx={{ width: 36, height: 36, bgcolor: brand.plum, color: brand.sand, fontWeight: 800 }}>
                 {user.name.slice(0, 1).toUpperCase()}
@@ -80,9 +82,23 @@ export function Header() {
               <Box sx={{ px: 2, py: 1 }}>
                 <Typography sx={{ fontWeight: 800 }}>{user.name}</Typography>
                 <Typography variant="caption" sx={{ opacity: 0.6 }}>
+                  {user.username ? `@${user.username} · ` : ''}
                   {user.isPhotographer ? 'Fotógrafo' : 'Surfista'}
                 </Typography>
               </Box>
+              <Divider />
+              <MenuItem onClick={() => go('/meus-picos')}>
+                <ListItemIcon>
+                  <Star width={18} height={18} />
+                </ListItemIcon>
+                Meus picos e alertas
+              </MenuItem>
+              <MenuItem onClick={() => go('/perfil')}>
+                <ListItemIcon>
+                  <User width={18} height={18} />
+                </ListItemIcon>
+                Meu perfil
+              </MenuItem>
               <Divider />
               {/* MUI Menu não aceita Fragment como filho: itens condicionais em array */}
               {FEATURES.photos && [
@@ -115,6 +131,9 @@ export function Header() {
           </>
         ) : (
           <>
+            <Button onClick={() => navigate('/cadastro')} sx={{ borderRadius: 99, display: { xs: 'none', sm: 'inline-flex' } }}>
+              Criar conta
+            </Button>
             <Button
               variant="outlined"
               onClick={() => void requireLogin()}

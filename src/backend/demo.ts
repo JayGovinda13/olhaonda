@@ -2,8 +2,11 @@
  * Modo demonstração: tudo fica no localStorage deste navegador.
  * Usado quando VITE_SUPABASE_URL não está configurado, para navegar e testar as telas.
  */
+import { USERNAME_RE } from './types'
 import type {
+  AppNotification,
   Backend,
+  Favorite,
   NewSession,
   NewThread,
   Photo,
@@ -14,8 +17,14 @@ import type {
   Thread,
 } from './types'
 
+type DemoUser = { profile: Profile; email: string; password: string }
+
 type DB = {
   me: Profile | null
+  /** contas criadas no cadastro (só neste navegador) */
+  users: DemoUser[]
+  favorites: Record<string, Favorite[]>
+  notifications: Record<string, AppNotification[]>
   threads: Thread[]
   posts: Post[]
   sessions: PhotoSession[]
@@ -23,7 +32,7 @@ type DB = {
   purchases: { id: string; sessionId: string; photoIds: string[]; totalCents: number; createdAt: string }[]
 }
 
-const KEY = 'olhaonda:demo:v1'
+const KEY = 'olhaonda:demo:v2'
 const uid = () => Math.random().toString(36).slice(2, 10)
 const iso = (offsetMin = 0) => new Date(Date.now() - offsetMin * 60_000).toISOString()
 const today = (offsetDays = 0) => {
@@ -64,6 +73,8 @@ function seed(): DB {
       createdAt: iso(180),
       lastActivityAt: iso(40),
       replyCount: 2,
+      kind: 'user',
+      forecastDate: null,
     },
     {
       id: t2,
@@ -76,6 +87,8 @@ function seed(): DB {
       createdAt: iso(60 * 26),
       lastActivityAt: iso(60 * 20),
       replyCount: 1,
+      kind: 'user',
+      forecastDate: null,
     },
     {
       id: t3,
@@ -88,6 +101,8 @@ function seed(): DB {
       createdAt: iso(60 * 72),
       lastActivityAt: iso(60 * 72),
       replyCount: 0,
+      kind: 'user',
+      forecastDate: null,
     },
   ]
   const posts: Post[] = [
@@ -124,13 +139,15 @@ function seed(): DB {
   mk('s2', '@fotosurfguaruja', 'gua-pit-ilha', today(0), 'tarde', 2000, 6)
   mk('s3', '@mar.lentes', 'gua-guaiuba', today(1), 'manha', 2500, 8)
   mk('s4', '@ondaclick', 'maresias', today(2), 'manha', 3000, 7)
-  return { me: null, threads, posts, sessions, photos, purchases: [] }
+  return { me: null, users: [], favorites: {}, notifications: {}, threads, posts, sessions, photos, purchases: [] }
 }
+
+const seedEmpty = () => ({ users: [], favorites: {}, notifications: {} })
 
 function load(): DB {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return JSON.parse(raw) as DB
+    if (raw) return { ...seedEmpty(), ...(JSON.parse(raw) as Partial<DB>) } as DB
   } catch {
     /* ignora */
   }
@@ -141,6 +158,8 @@ let db = load()
 // Prévias enviadas nesta aba (object URLs não sobrevivem a um reload)
 const blobUrls = new Map<string, string>()
 const listeners = new Set<(p: Profile | null) => void>()
+const notifListeners = new Set<() => void>()
+const emitNotif = () => notifListeners.forEach((l) => l())
 
 function save() {
   try {
@@ -171,6 +190,41 @@ export const demoBackend: Backend = {
     },
     async signInWithEmail(email) {
       setMe({ id: `u-${email}`, name: email.split('@')[0], isPhotographer: false })
+    },
+    async signInWithPassword(email, password) {
+      const u = db.users.find((x) => x.email === email.trim().toLowerCase())
+      if (!u || u.password !== password) throw new Error('E-mail ou senha incorretos.')
+      setMe(u.profile)
+    },
+    async signUp(input) {
+      const email = input.email.trim().toLowerCase()
+      if (db.users.some((u) => u.email === email)) throw new Error('Já existe uma conta com esse e-mail.')
+      const username = input.username.trim().toLowerCase()
+      if (!USERNAME_RE.test(username)) throw new Error('Apelido inválido.')
+      if (db.users.some((u) => u.profile.username === username)) throw new Error('Esse apelido já está em uso.')
+      const profile: Profile = {
+        id: `u-${uid()}`,
+        name: input.name.trim(),
+        username,
+        city: input.city.trim() || null,
+        modality: input.modality,
+        level: input.level,
+        isPhotographer: false,
+      }
+      db.users.push({ profile, email, password: input.password })
+      setMe(profile)
+      return { needsConfirmation: false }
+    },
+    async usernameAvailable(username) {
+      const u = username.trim().toLowerCase()
+      return delay(USERNAME_RE.test(u) && !db.users.some((x) => x.profile.username === u))
+    },
+    async updateProfile(patch) {
+      const me = requireMe()
+      const next = { ...me, ...patch }
+      const u = db.users.find((x) => x.profile.id === me.id)
+      if (u) u.profile = next
+      setMe(next)
     },
     async signInWithGoogle() {
       setMe({ id: 'u-google', name: 'Surfista', isPhotographer: false })
@@ -210,6 +264,8 @@ export const demoBackend: Backend = {
         createdAt: iso(),
         lastActivityAt: iso(),
         replyCount: 0,
+        kind: 'user',
+        forecastDate: null,
       }
       db.threads.unshift(t)
       save()
@@ -235,6 +291,83 @@ export const demoBackend: Backend = {
       const t = db.threads.find((x) => x.id === p.threadId)
       if (t) t.replyCount--
       save()
+    },
+    async ensureDailyPost(spotId, summary) {
+      if (db.threads.some((t) => t.kind === 'daily' && t.spotId === spotId && t.forecastDate === summary.date)) return
+      const at = `${summary.date}T08:15:00.000Z` // 05:15 em São Paulo, como a rodada do servidor
+      db.threads.unshift({
+        id: uid(),
+        title: summary.title,
+        body: summary.body,
+        category: 'previsao',
+        spotId,
+        authorId: 'olhaonda',
+        authorName: 'OlhaOnda',
+        createdAt: at < iso() ? at : iso(),
+        lastActivityAt: at < iso() ? at : iso(),
+        replyCount: 0,
+        kind: 'daily',
+        forecastDate: summary.date,
+      })
+      save()
+    },
+  },
+
+  favorites: {
+    async list() {
+      const me = requireMe()
+      return delay(db.favorites[me.id] ?? [])
+    },
+    async save(spotId, prefs, notify) {
+      const me = requireMe()
+      const list = db.favorites[me.id] ?? []
+      const prev = list.find((f) => f.spotId === spotId)
+      const fav: Favorite = { spotId, prefs, notify, createdAt: prev?.createdAt ?? iso() }
+      db.favorites[me.id] = [...list.filter((f) => f.spotId !== spotId), fav]
+      save()
+      return delay(fav)
+    },
+    async remove(spotId) {
+      const me = requireMe()
+      db.favorites[me.id] = (db.favorites[me.id] ?? []).filter((f) => f.spotId !== spotId)
+      save()
+    },
+  },
+
+  notifications: {
+    async list() {
+      if (!db.me) return []
+      return delay([...(db.notifications[db.me.id] ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)))
+    },
+    async markRead(ids) {
+      const me = requireMe()
+      const now = iso()
+      for (const n of db.notifications[me.id] ?? []) if (!n.readAt && (ids === 'all' || ids.includes(n.id))) n.readAt = now
+      save()
+      emitNotif()
+    },
+    onChange(cb) {
+      notifListeners.add(cb)
+      return () => notifListeners.delete(cb)
+    },
+    async add(input) {
+      const me = requireMe()
+      const list = db.notifications[me.id] ?? []
+      if (list.some((n) => n.spotId === input.spotId && n.sessionDate === input.sessionDate)) return null
+      const n: AppNotification = { ...input, id: uid(), createdAt: iso(), readAt: null }
+      db.notifications[me.id] = [n, ...list].slice(0, 100)
+      save()
+      emitNotif()
+      return n
+    },
+  },
+
+  push: {
+    vapidPublicKey: null, // demonstração: avisos locais do navegador, sem servidor de push
+    async subscribe() {},
+    async unsubscribe() {},
+    async test() {
+      return 0
     },
   },
 

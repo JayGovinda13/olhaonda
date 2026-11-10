@@ -12,13 +12,22 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { Mail, Xmark } from 'iconoir-react'
+import { Lock, Mail, Xmark } from 'iconoir-react'
 import { useState, type FormEvent } from 'react'
 import { backend } from '../backend'
 import { LogoMark } from '../components/Logo'
 
+/** O diálogo fica fora do roteador: navega pelo History API e avisa o React Router. */
+function softNavigate(path: string) {
+  window.history.pushState({}, '', path)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
 export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?: string; onClose: () => void }) {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [magic, setMagic] = useState(false)
+  const [quick, setQuick] = useState(false)
   const [name, setName] = useState('')
   const [photographer, setPhotographer] = useState(false)
   const [sent, setSent] = useState(false)
@@ -41,8 +50,10 @@ export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?
   const submitEmail = (e: FormEvent) => {
     e.preventDefault()
     void run(async () => {
-      await backend.auth.signInWithEmail(email.trim())
-      setSent(true)
+      if (magic) {
+        await backend.auth.signInWithEmail(email.trim())
+        setSent(true)
+      } else await backend.auth.signInWithPassword(email.trim(), password)
     })
   }
 
@@ -70,10 +81,14 @@ export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?
 
           {error && <Alert severity="error">{error}</Alert>}
 
-          {demo ? (
+          {sent ? (
+            <Alert severity="success">
+              Enviamos um link de acesso para <b>{email}</b>. Abra seu e-mail neste aparelho para entrar.
+            </Alert>
+          ) : demo && quick ? (
             <Box component="form" onSubmit={submitDemo}>
               <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
-                Modo demonstração: nenhum dado sai do seu navegador. Configure o Supabase para contas reais.
+                Entrada rápida de demonstração: nenhum dado sai do seu navegador.
               </Alert>
               <Stack spacing={1.5}>
                 <TextField label="Seu nome ou apelido" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
@@ -84,24 +99,25 @@ export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?
                 <Button type="submit" variant="contained" size="large" disabled={busy}>
                   Entrar
                 </Button>
+                <Button onClick={() => setQuick(false)}>Voltar</Button>
               </Stack>
             </Box>
-          ) : sent ? (
-            <Alert severity="success">
-              Enviamos um link de acesso para <b>{email}</b>. Abra seu e-mail neste aparelho para entrar.
-            </Alert>
           ) : (
             <>
-              <Button
-                variant="outlined"
-                size="large"
-                disabled={busy}
-                onClick={() => void run(() => backend.auth.signInWithGoogle())}
-                startIcon={<GoogleG />}
-              >
-                Continuar com Google
-              </Button>
-              <Divider sx={{ fontSize: 12, opacity: 0.7 }}>ou</Divider>
+              {!demo && (
+                <>
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    disabled={busy}
+                    onClick={() => void run(() => backend.auth.signInWithGoogle())}
+                    startIcon={<GoogleG />}
+                  >
+                    Continuar com Google
+                  </Button>
+                  <Divider sx={{ fontSize: 12, opacity: 0.7 }}>ou</Divider>
+                </>
+              )}
               <Box component="form" onSubmit={submitEmail}>
                 <Stack spacing={1.5}>
                   <TextField
@@ -112,11 +128,53 @@ export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
                   />
-                  <Button type="submit" variant="contained" size="large" disabled={busy} startIcon={<Mail width={18} height={18} />}>
-                    Receber link de acesso
+                  {!magic && (
+                    <TextField
+                      type="password"
+                      label="Senha"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                    />
+                  )}
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    disabled={busy}
+                    startIcon={magic ? <Mail width={18} height={18} /> : <Lock width={18} height={18} />}
+                  >
+                    {magic ? 'Receber link de acesso' : 'Entrar'}
                   </Button>
+                  {!demo && (
+                    <Button size="small" onClick={() => setMagic((m) => !m)}>
+                      {magic ? 'Entrar com senha' : 'Esqueci a senha / entrar sem senha'}
+                    </Button>
+                  )}
                 </Stack>
               </Box>
+              <Divider />
+              <Stack spacing={1}>
+                <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                  Ainda não tem conta?
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => {
+                    onClose()
+                    softNavigate('/cadastro')
+                  }}
+                >
+                  Criar conta grátis
+                </Button>
+                {demo && (
+                  <Button size="small" onClick={() => setQuick(true)}>
+                    Entrada rápida (demonstração)
+                  </Button>
+                )}
+              </Stack>
             </>
           )}
         </Stack>

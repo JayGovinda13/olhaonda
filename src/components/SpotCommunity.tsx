@@ -9,10 +9,13 @@ import type { Spot } from '../data/spots'
 import { timeAgo } from '../lib/time'
 import { dayLabel } from '../lib/surf'
 import { brand } from '../theme'
+import { useDailyPost } from '../hooks/useDailyPost'
+import { LogoMark } from './Logo'
 
 /** Tópicos e fotos recentes do pico selecionado. */
 export function SpotCommunity({ spot }: { spot: Spot }) {
   const [data, setData] = useState<{ spot: string; threads: Thread[]; sessions: PhotoSession[] } | null>(null)
+  const version = useDailyPost(FEATURES.forum ? spot : null)
 
   useEffect(() => {
     let alive = true
@@ -20,14 +23,16 @@ export function SpotCommunity({ spot }: { spot: Spot }) {
       FEATURES.forum ? backend.forum.listThreads({ spotId: spot.id }) : Promise.resolve([]),
       FEATURES.photos ? backend.photos.listSessions({ spotId: spot.id }) : Promise.resolve([]),
     ])
-      .then(([threads, sessions]) => alive && setData({ spot: spot.id, threads: threads.slice(0, 3), sessions: sessions.slice(0, 4) }))
+      .then(([threads, sessions]) => alive && setData({ spot: spot.id, threads, sessions: sessions.slice(0, 4) }))
       .catch(() => alive && setData({ spot: spot.id, threads: [], sessions: [] }))
     return () => {
       alive = false
     }
-  }, [spot.id])
+  }, [spot.id, version])
 
   const current = data?.spot === spot.id ? data : null
+  const daily = current?.threads.filter((t) => t.kind === 'daily').sort((a, b) => (b.forecastDate ?? '').localeCompare(a.forecastDate ?? ''))[0] ?? null
+  const userThreads = current?.threads.filter((t) => t.kind === 'user').slice(0, 3) ?? []
 
   return (
     <Box
@@ -40,22 +45,42 @@ export function SpotCommunity({ spot }: { spot: Spot }) {
       {FEATURES.forum && (
         <Paper sx={{ p: { xs: 2, sm: 3 } }}>
           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-            <Typography variant="h6">Papo no pico</Typography>
-            <Button component={RouterLink} to={`/forum?pico=${spot.id}`} size="small" startIcon={<ChatLines width={16} height={16} />}>
-              Ver fórum
+            <Typography variant="h6">Fórum do pico</Typography>
+            <Button component={RouterLink} to={`/pico/${spot.id}/forum`} size="small" startIcon={<ChatLines width={16} height={16} />}>
+              Abrir fórum
             </Button>
           </Stack>
-          {current && current.threads.length === 0 && (
+          {daily && (
+            <ButtonBase
+              component={RouterLink}
+              to={`/forum/${daily.id}`}
+              sx={{ display: 'flex', gap: 1.25, alignItems: 'flex-start', textAlign: 'left', p: 1.5, mb: 1, width: '100%', borderRadius: '14px', bgcolor: alpha(brand.green, 0.1), '&:hover': { bgcolor: alpha(brand.green, 0.16) } }}
+            >
+              <Box sx={{ flexShrink: 0, mt: 0.25 }}>
+                <LogoMark size={22} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, opacity: 0.7 }}>
+                  OlhaOnda · resumo do dia
+                </Typography>
+                <Typography sx={{ fontWeight: 700 }}>{daily.title}</Typography>
+                <Typography variant="caption" sx={{ opacity: 0.65 }}>
+                  {daily.replyCount} {daily.replyCount === 1 ? 'resposta' : 'respostas'} · conte como está o mar
+                </Typography>
+              </Box>
+            </ButtonBase>
+          )}
+          {current && userThreads.length === 0 && (
             <Typography variant="body2" sx={{ opacity: 0.7 }}>
-              Ninguém comentou sobre {spot.name} ainda.{' '}
-              <RouterLink to={`/forum?pico=${spot.id}&novo=1`} style={{ color: brand.plum, fontWeight: 700 }}>
+              Nenhum tópico da galera sobre {spot.name} ainda.{' '}
+              <RouterLink to={`/pico/${spot.id}/forum?novo=1`} style={{ color: brand.plum, fontWeight: 700 }}>
                 Conte como está o mar
               </RouterLink>
               .
             </Typography>
           )}
           <Stack spacing={0.5}>
-            {current?.threads.map((t) => (
+            {userThreads.map((t) => (
               <ButtonBase
                 key={t.id}
                 component={RouterLink}

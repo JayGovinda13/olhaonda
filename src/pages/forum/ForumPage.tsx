@@ -20,7 +20,7 @@ import { ChatBubble, Plus } from 'iconoir-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '../../auth/context'
-import { backend, FORUM_CATEGORIES, type ForumCategory, type Thread } from '../../backend'
+import { backend, FORUM_CATEGORIES, USER_CATEGORIES, type ForumCategory, type Thread } from '../../backend'
 import { SpotPicker } from '../../components/SpotPicker'
 import { SPOTS } from '../../data/spots'
 import { timeAgo } from '../../lib/time'
@@ -97,6 +97,11 @@ export default function ForumPage() {
         </Stack>
         <SpotPicker value={spot} onChange={(s) => update({ pico: s?.id ?? null })} allowEmpty locate={false} placeholder="Filtrar por pico" width={320} />
       </Stack>
+      {spot && (
+        <Alert severity="info" variant="outlined" action={<Button component={RouterLink} to={`/pico/${spot.id}/forum`}>Abrir</Button>}>
+          {spot.name} tem um fórum próprio, com o resumo diário da previsão.
+        </Alert>
+      )}
 
       {error && <Alert severity="error">{error}</Alert>}
 
@@ -135,7 +140,11 @@ export default function ForumPage() {
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Stack direction="row" spacing={1} sx={{ mb: 0.5, flexWrap: 'wrap', rowGap: 0.5 }}>
-                <Chip size="small" label={catLabel(t.category)} sx={{ height: 22, fontSize: 11, bgcolor: alpha(brand.green, 0.14), color: brand.deepGreen }} />
+                <Chip
+                  size="small"
+                  label={t.kind === 'daily' ? 'OlhaOnda · previsão do dia' : catLabel(t.category)}
+                  sx={{ height: 22, fontSize: 11, bgcolor: t.kind === 'daily' ? brand.purple : alpha(brand.green, 0.14), color: t.kind === 'daily' ? brand.sand : brand.deepGreen }}
+                />
                 {t.spotId && <Chip size="small" label={spotName(t.spotId)} variant="outlined" sx={{ height: 22, fontSize: 11 }} />}
               </Stack>
               <Typography sx={{ fontWeight: 800, fontSize: 17 }}>{t.title}</Typography>
@@ -162,7 +171,7 @@ export default function ForumPage() {
   )
 }
 
-function NewThreadDialog({
+export function NewThreadDialog({
   open,
   defaultSpot,
   defaultCategory,
@@ -177,7 +186,7 @@ function NewThreadDialog({
 }) {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
-  const [category, setCategory] = useState<ForumCategory>(defaultCategory ?? 'condicoes')
+  const [category, setCategory] = useState<ForumCategory>(defaultCategory && defaultCategory !== 'previsao' ? defaultCategory : 'condicoes')
   const [spotId, setSpotId] = useState<string | null>(defaultSpot)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -206,7 +215,7 @@ function NewThreadDialog({
           <TextField label="Título" required value={title} onChange={(e) => setTitle(e.target.value)} slotProps={{ htmlInput: { minLength: 3, maxLength: 140 } }} autoFocus />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField select label="Categoria" value={category} onChange={(e) => setCategory(e.target.value as ForumCategory)} sx={{ minWidth: 220 }}>
-              {FORUM_CATEGORIES.map((c) => (
+              {USER_CATEGORIES.map((c) => (
                 <MenuItem key={c.id} value={c.id}>
                   {c.label}
                 </MenuItem>

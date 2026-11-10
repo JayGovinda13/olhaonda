@@ -37,3 +37,6 @@ jobs:
           supabase functions deploy create-checkout --project-ref "$PROJECT_REF"
           supabase functions deploy mp-webhook --no-verify-jwt --project-ref "$PROJECT_REF"
           supabase functions deploy mp-oauth --no-verify-jwt --project-ref "$PROJECT_REF"
+          # rodada diária: protegida pelo cabeçalho x-cron-secret (não usa login)
+          supabase functions deploy daily-forecast --no-verify-jwt --project-ref "$PROJECT_REF"
+          supabase functions deploy push-test --project-ref "$PROJECT_REF"

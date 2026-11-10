@@ -1,13 +1,14 @@
 import { Alert, Box, Button, Skeleton, Stack, Typography } from '@mui/material'
 import { Refresh } from 'iconoir-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router'
 import { AdSlot } from '../components/AdSlot'
 import { DayStrip } from '../components/DayStrip'
 import { HourlyChart } from '../components/HourlyChart'
 import { NowPanel } from '../components/NowPanel'
 import { SpotCommunity } from '../components/SpotCommunity'
 import { HAS_COMMUNITY } from '../config/env'
+import { FavoriteButton } from '../components/community/FavoriteButton'
 import { PicoPanel } from '../components/pico/PicoPanel'
 import { SpotPicker } from '../components/SpotPicker'
 import { TidePanel } from '../components/TidePanel'
@@ -40,8 +41,11 @@ export default function ForecastPage() {
   const weekMax = useMemo(() => Math.max(0, ...(hours ?? []).map((h) => surfEstimate(spot, h)?.hb ?? 0)), [spot, hours])
 
   // a hora escolhida vale só para o pico em que foi escolhida
+  // ?t=2026-11-12T06:00 (links dos avisos e do fórum) abre direto naquela hora
+  const [params] = useSearchParams()
+  const linked = params.get('t')
   const [pick, setPick] = useState<{ spot: string; time: string } | null>(null)
-  const selTime = pick?.spot === spot.id ? pick.time : null
+  const selTime = pick?.spot === spot.id ? pick.time : linked
   const setSelTime = useCallback((time: string) => setPick({ spot: spot.id, time }), [spot.id])
 
   const selected = hours ? (hours.find((h) => h.time === selTime) ?? hours[nowIdx]) : undefined
@@ -69,7 +73,12 @@ export default function ForecastPage() {
 
   return (
     <Stack spacing={2}>
-      <SpotPicker value={spot} onChange={(s) => s && setSpot(s.id)} />
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+        <Box sx={{ flex: '0 1 420px', minWidth: 0 }}>
+          <SpotPicker value={spot} onChange={(s) => s && setSpot(s.id)} />
+        </Box>
+        {HAS_COMMUNITY && <FavoriteButton spot={spot} compact />}
+      </Stack>
 
       {forecast.status === 'error' && (
         <Alert

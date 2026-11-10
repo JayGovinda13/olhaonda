@@ -3,7 +3,9 @@
  * Esquema em supabase/migrations; pagamentos em supabase/functions.
  */
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
-import type { Backend, ForumCategory, Photo, PhotoSession, Post, Profile, Purchase, Thread } from './types'
+import type { SpotPrefs } from '../../supabase/functions/_shared/core/prefs.ts'
+import { normalizePrefs } from '../../supabase/functions/_shared/core/prefs.ts'
+import type { AppNotification, Backend, Favorite, ForumCategory, Level, Modality, Photo, PhotoSession, Post, Profile, Purchase, Thread } from './types'
 
 type Row = Record<string, unknown>
 
@@ -21,6 +23,30 @@ function toThread(r: Row): Thread {
     createdAt: str(r.created_at),
     lastActivityAt: str(r.last_activity_at),
     replyCount: Number(r.reply_count ?? 0),
+    kind: r.kind === 'daily' ? 'daily' : 'user',
+    forecastDate: (r.forecast_date as string | null) ?? null,
+  }
+}
+
+function toFavorite(r: Row): Favorite {
+  return {
+    spotId: str(r.spot_id),
+    prefs: normalizePrefs(r.prefs as Partial<SpotPrefs>),
+    notify: Boolean(r.notify),
+    createdAt: str(r.created_at),
+  }
+}
+
+function toNotification(r: Row): AppNotification {
+  return {
+    id: str(r.id),
+    spotId: str(r.spot_id),
+    sessionDate: str(r.session_date),
+    title: str(r.title),
+    body: str(r.body),
+    url: str(r.url),
+    createdAt: str(r.created_at),
+    readAt: (r.read_at as string | null) ?? null,
   }
 }
 
@@ -72,6 +98,11 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
       isPhotographer: Boolean(data?.is_photographer),
       paymentsConnected: Boolean(data?.payments_connected),
       instagram: (data?.instagram as string | null) ?? null,
+      username: (data?.username as string | null) ?? null,
+      city: (data?.city as string | null) ?? null,
+      modality: (data?.modality as Modality | null) ?? null,
+      level: (data?.level as Level | null) ?? null,
+      bio: (data?.bio as string | null) ?? null,
     }
   }
 
@@ -116,6 +147,44 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
       },
       async signInWithEmail(email) {
         check(await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo() } }))
+      },
+      async signInWithPassword(email, password) {
+        const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password })
+        if (error) throw new Error(error.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : error.message)
+      },
+      async signUp(input) {
+        const { data, error } = await sb.auth.signUp({
+          email: input.email.trim(),
+          password: input.password,
+          options: {
+            emailRedirectTo: `${location.origin}/`,
+            // vai para raw_user_meta_data; o gatilho handle_new_user cria o perfil com esses dados
+            data: {
+              display_name: input.name.trim(),
+              username: input.username.trim().toLowerCase(),
+              city: input.city.trim(),
+              modality: input.modality,
+              level: input.level,
+            },
+          },
+        })
+        if (error) throw new Error(error.message === 'User already registered' ? 'Já existe uma conta com esse e-mail.' : error.message)
+        return { needsConfirmation: !data.session }
+      },
+      async usernameAvailable(username) {
+        const { data, error } = await sb.rpc('username_available', { name: username.trim().toLowerCase() })
+        if (error) return true // na dúvida não bloqueia; o banco garante a unicidade
+        return Boolean(data)
+      },
+      async updateProfile(patch) {
+        const id = await uidOrThrow()
+        const row: Record<string, unknown> = {}
+        if (patch.name !== undefined) row.display_name = patch.name
+        if (patch.username !== undefined) row.username = patch.username?.toLowerCase() || null
+        for (const k of ['city', 'modality', 'level', 'bio'] as const) if (patch[k] !== undefined) row[k] = patch[k]
+        const { error } = await sb.from('profiles').update(row).eq('id', id)
+        if (error) throw new Error(error.code === '23505' ? 'Esse apelido já está em uso.' : error.message)
+        await sb.auth.refreshSession()
       },
       async signInWithGoogle() {
         const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectTo() } })
@@ -167,6 +236,67 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
       },
       async deletePost(postId) {
         check(await sb.from('forum_posts').delete().eq('id', postId))
+      },
+    },
+
+    favorites: {
+      async list() {
+        const id = await uidOrThrow()
+        return (check(await sb.from('favorite_spots').select('*').eq('user_id', id).order('created_at')) as Row[]).map(toFavorite)
+      },
+      async save(spotId, prefs, notify) {
+        const id = await uidOrThrow()
+        const row = check(
+          await sb.from('favorite_spots').upsert({ user_id: id, spot_id: spotId, prefs, notify }).select('*').single(),
+        ) as Row
+        return toFavorite(row)
+      },
+      async remove(spotId) {
+        const id = await uidOrThrow()
+        check(await sb.from('favorite_spots').delete().eq('user_id', id).eq('spot_id', spotId))
+      },
+    },
+
+    notifications: {
+      async list() {
+        const { data: s } = await sb.auth.getSession()
+        if (!s.session) return []
+        return (check(await sb.from('notifications').select('*').order('created_at', { ascending: false }).limit(50)) as Row[]).map(toNotification)
+      },
+      async markRead(ids) {
+        let q = sb.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null)
+        if (ids !== 'all') q = q.in('id', ids)
+        check(await q)
+      },
+      onChange(cb) {
+        // novas notificações chegam pela Edge Function; o realtime avisa o site aberto
+        const ch = sb
+          .channel('notifications')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => cb())
+          .subscribe()
+        return () => void sb.removeChannel(ch)
+      },
+    },
+
+    push: {
+      vapidPublicKey: (import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined) || null,
+      async subscribe(sub) {
+        const id = await uidOrThrow()
+        check(
+          await sb.from('push_subscriptions').upsert({
+            endpoint: sub.endpoint,
+            user_id: id,
+            p256dh: sub.keys?.p256dh,
+            auth: sub.keys?.auth,
+          }),
+        )
+      },
+      async unsubscribe(endpoint) {
+        check(await sb.from('push_subscriptions').delete().eq('endpoint', endpoint))
+      },
+      async test() {
+        const r = await invoke<{ sent: number }>('push-test', {})
+        return r.sent
       },
     },
 

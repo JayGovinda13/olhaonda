@@ -160,6 +160,31 @@ em cada projeto com `supabase secrets set`.
 
 **CI:** `.github/workflows/ci.yml` roda tipos, lint e os dois builds em todo push e pull request.
 
+## Comunidade (staging): cadastro, fórum por pico e alertas
+
+| Recurso | Onde | Como funciona |
+| --- | --- | --- |
+| Cadastro | `/cadastro` | Nome, apelido (@), e-mail e senha, cidade, surf/bodyboard, nível e até 5 picos favoritos. Também entra com Google ou link por e-mail. |
+| Fórum do pico | `/pico/:id/forum` | Cada pico tem o seu. Todo dia às 5h o OlhaOnda publica o resumo da previsão (ondas na arrebentação de manhã e à tarde, swell, vento terral/maral, maré, lua e tempo); a galera responde como o mar realmente está. |
+| Picos favoritos | estrela na previsão e `/meus-picos` | Para cada pico: tamanho, vento (só terral / aceita lateral / qualquer), vento máximo, período mínimo, maré, manhã/tarde, horas seguidas e antecedência do aviso. A tela mostra na hora quais dos próximos 14 dias batem. |
+| Avisos | sino no topo + push no navegador | Quando a previsão bate com o gosto, um aviso por pico por dia. Push chega com o site fechado (Android, computador; iPhone com o site na tela de início). |
+
+Cálculos compartilhados entre o site e o servidor em `supabase/functions/_shared/core` (resumo diário em
+`summary.ts`, condições em `prefs.ts`), então o resumo e os alertas usam exatamente os números da página.
+
+**Ligar no Supabase de staging:**
+
+1. Migração `20261110000000_cadastro_forum_alertas.sql` (o workflow `supabase-deploy` aplica sozinho).
+2. Auth > Providers > Email: deixe *Confirm email* ligado (o cadastro mostra "confirme seu e-mail").
+3. Chaves de push: `npx web-push generate-vapid-keys`. Pública em `VITE_VAPID_PUBLIC_KEY` (Preview na Cloudflare);
+   na função: `supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:contato@olhaonda.com`.
+4. Agendamento: `supabase secrets set CRON_SECRET=<senha longa> SITE_URL=https://staging.olhaonda.com` e o mesmo
+   `CRON_SECRET` no environment `staging` do GitHub. O workflow `daily-forecast.yml` chama a função às 5h13 e 17h13.
+5. Opcional: `OPEN_METEO_API_KEY` (plano comercial) e `SPOT_SCOPE=baixada` no projeto de produção.
+
+Sem Supabase (modo demonstração) tudo funciona no navegador: o resumo do dia é gerado ao abrir o fórum do pico
+e os alertas são conferidos com o site aberto, a cada 30 min.
+
 ## Google AdSense (publicidade)
 
 O site já está preparado: página *Sobre e contato* (`/sobre`), política de privacidade (`/privacidade`), aviso de

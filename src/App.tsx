@@ -1,7 +1,7 @@
 import { lazy } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider, type RouteObject } from 'react-router'
 import { AuthProvider } from './auth/AuthProvider'
-import { FEATURES } from './config/env'
+import { FEATURES, HAS_COMMUNITY } from './config/env'
 import { Layout } from './layout/Layout'
 import ForecastPage from './pages/ForecastPage'
 import HomePage from './pages/HomePage'
@@ -15,6 +15,10 @@ const SellPage = lazy(() => import('./pages/photos/SellPage'))
 const PurchasesPage = lazy(() => import('./pages/photos/PurchasesPage'))
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
 const AboutPage = lazy(() => import('./pages/AboutPage'))
+const SpotForumPage = lazy(() => import('./pages/forum/SpotForumPage'))
+const SignUpPage = lazy(() => import('./pages/SignUpPage'))
+const MySpotsPage = lazy(() => import('./pages/MySpotsPage'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 
 // Rotas desligadas no ambiente (ex.: fórum e fotos em produção) nem entram no roteador.
 const routes: RouteObject[] = [
@@ -26,6 +30,15 @@ const routes: RouteObject[] = [
     ? [
         { path: 'forum', element: <ForumPage /> },
         { path: 'forum/:id', element: <ThreadPage /> },
+        { path: 'pico/:id/forum', element: <SpotForumPage /> },
+      ]
+    : []),
+  // conta, favoritos e alertas existem onde há comunidade (staging hoje)
+  ...(HAS_COMMUNITY
+    ? [
+        { path: 'cadastro', element: <SignUpPage /> },
+        { path: 'meus-picos', element: <MySpotsPage /> },
+        { path: 'perfil', element: <ProfilePage /> },
       ]
     : []),
   ...(FEATURES.photos

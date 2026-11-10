@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "build:staging": "tsc -b && vite build --mode staging",
     "build:production": "tsc -b && vite build --mode production",
-    "lint": "oxlint src",
+    "lint": "oxlint src supabase/functions/_shared/core",
     "typecheck": "tsc -b",
     "preview": "vite preview",
     "build:ci": "node scripts/ci-build.mjs"

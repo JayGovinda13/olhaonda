@@ -7,6 +7,7 @@ import { AdSlot } from '../components/AdSlot'
 import { ConsentBanner } from '../components/ConsentBanner'
 import { Header } from '../components/Header'
 import { LogoMark } from '../components/Logo'
+import { CommunityEffects } from './CommunityEffects'
 
 export function Layout() {
   return (
@@ -82,6 +83,7 @@ export function Layout() {
           </Stack>
         </Container>
       </Box>
+      {HAS_COMMUNITY && <CommunityEffects />}
       <ConsentBanner />
       {/* nova página começa do topo; voltar restaura a rolagem anterior */}
       <ScrollRestoration />

@@ -1,0 +1,29 @@
+# Rodada diária do fórum e dos alertas (Edge Function daily-forecast) no STAGING:
+#   05:13 (horário de Brasília): publica o resumo da previsão no fórum de cada pico e confere os alertas
+#   17:13: confere os alertas de novo com a previsão atualizada (não repete o resumo)
+#
+# Segredos no environment "staging" do GitHub: SUPABASE_PROJECT_REF (já existe) e CRON_SECRET
+# (o mesmo valor configurado na função: supabase secrets set CRON_SECRET=...).
+name: Previsão diária no fórum
+
+on:
+  schedule:
+    - cron: '13 8 * * *' # 05:13 BRT
+    - cron: '13 20 * * *' # 17:13 BRT
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Chamar daily-forecast
+        env:
+          REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          ONLY: ${{ github.event.schedule == '13 20 * * *' && 'alerts' || '' }}
+        run: |
+          if [ -z "$REF" ] || [ -z "$CRON_SECRET" ]; then echo "Configure SUPABASE_PROJECT_REF e CRON_SECRET no environment staging"; exit 1; fi
+          url="https://$REF.supabase.co/functions/v1/daily-forecast"
+          [ -n "$ONLY" ] && url="$url?only=$ONLY"
+          curl -sS --fail-with-body --max-time 400 -X POST -H "x-cron-secret: $CRON_SECRET" "$url"

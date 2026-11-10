@@ -4,38 +4,11 @@ import { ArrowDown, ArrowUp } from 'iconoir-react'
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
-import { tidePortFor } from '../data/tidePorts'
+import { extremes, m1, tidePortFor } from '../data/tidePorts'
 import { moonInfo } from '../lib/moon'
 import { dayLabel, fmt } from '../lib/surf'
 import { MoonIcon } from './MoonIcon'
 import { brand } from '../theme'
-
-type Extreme = { time: string; level: number; kind: 'alta' | 'baixa' }
-
-/** Padrão das tábuas da Marinha: metros com uma casa decimal. */
-const m1 = (v: number) => `${v.toFixed(1).replace('.', ',')} m`
-
-/**
- * Preamares e baixa-mares com precisão de minutos: ajusta uma parábola pelos três pontos
- * horários em volta de cada pico/vale e pega o vértice (os dados vêm de hora em hora).
- */
-function extremes(hours: HourPoint[]): Extreme[] {
-  const out: Extreme[] = []
-  for (let i = 1; i < hours.length - 1; i++) {
-    const [a, b, c] = [hours[i - 1].seaLevel, hours[i].seaLevel, hours[i + 1].seaLevel]
-    if (a == null || b == null || c == null) continue
-    const isHigh = b > a && b >= c
-    const isLow = b < a && b <= c
-    if (!isHigh && !isLow) continue
-    const denom = a - 2 * b + c
-    const dt = denom === 0 ? 0 : Math.max(-0.5, Math.min(0.5, (a - c) / (2 * denom))) // em horas
-    const level = b - ((a - c) * dt) / 4
-    const base = new Date(`${hours[i].time}:00Z`)
-    const t = new Date(base.getTime() + Math.round(dt * 60) * 60_000).toISOString().slice(0, 16)
-    out.push({ time: t, level, kind: isHigh ? 'alta' : 'baixa' })
-  }
-  return out
-}
 
 export function TidePanel({
   spot,
