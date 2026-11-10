@@ -39,7 +39,7 @@ export default function HomePage() {
   usePageMeta({
     title: 'OlhaOnda · Previsão de ondas para surf e bodyboard',
     description:
-      'Previsão de ondas para surf e bodyboard no litoral de São Paulo: Ubatuba, Maresias, Ilhabela, Guarujá, Santos, Praia Grande, Peruíbe, Ilha Comprida e mais. Swell, vento, maré e tempo.',
+      'Previsão de ondas de 14 dias, grátis, para surf e bodyboard no litoral de São Paulo: Ubatuba, Maresias, Ilhabela, Guarujá, Santos, Praia Grande, Peruíbe, Ilha Comprida e mais. Swell, vento, maré e tempo.',
     path: '/',
   })
 
@@ -88,6 +88,28 @@ export default function HomePage() {
       <Box sx={{ textAlign: 'center', pt: { xs: 0, md: 3 } }}>
         <Box sx={{ display: { xs: 'none', md: 'inline-block' }, mb: 2 }}>
           <Wordmark height={48} />
+        </Box>
+        {/* destaque: 14 dias grátis */}
+        <Box
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 1,
+            mb: 1.5,
+            px: 1.75,
+            py: 0.75,
+            borderRadius: 99,
+            bgcolor: brand.deepGreen,
+            color: brand.sand,
+            fontWeight: 800,
+            fontSize: { xs: 13, md: 15 },
+            boxShadow: '0 6px 18px rgba(15,76,58,.25)',
+          }}
+        >
+          <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: 99, bgcolor: brand.green, color: '#fff', fontSize: { xs: 12, md: 13 } }}>
+            14 dias
+          </Box>
+          de previsão, 100% grátis
         </Box>
         <Typography variant="h3" component="h1" sx={{ fontSize: { xs: 26, md: 40 } }}>
           Onde você vai cair hoje?
