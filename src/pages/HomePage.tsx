@@ -1,13 +1,13 @@
 import { Box, Breadcrumbs, Button, ButtonBase, Link, Paper, Stack, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { ArrowLeft, ArrowRight, Position } from 'iconoir-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import { HomeMap, type MapItem } from '../components/home/HomeMap'
 import { Wordmark } from '../components/Logo'
 import { SpotPicker } from '../components/SpotPicker'
 import { cities, spotsIn, STATE_NAMES, states } from '../data/hierarchy'
-import { DEFAULT_SPOT_ID, KIND_LABEL, nearestSpot, SPOTS, type Spot } from '../data/spots'
+import { DEFAULT_SPOT_ID, distanceKm, KIND_LABEL, SPOTS, type Spot } from '../data/spots'
 import { useLocalState } from '../hooks/useLocalState'
 import { usePageMeta } from '../lib/meta'
 import { dirDeg } from '../lib/surf'
@@ -25,6 +25,10 @@ export default function HomePage() {
   const [params, setParams] = useSearchParams()
   const [savedId] = useLocalState('olhaonda:spot', DEFAULT_SPOT_ID)
   const [locating, setLocating] = useState(false)
+  /** "Perto de mim": picos até 10 km (ou os 3 mais próximos, se não houver nenhum) */
+  const [nearby, setNearby] = useState<{ within: boolean; list: { spot: Spot; km: number }[] } | null>(null)
+  const [geoError, setGeoError] = useState<string | null>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   // no celular a tela de início é só a lista (o mapa nem carrega)
   const showMap = useMediaQuery(useTheme().breakpoints.up('md'), {
     noSsr: true,
@@ -47,6 +51,7 @@ export default function HomePage() {
 
   const go = (s: Spot | null) => s && navigate(`/pico/${s.id}`)
   const setLevel = (next: { uf?: string | null; cidade?: string | null }) => {
+    setNearby(null)
     const p = new URLSearchParams()
     if (next.uf && next.uf !== singleState) p.set('uf', next.uf)
     if (next.uf && next.cidade) {
@@ -58,6 +63,13 @@ export default function HomePage() {
 
   // itens do mapa no nível atual
   const items: MapItem[] = useMemo(() => {
+    if (nearby)
+      return nearby.list.map(({ spot: s }) => ({
+        type: 'spot',
+        spot: s,
+        active: s.id === savedId,
+        onClick: () => go(s),
+      }))
     if (!uf)
       return allStates.map((pl) => ({
         type: 'place',
@@ -77,27 +89,41 @@ export default function HomePage() {
       onClick: () => go(s),
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uf, city, cityList, spotList, allStates, savedId])
+  }, [uf, city, cityList, spotList, allStates, savedId, nearby])
 
   // links antigos (/?pico=…) continuam funcionando
   const legacy = params.get('pico')
   if (legacy && SPOTS.some((s) => s.id === legacy)) return <Navigate to={`/pico/${legacy}`} replace />
 
   const nearMe = () => {
-    if (!navigator.geolocation) return
+    setGeoError(null)
+    if (!navigator.geolocation) return setGeoError('Este navegador não informa a localização.')
     setLocating(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false)
-        go(nearestSpot(pos.coords.latitude, pos.coords.longitude))
+        const { latitude, longitude } = pos.coords
+        const all = SPOTS.map((spot) => ({ spot, km: distanceKm(latitude, longitude, spot.lat, spot.lon) })).sort((a, b) => a.km - b.km)
+        const within = all.filter((x) => x.km <= 10)
+        setNearby(within.length ? { within: true, list: within } : { within: false, list: all.slice(0, 3) })
+        // no celular a lista fica abaixo: rola até ela
+        setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
       },
-      () => setLocating(false),
-      { timeout: 8000 },
+      (err) => {
+        setLocating(false)
+        setGeoError(
+          err.code === err.PERMISSION_DENIED
+            ? 'Permita o acesso à localização no navegador para ver os picos perto de você.'
+            : 'Não foi possível descobrir sua localização agora. Tente de novo.',
+        )
+      },
+      { timeout: 10000, maximumAge: 5 * 60_000 },
     )
   }
+  const fmtKm = (km: number) => (km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1).replace('.', ',')} km`)
 
-  const title = !uf ? 'Escolha o estado' : !city ? 'Escolha a cidade' : 'Escolha o pico'
-  const back = city ? () => setLevel({ uf }) : uf && !singleState ? () => setLevel({}) : null
+  const title = nearby ? (nearby.within ? 'Perto de você · até 10 km' : 'Mais perto de você') : !uf ? 'Escolha o estado' : !city ? 'Escolha a cidade' : 'Escolha o pico'
+  const back = nearby ? () => setNearby(null) : city ? () => setLevel({ uf }) : uf && !singleState ? () => setLevel({}) : null
 
   return (
     <Stack spacing={3}>
@@ -180,6 +206,11 @@ export default function HomePage() {
             Perto de mim
           </Button>
         </Stack>
+        {geoError && (
+          <Typography variant="body2" sx={{ mt: 1.25, color: brand.plum, fontWeight: 700 }}>
+            {geoError}
+          </Typography>
+        )}
         {last && (
           <Button
             onClick={() => go(last)}
@@ -221,7 +252,9 @@ export default function HomePage() {
         {showMap && <HomeMap items={items} height={MAP_H} />}
 
         <Paper
+          ref={panelRef}
           sx={{
+            scrollMarginTop: 80,
             p: { xs: 2, sm: 2.5 },
             maxHeight: { md: MAP_H },
             display: 'flex',
@@ -239,7 +272,8 @@ export default function HomePage() {
                 {singleState ? 'Litoral de São Paulo' : (STATE_NAMES[uf] ?? uf)}
               </Link>
             )}
-            {city && <Typography sx={{ fontSize: 13, fontWeight: 800 }}>{city}</Typography>}
+            {city && !nearby && <Typography sx={{ fontSize: 13, fontWeight: 800 }}>{city}</Typography>}
+            {nearby && <Typography sx={{ fontSize: 13, fontWeight: 800 }}>Perto de mim</Typography>}
           </Breadcrumbs>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1.5 }}>
             {back && (
@@ -253,11 +287,21 @@ export default function HomePage() {
           </Stack>
 
           <Stack spacing={1} sx={{ overflowY: 'auto', pr: 0.5 }}>
-            {!uf &&
+            {nearby && !nearby.within && (
+              <Typography variant="body2" sx={{ opacity: 0.75, mb: 0.5 }}>
+                Nenhum pico até 10 km de você. Estes são os mais próximos:
+              </Typography>
+            )}
+            {nearby &&
+              nearby.list.map(({ spot: s, km }) => (
+                <Row key={s.id} title={s.name} sub={`${s.city} · ${fmtKm(km)}`} onClick={() => go(s)} active={s.id === savedId} />
+              ))}
+            {!nearby && !uf &&
               allStates.map((pl) => (
                 <Row key={pl.key} title={pl.name} sub={`${pl.count} picos`} onClick={() => setLevel({ uf: pl.key })} />
               ))}
-            {uf &&
+            {!nearby &&
+              uf &&
               !city &&
               cityList.map((pl) => (
                 <Row
@@ -267,7 +311,8 @@ export default function HomePage() {
                   onClick={() => setLevel({ uf, cidade: pl.key })}
                 />
               ))}
-            {city &&
+            {!nearby &&
+              city &&
               spotList.map((s) => (
                 <Row
                   key={s.id}

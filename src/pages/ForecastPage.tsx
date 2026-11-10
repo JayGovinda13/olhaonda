@@ -75,7 +75,7 @@ export default function ForecastPage() {
     <Stack spacing={2}>
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
         <Box sx={{ flex: '0 1 420px', minWidth: 0 }}>
-          <SpotPicker value={spot} onChange={(s) => s && setSpot(s.id)} />
+          <SpotPicker value={spot} onChange={(s) => s && setSpot(s.id)} locate={false} />
         </Box>
         {HAS_COMMUNITY && <FavoriteButton spot={spot} compact />}
       </Stack>
