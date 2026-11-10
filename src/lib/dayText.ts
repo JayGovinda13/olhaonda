@@ -101,3 +101,10 @@ export function windDay(spot: Spot, hours: HourPoint[]) {
   const goodMorning = kinds.filter((k) => GOOD.includes(k)).length >= kinds.length / 2
   return { avg, dir, gust, goodMorning }
 }
+
+/** horário da hora de maior valor: "15h" */
+export function peakHour(hours: HourPoint[], get: (h: HourPoint) => number | null) {
+  let best: HourPoint | null = null
+  for (const h of hours) if (get(h) != null && (best == null || get(h)! > get(best)!)) best = h
+  return best ? `${best.time.slice(11, 13)}h` : '—'
+}

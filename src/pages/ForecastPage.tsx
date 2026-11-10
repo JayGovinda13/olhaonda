@@ -120,16 +120,9 @@ export default function ForecastPage() {
               </Typography>
             </Stack>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2 }}>
-              <WeatherPanel
-                days={weather}
-                selectedDate={selDate}
-                hour={selected}
-                dayHours={dayHours}
-                onSelectDay={pickDay}
-                onSelectHour={setSelTime}
-              />
+              <WeatherPanel days={weather} hour={selected} dayHours={dayHours} onSelectDay={pickDay} onSelectHour={setSelTime} />
               <WindPanel spot={spot} hour={selected} dayHours={dayHours} allHours={hours} onSelectHour={setSelTime} onSelectDay={pickDay} />
-              <TidePanel spot={spot} hours={dayHours} allHours={hours} selected={selected.time} onSelect={setSelTime} onSelectDay={pickDay} />
+              <TidePanel spot={spot} hour={selected} dayHours={dayHours} allHours={hours} onSelectHour={setSelTime} onSelectDay={pickDay} />
             </Box>
           </Box>
         </>
