@@ -1,0 +1,44 @@
+# Gera as chaves das notificações push (VAPID) e grava direto no Supabase do ambiente.
+# A chave privada nunca aparece: só a PÚBLICA é mostrada no resumo da execução, para você
+# colar em VITE_VAPID_PUBLIC_KEY na Cloudflare. Rode uma vez por ambiente (Actions > Run workflow).
+name: Gerar chaves de push
+
+on:
+  workflow_dispatch:
+    inputs:
+      ambiente:
+        description: Ambiente
+        type: choice
+        options: [staging, production]
+        default: staging
+
+jobs:
+  vapid:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.ambiente }}
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Gerar e gravar no Supabase
+        run: |
+          keys=$(npx -y web-push@3.6.7 generate-vapid-keys --json)
+          pub=$(echo "$keys" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).publicKey))')
+          priv=$(echo "$keys" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).privateKey))')
+          echo "::add-mask::$priv"
+          supabase secrets set VAPID_PUBLIC_KEY="$pub" VAPID_PRIVATE_KEY="$priv" VAPID_SUBJECT="mailto:contato@olhaonda.com" --project-ref "$PROJECT_REF"
+          {
+            echo "### Chave pública de push (${{ inputs.ambiente }})"
+            echo ""
+            echo "Cole na Cloudflare em VITE_VAPID_PUBLIC_KEY (${{ inputs.ambiente == 'staging' && 'Preview' || 'Production' }}) e refaça o deploy:"
+            echo ""
+            echo '```'
+            echo "$pub"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

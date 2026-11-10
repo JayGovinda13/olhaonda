@@ -4,6 +4,8 @@
 #
 # Segredos por environment no GitHub (Settings > Environments > staging / production):
 #   SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF, SUPABASE_DB_PASSWORD
+#   CRON_SECRET (senha da rodada diária) e, opcionais, OPEN_METEO_API_KEY e MP_* (fotos)
+# Variáveis (Settings > Environments > Variables): SITE_URL, SPOT_SCOPE (all no staging, baixada na produção)
 name: Supabase deploy
 
 on:
@@ -30,6 +32,18 @@ jobs:
         with:
           version: latest
       - run: supabase link --project-ref "$PROJECT_REF"
+      - name: Segredos das Edge Functions
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          OPEN_METEO_API_KEY: ${{ secrets.OPEN_METEO_API_KEY }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          SPOT_SCOPE: ${{ vars.SPOT_SCOPE }}
+        run: |
+          args=()
+          for k in CRON_SECRET OPEN_METEO_API_KEY SITE_URL SPOT_SCOPE; do
+            [ -n "${!k}" ] && args+=("$k=${!k}")
+          done
+          if [ ${#args[@]} -gt 0 ]; then supabase secrets set "${args[@]}" --project-ref "$PROJECT_REF"; fi
       - name: Migrações do banco
         run: supabase db push --password "$SUPABASE_DB_PASSWORD"
       - name: Edge Functions
