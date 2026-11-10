@@ -1,11 +1,10 @@
 import { Box, ButtonBase, Paper, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { useEffect, useRef } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
 import { surfEstimate } from '../lib/breaking'
 import { energyRatio, fmt, rate, ratingColor, waveEnergy, windKind } from '../lib/surf'
-import { brand } from '../theme'
+import { alpha, brand } from '../theme'
 import { DirArrow } from './bits'
 import { WeatherIcon } from './WeatherIcon'
 

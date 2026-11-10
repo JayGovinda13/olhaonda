@@ -1,11 +1,10 @@
 import { Box, Link, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { Megaphone } from 'iconoir-react'
 import { useEffect, useRef } from 'react'
 import { ADSENSE_CLIENT } from '../config/ads'
 import { loadAdsense } from '../lib/adsense'
 import { useConsent } from '../lib/consent'
-import { brand } from '../theme'
+import { alpha, brand } from '../theme'
 
 /**
  * Espaço publicitário.

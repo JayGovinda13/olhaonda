@@ -1,11 +1,10 @@
 import { Alert, Box, Button, InputAdornment, Paper, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router'
 import { useAuth } from '../auth/context'
 import { backend, LEVEL_LABEL, MODALITY_LABEL, USERNAME_RE, type Level, type Modality, type Profile } from '../backend'
 import { usePageMeta } from '../lib/meta'
-import { brand } from '../theme'
+import { alpha, brand } from '../theme'
 
 /** Editar o perfil (dados do cadastro). */
 export default function ProfilePage() {

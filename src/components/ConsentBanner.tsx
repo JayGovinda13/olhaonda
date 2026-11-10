@@ -37,9 +37,9 @@ export function ConsentBanner() {
         width: 'min(720px, calc(100% - 32px))',
         p: { xs: 2, sm: 2.5 },
         zIndex: 30,
-        bgcolor: '#FBF4EC',
+        bgcolor: 'var(--oo-paper-solid)',
         backdropFilter: 'none',
-        boxShadow: '0 12px 40px rgba(75,29,90,.22)',
+        boxShadow: '0 12px 40px var(--oo-shadow)',
       }}
     >
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' } }}>

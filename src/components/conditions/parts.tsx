@@ -3,10 +3,9 @@
  *   título + estado agora · 14 dias · agora · 4 indicadores · gráfico do dia · hora a hora · resumo · nota
  */
 import { Box, ButtonBase, Paper, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import { dayLabel, fmt } from '../../lib/surf'
-import { brand } from '../../theme'
+import { alpha, brand } from '../../theme'
 
 /** rola a faixa para manter o item marcado (aria-pressed) no centro */
 function useCenterSelected(dep: unknown) {

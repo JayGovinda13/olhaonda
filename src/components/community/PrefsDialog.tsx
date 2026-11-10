@@ -15,14 +15,13 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { Bell } from 'iconoir-react'
 import { useEffect, useMemo, useState } from 'react'
 import { fetchForecast, type Forecast } from '../../api/openMeteo'
 import type { SpotPrefs } from '../../backend'
 import type { Spot } from '../../data/spots'
 import { enablePush, pushState, type PushState } from '../../lib/push'
-import { brand } from '../../theme'
+import { alpha, brand } from '../../theme'
 import {
   DAYPART_LABEL,
   DEFAULT_PREFS,

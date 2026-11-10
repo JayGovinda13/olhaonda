@@ -15,7 +15,6 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { Bell, ChatLines, Star } from 'iconoir-react'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link as RouterLink, Navigate, useNavigate } from 'react-router'
@@ -26,7 +25,7 @@ import { SPOTS } from '../data/spots'
 import { resetDemoAlerts } from '../hooks/useDemoAlerts'
 import { setPendingFavorites, useFavorites } from '../hooks/useFavorites'
 import { usePageMeta } from '../lib/meta'
-import { brand } from '../theme'
+import { alpha, brand } from '../theme'
 import { DEFAULT_PREFS } from '../../supabase/functions/_shared/core/prefs.ts'
 
 const slug = (s: string) =>

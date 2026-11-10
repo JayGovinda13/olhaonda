@@ -5,7 +5,8 @@ import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
 import { arrowImage, loadMapLibre, OFM_ATTRIBUTION, OFM_GLYPHS, OFM_SOURCE, cachedCoast, offsetLngLat, rememberCoast, SNAP_ZOOM } from '../lib/maplibre'
 import { dirDeg, ENERGY_GRADIENT, energyColor, energyLabel, energyRatio, fmt, fmtEnergy, waveEnergy, WIND_LABEL, windKind } from '../lib/surf'
-import { brand } from '../theme'
+// cores fixas: o MapLibre não lê variáveis CSS e o card verde é igual nos dois modos
+import { fixed as brand } from '../theme'
 
 /**
  * Mapa detalhado do pico (card "O pico"): terra, vegetação, prédios, ruas e nomes,

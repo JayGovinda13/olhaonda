@@ -1,9 +1,9 @@
-import { brand } from '../theme'
+import { brand, fixed } from '../theme'
 
 /** Desenho da Lua com a parte iluminada correta (hemisfério sul: crescente iluminada à esquerda). */
 export function MoonIcon({ phase, size = 40 }: { phase: number; size?: number }) {
   const r = 20
-  const lit = brand.sand
+  const lit = fixed.sand
   const dark = '#2B1233'
   // terminador: elipse com raio horizontal r·cos(2πφ)
   const k = Math.cos(2 * Math.PI * phase)

@@ -1,10 +1,9 @@
 import { Box, ButtonBase, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { useEffect, useRef } from 'react'
 import type { DaySummary } from '../lib/days'
 import { surfRange } from '../lib/breaking'
 import { dayLabel, ratingColor } from '../lib/surf'
-import { brand } from '../theme'
+import { alpha, brand } from '../theme'
 
 export function DayStrip({
   days,

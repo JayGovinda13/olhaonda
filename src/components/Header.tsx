@@ -1,14 +1,14 @@
 import { Avatar, Box, Button, Container, Divider, IconButton, ListItemIcon, Menu, MenuItem, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { Camera, ChatLines, LogIn, LogOut, SeaWaves, ShoppingBag, Star, Upload, User } from 'iconoir-react'
 import { useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 import { backend } from '../backend'
 import { FEATURES, HAS_COMMUNITY } from '../config/env'
 import { useAuth } from '../auth/context'
-import { brand } from '../theme'
+import { alpha, brand } from '../theme'
 import { LogoMark, Wordmark } from './Logo'
 import { NotificationsBell } from './community/NotificationsBell'
+import { ColorModeToggle } from './ColorModeToggle'
 
 const NAV: { to: string; label: string; icon: ReactNode; end?: boolean; on: boolean }[] = [
   { to: '/', label: 'Previsão', icon: <SeaWaves width={18} height={18} />, end: true, on: true },
@@ -70,6 +70,7 @@ export function Header() {
           ))}
         </Stack>
 
+        <ColorModeToggle />
         {!HAS_COMMUNITY ? null : user ? (
           <>
             <NotificationsBell />

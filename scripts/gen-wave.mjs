@@ -86,3 +86,16 @@ writeFileSync(new URL('../public/bg-waves-tile.svg', import.meta.url), tile)
 const sunSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="96" fill="${C.plum}" fill-opacity="0.12"/></svg>`
 writeFileSync(new URL('../public/bg-sun.svg', import.meta.url), sunSvg)
 console.log('public/bg-waves-tile.svg e public/bg-sun.svg')
+
+// Modo noturno: mesmas formas com cores claras e opacidade menor
+const night = (s) =>
+  s
+    .replaceAll('#0F4C3A', '#7BD9AE')
+    .replaceAll('#7A2E6E', '#D9A2D3')
+    .replaceAll('stroke-opacity="0.14"', 'stroke-opacity="0.08"')
+    .replaceAll('stroke-opacity="0.22"', 'stroke-opacity="0.13"')
+    .replaceAll('fill-opacity="0.16"', 'fill-opacity="0.08"')
+    .replace('fill="#D9A2D3" fill-opacity="0.12"', 'fill="#D9A2D3" fill-opacity="0.07"')
+writeFileSync(new URL('../public/bg-waves-tile-dark.svg', import.meta.url), night(tile))
+writeFileSync(new URL('../public/bg-sun-dark.svg', import.meta.url), night(sunSvg))
+console.log('public/bg-waves-tile-dark.svg e public/bg-sun-dark.svg')

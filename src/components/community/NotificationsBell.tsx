@@ -1,11 +1,10 @@
 import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { Bell } from 'iconoir-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useNotifications } from '../../hooks/useNotifications'
 import { timeAgo } from '../../lib/time'
-import { brand } from '../../theme'
+import { alpha, brand } from '../../theme'
 
 /** Sino do cabeçalho: avisos de previsão que bate com o gosto do usuário. */
 export function NotificationsBell() {

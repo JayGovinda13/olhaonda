@@ -5,7 +5,8 @@ import type { HourPoint } from '../api/openMeteo'
 import { KIND_LABEL, type Spot } from '../data/spots'
 import { surfEstimate, surfRange } from '../lib/breaking'
 import { dayLabel, dirDeg, energyLabel, energyRatio, fmt, fmtEnergy, WIND_LABEL, waveEnergy, windKind, windStrength } from '../lib/surf'
-import { brand } from '../theme'
+// cores fixas: o MapLibre não lê variáveis CSS e o card verde é igual nos dois modos
+import { fixed as brand } from '../theme'
 import { DirArrow } from './bits'
 import { SpotMap } from './SpotMap'
 

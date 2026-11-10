@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { bounds, type Place } from '../../data/hierarchy'
 import type { Spot } from '../../data/spots'
 import { loadMapLibre, OFM_ATTRIBUTION, OFM_GLYPHS, OFM_SOURCE } from '../../lib/maplibre'
-import { brand } from '../../theme'
+// mapa sempre no tema claro (MapLibre não lê variáveis CSS)
+import { fixed as brand } from '../../theme'
 
 const STYLE: StyleSpecification = {
   version: 8,

@@ -1,5 +1,4 @@
 import { Alert, Box, Button, ButtonBase, Checkbox, Dialog, IconButton, Paper, Skeleton, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { ArrowLeft, Cart, NavArrowLeft, NavArrowRight, Xmark } from 'iconoir-react'
 import { useEffect, useState } from 'react'
 import { Link as RouterLink, useNavigate, useParams } from 'react-router'
@@ -7,7 +6,7 @@ import { useAuth } from '../../auth/context'
 import { backend, brl, PERIOD_LABEL, type Photo, type PhotoSession } from '../../backend'
 import { SPOTS } from '../../data/spots'
 import { dayLabel } from '../../lib/surf'
-import { brand } from '../../theme'
+import { alpha, brand } from '../../theme'
 
 export default function SessionPage() {
   const { id = '' } = useParams()

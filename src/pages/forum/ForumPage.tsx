@@ -15,7 +15,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { ChatBubble, Plus } from 'iconoir-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router'
@@ -24,7 +23,7 @@ import { backend, FORUM_CATEGORIES, USER_CATEGORIES, type ForumCategory, type Th
 import { SpotPicker } from '../../components/SpotPicker'
 import { SPOTS } from '../../data/spots'
 import { timeAgo } from '../../lib/time'
-import { brand } from '../../theme'
+import { alpha, brand } from '../../theme'
 
 const catLabel = (id: ForumCategory) => FORUM_CATEGORIES.find((c) => c.id === id)?.label ?? id
 const spotName = (id: string | null) => (id ? SPOTS.find((s) => s.id === id)?.name : null)

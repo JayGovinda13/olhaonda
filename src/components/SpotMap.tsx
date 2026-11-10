@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { Map as MLMap, Marker as MLMarker, StyleSpecification } from 'maplibre-gl'
 import type { Spot } from '../data/spots'
 import { cachedCoast, loadMapLibre, OFM_ATTRIBUTION, OFM_SOURCE, rememberCoast, SNAP_ZOOM } from '../lib/maplibre'
-import { brand } from '../theme'
+// cores fixas: o MapLibre não lê variáveis CSS e o card verde é igual nos dois modos
+import { fixed as brand } from '../theme'
 
 /**
  * Mapa da região do pico, usado como marca d'água no fundo do card principal.
