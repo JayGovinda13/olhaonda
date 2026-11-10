@@ -23,7 +23,7 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           ONLY: ${{ github.event.schedule == '13 20 * * *' && 'alerts' || '' }}
         run: |
-          if [ -z "$REF" ] || [ -z "$CRON_SECRET" ]; then echo "Configure SUPABASE_PROJECT_REF e CRON_SECRET no environment staging"; exit 1; fi
+          if [ -z "$REF" ] || [ -z "$CRON_SECRET" ]; then echo "::notice::Supabase do staging ainda não configurado (SUPABASE_PROJECT_REF e CRON_SECRET): nada a fazer."; exit 0; fi
           url="https://$REF.supabase.co/functions/v1/daily-forecast"
           [ -n "$ONLY" ] && url="$url?only=$ONLY"
           curl -sS --fail-with-body --max-time 400 -X POST -H "x-cron-secret: $CRON_SECRET" "$url"

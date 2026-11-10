@@ -31,8 +31,10 @@ export const FEATURES = {
 export const HAS_COMMUNITY = FEATURES.forum || FEATURES.photos
 
 /**
- * Quais picos aparecem: 'baixada' = só praias com onda da Baixada Santista; 'all' = todos.
- * Padrão: 'baixada' em produção, 'all' nos outros ambientes.
+ * Quais picos aparecem: 'sp' = litoral de São Paulo com onda; 'all' = todos.
+ * Padrão: 'sp' em produção, 'all' nos outros ambientes.
+ * 'baixada' (valor antigo de VITE_SPOT_SCOPE, quando a produção era só a Baixada) vale como 'sp':
+ * a produção passou a cobrir o litoral paulista inteiro.
  */
-export const SPOT_SCOPE: 'baixada' | 'all' =
-  (import.meta.env.VITE_SPOT_SCOPE as 'baixada' | 'all' | undefined) || (IS_PRODUCTION ? 'baixada' : 'all')
+const scopeVar = import.meta.env.VITE_SPOT_SCOPE as string | undefined
+export const SPOT_SCOPE: 'sp' | 'all' = scopeVar === 'all' ? 'all' : scopeVar ? 'sp' : IS_PRODUCTION ? 'sp' : 'all'

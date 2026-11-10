@@ -2,7 +2,7 @@ import { SPOTS, type Spot } from './spots'
 
 /**
  * Navegação em níveis: estado → cidade → pico.
- * Hoje a produção só tem SP (Baixada Santista); com um estado só, o nível de estado é pulado.
+ * Hoje a produção só tem SP (litoral paulista); com um estado só, o nível de estado é pulado.
  */
 export type Place = { key: string; name: string; lat: number; lon: number; count: number }
 

@@ -7,7 +7,7 @@ import { admin, env, json } from '../_shared/util.ts'
 import { pushToUser } from '../_shared/push.ts'
 import { fetchForecastRaw, type Forecast } from '../_shared/core/openMeteo.ts'
 import { describeMatch, findMatches, normalizePrefs } from '../_shared/core/prefs.ts'
-import { ALL_SPOTS, spotsForScope, type Spot } from '../_shared/core/spots.ts'
+import { ALL_SPOTS, spotsForScope, type Spot, type SpotScope } from '../_shared/core/spots.ts'
 import { dailySummary } from '../_shared/core/summary.ts'
 import { localNow } from '../_shared/core/time.ts'
 
@@ -26,7 +26,8 @@ Deno.serve(async (req) => {
   const url = new URL(req.url)
   const onlyAlerts = url.searchParams.get('only') === 'alerts'
   const sb = admin()
-  const scope = (Deno.env.get('SPOT_SCOPE') === 'baixada' ? 'baixada' : 'all') as 'baixada' | 'all'
+  const v = Deno.env.get('SPOT_SCOPE')
+  const scope: SpotScope = v === 'baixada' ? 'baixada' : v === 'sp' ? 'sp' : 'all'
   const apiKey = Deno.env.get('OPEN_METEO_API_KEY') || undefined
   const now = localNow()
 

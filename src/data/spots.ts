@@ -5,12 +5,12 @@ import { distanceKm, spotsForScope, type Spot } from '../../supabase/functions/_
 export * from '../../supabase/functions/_shared/core/spots.ts'
 
 /**
- * Picos visíveis neste ambiente. Em produção (VITE_SPOT_SCOPE=baixada): só a Baixada Santista,
- * sem as praias abrigadas. Em staging/dev: todos.
+ * Picos visíveis neste ambiente. Em produção: o litoral de São Paulo com onda (sem as praias
+ * abrigadas). Em staging/dev: todos.
  */
 export const SPOTS: Spot[] = spotsForScope(SPOT_SCOPE)
 
-export const DEFAULT_SPOT_ID = SPOT_SCOPE === 'baixada' ? 'gua-pit-ilha' : 'itauna'
+export const DEFAULT_SPOT_ID = SPOT_SCOPE === 'sp' ? 'gua-pit-ilha' : 'itauna'
 
 export function nearestSpot(lat: number, lon: number) {
   return SPOTS.reduce((best, s) =>

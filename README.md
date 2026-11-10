@@ -114,7 +114,7 @@ Build: `npm run build`, pasta `dist`.
 | Google | `noindex` (não aparece em buscas) | indexado |
 | Aviso no topo | faixa "STAGING" | nenhum |
 | Seções | previsão, fórum e fotos | **só previsão** (fórum e fotos desligados) |
-| Picos | todos (65) | **só Baixada Santista com onda** (33: Peruíbe a Bertioga, sem as abrigadas) |
+| Picos | todos | **litoral de São Paulo com onda**: Ilha Comprida e Juréia, Baixada Santista, São Sebastião, Ilhabela, Caraguatatuba e Ubatuba (sem as abrigadas) |
 
 Para ligar fórum ou fotos em produção, defina `VITE_FEATURE_FORUM=true` e/ou `VITE_FEATURE_PHOTOS=true` nas variáveis
 de produção e publique de novo. Desligados, os endereços `/forum` e `/fotos` voltam para a previsão e o login some.

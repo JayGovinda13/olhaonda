@@ -39,7 +39,7 @@ export default function HomePage() {
   usePageMeta({
     title: 'OlhaOnda · Previsão de ondas para surf e bodyboard',
     description:
-      'Previsão de ondas para surf e bodyboard na Baixada Santista: Guarujá, Santos, São Vicente, Praia Grande, Peruíbe, Bertioga e mais. Swell, vento, maré e tempo.',
+      'Previsão de ondas para surf e bodyboard no litoral de São Paulo: Ubatuba, Maresias, Ilhabela, Guarujá, Santos, Praia Grande, Peruíbe, Ilha Comprida e mais. Swell, vento, maré e tempo.',
     path: '/',
   })
 
@@ -132,7 +132,7 @@ export default function HomePage() {
             )}
             {uf && (
               <Link component="button" underline="hover" color="inherit" onClick={() => setLevel({ uf })}>
-                {singleState ? 'Baixada Santista' : (STATE_NAMES[uf] ?? uf)}
+                {singleState ? 'Litoral de São Paulo' : (STATE_NAMES[uf] ?? uf)}
               </Link>
             )}
             {city && <Typography sx={{ fontSize: 13, fontWeight: 800 }}>{city}</Typography>}
