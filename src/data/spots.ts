@@ -10,7 +10,7 @@ export * from '../../supabase/functions/_shared/core/spots.ts'
  */
 export const SPOTS: Spot[] = spotsForScope(SPOT_SCOPE)
 
-export const DEFAULT_SPOT_ID = SPOT_SCOPE === 'prod' ? 'gua-pit-ilha' : 'itauna'
+export const DEFAULT_SPOT_ID = SPOT_SCOPE === 'prod' ? 'gua-pit-ilha' : 'sqr-itauna'
 
 export function nearestSpot(lat: number, lon: number) {
   return SPOTS.reduce((best, s) =>

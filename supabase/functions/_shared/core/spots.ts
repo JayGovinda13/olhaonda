@@ -339,6 +339,141 @@ const SANTA_CATARINA: Spot[] = [
   { id: 'itp-barradosai', name: 'Barra do Saí', ...SC_ITP, lat: -25.972, lon: -48.598, facing: 80, kind: 'beach' },
 ]
 
+/** Cidade do Rio de Janeiro (estado): grupo no seletor = cidade; maré pelo porto de referência da região. */
+const rj = (city: string, tidePort: string) => ({ city, state: 'RJ', region: city, tidePort }) as const
+const RJ_PTY = rj('Paraty', 'angra')
+const RJ_AGR = rj('Angra dos Reis', 'angra')
+const RJ_ILG = rj('Ilha Grande', 'angra')
+const RJ_MGT = rj('Mangaratiba', 'angra')
+const RJ_ITG = rj('Itaguaí', 'angra')
+const RJ_RIO = rj('Rio de Janeiro', 'ilhafiscal')
+const RJ_NIT = rj('Niterói', 'ilhafiscal')
+const RJ_MRC = rj('Maricá', 'ilhafiscal')
+const RJ_SQR = rj('Saquarema', 'cabofrio')
+const RJ_ARR = rj('Araruama', 'cabofrio')
+const RJ_ARC = rj('Arraial do Cabo', 'cabofrio')
+const RJ_CBF = rj('Cabo Frio', 'cabofrio')
+const RJ_BZS = rj('Armação dos Búzios', 'cabofrio')
+const RJ_CAS = rj('Casimiro de Abreu', 'cabofrio')
+const RJ_RDO = rj('Rio das Ostras', 'macae')
+const RJ_MAC = rj('Macaé', 'macae')
+const RJ_CRP = rj('Carapebus', 'macae')
+const RJ_QSS = rj('Quissamã', 'macae')
+const RJ_CMP = rj('Campos dos Goytacazes', 'macae')
+const RJ_SJB = rj('São João da Barra', 'macae')
+const RJ_SFI = rj('São Francisco de Itabapoana', 'macae')
+
+/** Litoral do Rio de Janeiro, de Paraty (divisa com SP) a São Francisco de Itabapoana (divisa com o ES). */
+const RIO_DE_JANEIRO: Spot[] = [
+  { id: 'pty-trindade', name: 'Praia Brava de Trindade', ...RJ_PTY, lat: -23.3444, lon: -44.7133, facing: 150, kind: 'beach' },
+  { id: 'pty-cepilho', name: 'Cepilho', ...RJ_PTY, lat: -23.3458, lon: -44.7173, facing: 150, kind: 'beach' },
+  { id: 'pty-coqueiro', name: 'Praia do Coqueiro', ...RJ_PTY, lat: -23.347, lon: -44.7192, facing: 150, kind: 'beach' },
+  { id: 'pty-sono', name: 'Praia do Sono', ...RJ_PTY, lat: -23.3334, lon: -44.6343, facing: 170, kind: 'beach' },
+  { id: 'pty-antigos', name: 'Praia dos Antigos', ...RJ_PTY, lat: -23.342, lon: -44.629, facing: 150, kind: 'beach' },
+  { id: 'pty-laranjeiras', name: 'Laranjeiras', ...RJ_PTY, lat: -23.3383, lon: -44.6673, facing: 180, kind: 'beach' },
+  { id: 'pty-martimdesa', name: 'Martim de Sá', ...RJ_PTY, lat: -23.3163, lon: -44.5605, facing: 110, kind: 'beach' },
+  { id: 'pty-sumaca', name: 'Sumaca', ...RJ_PTY, lat: -23.365, lon: -44.607, facing: 170, kind: 'beach' },
+  { id: 'pty-prainha', name: 'Prainha (Mambucaba)', ...RJ_PTY, lat: -23.0282, lon: -44.533, facing: 158, kind: 'beach' },
+  { id: 'pty-mambucaba', name: 'Mambucaba', ...RJ_PTY, lat: -23.0261, lon: -44.5165, facing: 168, kind: 'beach' },
+  { id: 'agr-brava', name: 'Praia Brava', ...RJ_AGR, lat: -23.0074, lon: -44.4613, facing: 181, kind: 'beach' },
+  { id: 'agr-ribeira', name: 'Ribeira', ...RJ_AGR, lat: -22.9618, lon: -44.3054, facing: 200, kind: 'beach' },
+  { id: 'agr-garatucaia', name: 'Garatucaia', ...RJ_AGR, lat: -23.03, lon: -44.183, facing: 170, kind: 'beach' },
+  { id: 'ilg-aventureiro', name: 'Aventureiro', ...RJ_ILG, lat: -23.1882, lon: -44.3183, facing: 160, kind: 'beach' },
+  { id: 'ilg-sul', name: 'Praia do Sul', ...RJ_ILG, lat: -23.1781, lon: -44.3027, facing: 165, kind: 'beach' },
+  { id: 'ilg-leste', name: 'Praia do Leste', ...RJ_ILG, lat: -23.1794, lon: -44.2864, facing: 180, kind: 'beach' },
+  { id: 'ilg-parnaioca', name: 'Parnaioca', ...RJ_ILG, lat: -23.1913, lon: -44.2518, facing: 190, kind: 'beach' },
+  { id: 'ilg-doisrios', name: 'Dois Rios', ...RJ_ILG, lat: -23.1829, lon: -44.1884, facing: 160, kind: 'beach' },
+  { id: 'ilg-lopesmendes', name: 'Lopes Mendes', ...RJ_ILG, lat: -23.1669, lon: -44.138, facing: 110, kind: 'beach' },
+  { id: 'ilg-santoantonio', name: 'Santo Antônio', ...RJ_ILG, lat: -23.171, lon: -44.153, facing: 150, kind: 'beach' },
+  { id: 'mgt-jacarei', name: 'Conceição de Jacareí', ...RJ_MGT, lat: -23.0322, lon: -44.1618, facing: 160, kind: 'beach' },
+  { id: 'mgt-saco', name: 'Praia do Saco', ...RJ_MGT, lat: -22.9446, lon: -44.0541, facing: 170, kind: 'beach' },
+  { id: 'mgt-portoreal', name: 'Porto Real', ...RJ_MGT, lat: -22.9358, lon: -43.9891, facing: 170, kind: 'beach' },
+  { id: 'mgt-itacuruca', name: 'Itacuruçá', ...RJ_MGT, lat: -22.93, lon: -43.91, facing: 180, kind: 'beach' },
+  { id: 'itg-porto', name: 'Porto de Itaguaí', ...RJ_ITG, lat: -22.9312, lon: -43.8344, facing: 170, kind: 'beach' },
+  { id: 'rio-sepetiba', name: 'Sepetiba', ...RJ_RIO, lat: -22.9784, lon: -43.7054, facing: 180, kind: 'beach' },
+  { id: 'rio-barradeguaratiba', name: 'Barra de Guaratiba', ...RJ_RIO, lat: -23.0625, lon: -43.567, facing: 180, kind: 'beach' },
+  { id: 'rio-grumari', name: 'Grumari', ...RJ_RIO, lat: -23.0499, lon: -43.5326, facing: 165, kind: 'beach' },
+  { id: 'rio-prainha', name: 'Prainha', ...RJ_RIO, lat: -23.0412, lon: -43.5056, facing: 165, kind: 'beach' },
+  { id: 'rio-macumba', name: 'Macumba', ...RJ_RIO, lat: -23.0339, lon: -43.4864, facing: 163, kind: 'beach' },
+  { id: 'rio-recreio', name: 'Recreio dos Bandeirantes', ...RJ_RIO, lat: -23.027, lon: -43.4601, facing: 165, kind: 'beach' },
+  { id: 'rio-reserva', name: 'Reserva', ...RJ_RIO, lat: -23.0133, lon: -43.3897, facing: 175, kind: 'beach' },
+  { id: 'rio-barra', name: 'Barra da Tijuca', ...RJ_RIO, lat: -23.0122, lon: -43.33, facing: 170, kind: 'beach' },
+  { id: 'rio-joatinga', name: 'Joatinga', ...RJ_RIO, lat: -23.0148, lon: -43.2901, facing: 170, kind: 'beach' },
+  { id: 'rio-pepino', name: 'Pepino', ...RJ_RIO, lat: -23.0017, lon: -43.2722, facing: 163, kind: 'beach' },
+  { id: 'rio-saoconrado', name: 'São Conrado', ...RJ_RIO, lat: -23.0003, lon: -43.2649, facing: 170, kind: 'beach' },
+  { id: 'rio-leblon', name: 'Leblon', ...RJ_RIO, lat: -22.9879, lon: -43.2237, facing: 168, kind: 'beach' },
+  { id: 'rio-ipanema', name: 'Ipanema', ...RJ_RIO, lat: -22.9876, lon: -43.2022, facing: 182, kind: 'beach' },
+  { id: 'rio-arpoador', name: 'Arpoador', ...RJ_RIO, lat: -22.9891, lon: -43.192, facing: 180, kind: 'point' },
+  { id: 'rio-diabo', name: 'Praia do Diabo', ...RJ_RIO, lat: -22.988, lon: -43.1889, facing: 160, kind: 'beach' },
+  { id: 'rio-copacabana', name: 'Copacabana', ...RJ_RIO, lat: -22.9725, lon: -43.1832, facing: 135, kind: 'beach' },
+  { id: 'rio-leme', name: 'Leme', ...RJ_RIO, lat: -22.9632, lon: -43.166, facing: 140, kind: 'beach' },
+  { id: 'rio-vermelha', name: 'Praia Vermelha', ...RJ_RIO, lat: -22.9552, lon: -43.1645, facing: 170, kind: 'beach' },
+  { id: 'rio-flamengo', name: 'Flamengo', ...RJ_RIO, lat: -22.9335, lon: -43.1713, facing: 75, kind: 'beach' },
+  { id: 'nit-icarai', name: 'Icaraí', ...RJ_NIT, lat: -22.9091, lon: -43.112, facing: 200, kind: 'beach' },
+  { id: 'nit-itapuca', name: 'Pedra de Itapuca', ...RJ_NIT, lat: -22.9053, lon: -43.1228, facing: 200, kind: 'reef' },
+  { id: 'nit-adaoeva', name: 'Adão e Eva', ...RJ_NIT, lat: -22.9331, lon: -43.1138, facing: 85, kind: 'beach' },
+  { id: 'nit-piratininga', name: 'Piratininga', ...RJ_NIT, lat: -22.9535, lon: -43.0822, facing: 170, kind: 'beach' },
+  { id: 'nit-camboinhas', name: 'Camboinhas', ...RJ_NIT, lat: -22.9618, lon: -43.0575, facing: 190, kind: 'beach' },
+  { id: 'nit-canal', name: 'Canal de Itaipu', ...RJ_NIT, lat: -22.9655, lon: -43.048, facing: 190, kind: 'beach' },
+  { id: 'nit-itaipu', name: 'Itaipu', ...RJ_NIT, lat: -22.9685, lon: -43.0459, facing: 200, kind: 'beach' },
+  { id: 'nit-itacoatiara', name: 'Itacoatiara', ...RJ_NIT, lat: -22.9749, lon: -43.0325, facing: 180, kind: 'beach' },
+  { id: 'mrc-recanto', name: 'Recanto de Itaipuaçu', ...RJ_MRC, lat: -22.9708, lon: -43.0101, facing: 165, kind: 'beach' },
+  { id: 'mrc-itaipuacu', name: 'Itaipuaçu', ...RJ_MRC, lat: -22.9698, lon: -42.9934, facing: 180, kind: 'beach' },
+  { id: 'mrc-barra', name: 'Barra de Maricá', ...RJ_MRC, lat: -22.9619, lon: -42.8192, facing: 178, kind: 'beach' },
+  { id: 'mrc-pontanegra', name: 'Ponta Negra', ...RJ_MRC, lat: -22.9575, lon: -42.6965, facing: 213, kind: 'beach' },
+  { id: 'mrc-prainha', name: 'Prainha (da Sacristia)', ...RJ_MRC, lat: -22.9596, lon: -42.6852, facing: 147, kind: 'beach' },
+  { id: 'mrc-jacone', name: 'Jaconé (Maricá)', ...RJ_MRC, lat: -22.9403, lon: -42.6577, facing: 168, kind: 'beach' },
+  { id: 'sqr-jacone', name: 'Jaconé', ...RJ_SQR, lat: -22.9345, lon: -42.6, facing: 170, kind: 'beach' },
+  { id: 'sqr-vila', name: 'Praia da Vila', ...RJ_SQR, lat: -22.9345, lon: -42.5, facing: 188, kind: 'beach' },
+  { id: 'sqr-itauna', name: 'Itaúna', ...RJ_SQR, lat: -22.9374, lon: -42.4764, facing: 191, kind: 'beach' },
+  { id: 'sqr-barrinha', name: 'Barrinha', ...RJ_SQR, lat: -22.9359, lon: -42.4645, facing: 168, kind: 'beach' },
+  { id: 'sqr-barranova', name: 'Barra Nova', ...RJ_SQR, lat: -22.935, lon: -42.42, facing: 182, kind: 'beach' },
+  { id: 'sqr-vilatur', name: 'Vilatur', ...RJ_SQR, lat: -22.9382, lon: -42.355, facing: 180, kind: 'beach' },
+  { id: 'arr-vargas', name: 'Praia do Vargas', ...RJ_ARR, lat: -22.9382, lon: -42.3, facing: 180, kind: 'beach' },
+  { id: 'arr-massambaba', name: 'Massambaba', ...RJ_ARR, lat: -22.939, lon: -42.2538, facing: 180, kind: 'beach' },
+  { id: 'arc-figueira', name: 'Figueira', ...RJ_ARC, lat: -22.9519, lon: -42.105, facing: 188, kind: 'beach' },
+  { id: 'arc-novoarraial', name: 'Novo Arraial', ...RJ_ARC, lat: -22.9567, lon: -42.07, facing: 190, kind: 'beach' },
+  { id: 'arc-grande', name: 'Praia Grande', ...RJ_ARC, lat: -22.9689, lon: -42.0355, facing: 225, kind: 'beach' },
+  { id: 'arc-pontal', name: 'Pontal', ...RJ_ARC, lat: -22.9668, lon: -42.0157, facing: 90, kind: 'beach' },
+  { id: 'arc-brava', name: 'Praia Brava', ...RJ_ARC, lat: -22.9785, lon: -42.0104, facing: 48, kind: 'beach' },
+  { id: 'cbf-foguete', name: 'Foguete', ...RJ_CBF, lat: -22.911, lon: -42.035, facing: 120, kind: 'beach' },
+  { id: 'cbf-forte', name: 'Praia do Forte', ...RJ_CBF, lat: -22.8862, lon: -42.0174, facing: 140, kind: 'beach' },
+  { id: 'cbf-brava', name: 'Praia Brava', ...RJ_CBF, lat: -22.8838, lon: -41.9965, facing: 158, kind: 'beach' },
+  { id: 'cbf-conchas', name: 'Praia das Conchas', ...RJ_CBF, lat: -22.8611, lon: -41.9859, facing: 73, kind: 'beach' },
+  { id: 'cbf-pero', name: 'Peró', ...RJ_CBF, lat: -22.843, lon: -41.981, facing: 110, kind: 'beach' },
+  { id: 'cbf-pontalpero', name: 'Pontal do Peró', ...RJ_CBF, lat: -22.8242, lon: -41.9713, facing: 120, kind: 'beach' },
+  { id: 'cbf-rasa', name: 'Praia Rasa', ...RJ_CBF, lat: -22.7324, lon: -41.9669, facing: 28, kind: 'beach' },
+  { id: 'cbf-unamar', name: 'Unamar (Tamoios)', ...RJ_CBF, lat: -22.621, lon: -41.9988, facing: 95, kind: 'beach' },
+  { id: 'bzs-tucuns', name: 'Tucuns', ...RJ_BZS, lat: -22.7972, lon: -41.9288, facing: 113, kind: 'beach' },
+  { id: 'bzs-geriba', name: 'Geribá', ...RJ_BZS, lat: -22.7799, lon: -41.9127, facing: 170, kind: 'beach' },
+  { id: 'bzs-brava', name: 'Praia Brava', ...RJ_BZS, lat: -22.7544, lon: -41.8726, facing: 70, kind: 'beach' },
+  { id: 'cas-praiao', name: 'Praião (Barra de São João)', ...RJ_CAS, lat: -22.5885, lon: -41.9874, facing: 103, kind: 'beach' },
+  { id: 'rdo-tartarugas', name: 'Praia das Tartarugas', ...RJ_RDO, lat: -22.5326, lon: -41.9378, facing: 120, kind: 'beach' },
+  { id: 'rdo-costaazul', name: 'Costa Azul', ...RJ_RDO, lat: -22.5217, lon: -41.9193, facing: 115, kind: 'beach' },
+  { id: 'rdo-mardonorte', name: 'Mar do Norte', ...RJ_RDO, lat: -22.4502, lon: -41.8548, facing: 105, kind: 'beach' },
+  { id: 'mac-campistas', name: 'Praia dos Campistas', ...RJ_MAC, lat: -22.3936, lon: -41.7789, facing: 150, kind: 'beach' },
+  { id: 'mac-cavaleiros', name: 'Praia dos Cavaleiros', ...RJ_MAC, lat: -22.3963, lon: -41.784, facing: 150, kind: 'beach' },
+  { id: 'mac-pecado', name: 'Praia do Pecado', ...RJ_MAC, lat: -22.407, lon: -41.807, facing: 150, kind: 'beach' },
+  { id: 'mac-aeroporto', name: 'Praia do Aeroporto', ...RJ_MAC, lat: -22.3501, lon: -41.7597, facing: 143, kind: 'beach' },
+  { id: 'mac-barreto', name: 'São José do Barreto', ...RJ_MAC, lat: -22.3352, lon: -41.7343, facing: 140, kind: 'beach' },
+  { id: 'mac-lagomar', name: 'Lagomar', ...RJ_MAC, lat: -22.3046, lon: -41.6958, facing: 143, kind: 'beach' },
+  { id: 'crp-carapebus', name: 'Carapebus', ...RJ_CRP, lat: -22.2524, lon: -41.5872, facing: 155, kind: 'beach' },
+  { id: 'crp-jurubatiba', name: 'Jurubatiba (Praia Grande)', ...RJ_CRP, lat: -22.232, lon: -41.495, facing: 155, kind: 'beach' },
+  { id: 'qss-visgueiro', name: 'Visgueiro', ...RJ_QSS, lat: -22.172, lon: -41.33, facing: 150, kind: 'beach' },
+  { id: 'qss-barradofurado', name: 'Barra do Furado', ...RJ_QSS, lat: -22.1, lon: -41.1391, facing: 145, kind: 'beach' },
+  { id: 'cmp-farol', name: 'Farol de São Thomé', ...RJ_CMP, lat: -22.0432, lon: -41.0485, facing: 130, kind: 'beach' },
+  { id: 'cmp-xexe', name: 'Balneário do Xexé', ...RJ_CMP, lat: -21.985, lon: -40.984, facing: 100, kind: 'beach' },
+  { id: 'cmp-mariadarosa', name: 'Maria da Rosa', ...RJ_CMP, lat: -21.922, lon: -40.99, facing: 95, kind: 'beach' },
+  { id: 'sjb-acu', name: 'Barra do Açu', ...RJ_SJB, lat: -21.895, lon: -40.979, facing: 85, kind: 'beach' },
+  { id: 'sjb-grussai', name: 'Grussaí', ...RJ_SJB, lat: -21.6946, lon: -41.0232, facing: 95, kind: 'beach' },
+  { id: 'sjb-atafona', name: 'Atafona', ...RJ_SJB, lat: -21.6243, lon: -41.0136, facing: 98, kind: 'beach' },
+  { id: 'sfi-guriri', name: 'Guriri', ...RJ_SFI, lat: -21.5412, lon: -41.0449, facing: 90, kind: 'beach' },
+  { id: 'sfi-buena', name: 'Buena', ...RJ_SFI, lat: -21.478, lon: -41.03, facing: 90, kind: 'beach' },
+  { id: 'sfi-santaclara', name: 'Santa Clara', ...RJ_SFI, lat: -21.3926, lon: -40.9843, facing: 165, kind: 'beach' },
+  { id: 'sfi-guaxindiba', name: 'Guaxindiba', ...RJ_SFI, lat: -21.3823, lon: -40.977, facing: 133, kind: 'beach' },
+  { id: 'sfi-lagoadoce', name: 'Lagoa Doce', ...RJ_SFI, lat: -21.3541, lon: -40.963, facing: 78, kind: 'beach' },
+]
+
 /**
  * Picos do litoral brasileiro, do Sul ao Nordeste.
  * Coordenadas e orientação aproximadas; ajuste conforme o conhecimento local.
@@ -352,11 +487,7 @@ export const ALL_SPOTS: Spot[] = [
   ...GUARUJA,
   ...BAIXADA_NORTE,
   ...LITORAL_NORTE,
-  { id: 'prainha', name: 'Prainha', city: 'Rio de Janeiro', state: 'RJ', lat: -23.04, lon: -43.506, facing: 170, kind: 'beach' },
-  { id: 'barra', name: 'Barra da Tijuca', city: 'Rio de Janeiro', state: 'RJ', lat: -23.012, lon: -43.36, facing: 175, kind: 'beach' },
-  { id: 'arpoador', name: 'Arpoador', city: 'Rio de Janeiro', state: 'RJ', lat: -22.989, lon: -43.19, facing: 180, kind: 'point' },
-  { id: 'itauna', name: 'Itaúna', city: 'Saquarema', state: 'RJ', lat: -22.937, lon: -42.48, facing: 170, kind: 'beach' },
-  { id: 'geriba', name: 'Geribá', city: 'Búzios', state: 'RJ', lat: -22.78, lon: -41.91, facing: 170, kind: 'beach' },
+  ...RIO_DE_JANEIRO,
   { id: 'jacaraipe', name: 'Jacaraípe', city: 'Serra', state: 'ES', lat: -20.15, lon: -40.18, facing: 90, kind: 'beach' },
   { id: 'itacare', name: 'Tiririca', city: 'Itacaré', state: 'BA', lat: -14.29, lon: -38.99, facing: 90, kind: 'beach' },
   { id: 'stellamaris', name: 'Stella Maris', city: 'Salvador', state: 'BA', lat: -12.94, lon: -38.33, facing: 130, kind: 'reef' },
@@ -395,6 +526,11 @@ export const SPOT_ALIASES: Record<string, string> = {
   joaquina: 'fln-joaquina',
   mole: 'fln-mole',
   'jag-cardoso': 'lag-cardoso',
+  prainha: 'rio-prainha',
+  barra: 'rio-barra',
+  arpoador: 'rio-arpoador',
+  itauna: 'sqr-itauna',
+  geriba: 'bzs-geriba',
 }
 
 export const KIND_LABEL: Record<Spot['kind'], string> = {
