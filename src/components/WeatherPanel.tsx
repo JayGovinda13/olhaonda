@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { DayWeather, HourPoint } from '../api/openMeteo'
 import { dayLabel, fmt, weatherLabel } from '../lib/surf'
 import { brand } from '../theme'
+import { weatherSummary } from '../lib/dayText'
+import { DaySummaryBox } from './DaySummaryBox'
 import { WeatherIcon } from './WeatherIcon'
 
 function uvLabel(uv: number | null) {
@@ -55,7 +57,7 @@ export function WeatherPanel({
   const iconP = { width: 16, height: 16, color: brand.plum }
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
+    <Paper sx={{ p: { xs: 2, sm: 3 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Typography variant="h6">Tempo</Typography>
 
       <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mt: 2 }}>
@@ -174,6 +176,7 @@ export function WeatherPanel({
           })}
         </Box>
       </Collapse>
+      <DaySummaryBox title="Resumo do tempo" lines={weatherSummary(dayHours)} />
     </Paper>
   )
 }

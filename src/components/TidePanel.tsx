@@ -211,22 +211,22 @@ export function TidePanel({
         </Typography>
       )}
 
-      {/* preamares e baixa-mares */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1.5 }}>
+      {/* preamares e baixa-mares: altura em cima, blocos ocupando a largura do card */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${Math.max(1, ext.length)}, minmax(0, 1fr))`, gap: 1, mt: 1.5 }}>
         {ext.map((e) => (
           <Box
             key={e.time}
             sx={{
-              px: 1.25,
-              py: 0.75,
-              borderRadius: 2,
+              px: 1,
+              py: 1,
+              borderRadius: '12px',
+              textAlign: 'center',
               bgcolor: e.kind === 'alta' ? 'rgba(47,174,123,.14)' : 'rgba(122,46,110,.1)',
             }}
           >
-            <Typography sx={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', opacity: 0.7 }}>{e.kind}</Typography>
-            <Typography sx={{ fontSize: 14, fontWeight: 800 }}>
-              {fmt.hour(e.time)} · {m1(e.level)}
-            </Typography>
+            <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', opacity: 0.7 }}>{e.kind}</Typography>
+            <Typography sx={{ fontSize: { xs: 16, sm: 18 }, fontWeight: 800, lineHeight: 1.2, whiteSpace: 'nowrap' }}>{m1(e.level)}</Typography>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, opacity: 0.8 }}>{fmt.hour(e.time)}</Typography>
           </Box>
         ))}
       </Box>

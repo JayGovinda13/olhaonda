@@ -5,7 +5,10 @@ import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
 import { dirDeg, fmt, WIND_LABEL, windKind, windStrength, type WindKind } from '../lib/surf'
 import { brand } from '../theme'
+import { dayLabel } from '../lib/surf'
+import { windDay, windSummary } from '../lib/dayText'
 import { DirArrow } from './bits'
+import { DaySummaryBox } from './DaySummaryBox'
 
 const GOOD: WindKind[] = ['terral', 'cross-terral', 'calmo']
 const kindColor = (k: WindKind) => (GOOD.includes(k) ? brand.green : brand.plum)
@@ -25,12 +28,17 @@ export function WindPanel({
   spot,
   hour,
   dayHours,
+  allHours,
   onSelectHour,
+  onSelectDay,
 }: {
   spot: Spot
   hour: HourPoint
   dayHours: HourPoint[]
+  /** todas as horas (14 dias), para a faixa de dias */
+  allHours: HourPoint[]
   onSelectHour: (time: string) => void
+  onSelectDay: (date: string) => void
 }) {
   const wk = windKind(spot, hour.windDirection, hour.windSpeed)
   const strip = useRef<HTMLDivElement>(null)
@@ -51,7 +59,7 @@ export function WindPanel({
   const selIdx = dayHours.findIndex((h) => h.time === hour.time)
 
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
+    <Paper sx={{ p: { xs: 2, sm: 3 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
         <Typography variant="h6">Vento</Typography>
         <Typography variant="body2" sx={{ fontWeight: 800, color: kindColor(wk) }}>
@@ -59,6 +67,8 @@ export function WindPanel({
           {wk !== 'calmo' && ` · ${windStrength(hour.windSpeed).toLowerCase()}`}
         </Typography>
       </Stack>
+
+      <WindDays spot={spot} allHours={allHours} selectedDate={hour.time.slice(0, 10)} onSelectDay={onSelectDay} />
 
       <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mt: 2 }}>
         <Box
@@ -145,6 +155,7 @@ export function WindPanel({
       <Typography variant="caption" sx={{ display: 'block', mt: 1.5, opacity: 0.6 }}>
         Linha cheia: vento médio; tracejada: rajadas (km/h). Seta para onde o vento sopra; verde = terral ou fraco.
       </Typography>
+      <DaySummaryBox title="Resumo do vento" lines={windSummary(spot, dayHours)} />
     </Paper>
   )
 }
@@ -156,6 +167,72 @@ function Mini({ label, value }: { label: string; value: string }) {
       <Typography variant="body2" sx={{ fontWeight: 700, mt: 0.25 }} noWrap>
         {value}
       </Typography>
+    </Box>
+  )
+}
+
+/** Os 14 dias de vento: direção média com luz do dia, velocidade média e rajada máxima. Verde = manhã terral ou fraca. */
+function WindDays({
+  spot,
+  allHours,
+  selectedDate,
+  onSelectDay,
+}: {
+  spot: Spot
+  allHours: HourPoint[]
+  selectedDate: string
+  onSelectDay: (date: string) => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const c = ref.current
+    const el = c?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (c && el) c.scrollTo({ left: el.offsetLeft - c.clientWidth / 2 + el.offsetWidth / 2, behavior: 'smooth' })
+  }, [selectedDate])
+  const byDay = new Map<string, HourPoint[]>()
+  for (const h of allHours) {
+    const d = h.time.slice(0, 10)
+    if (!byDay.has(d)) byDay.set(d, [])
+    byDay.get(d)!.push(h)
+  }
+  return (
+    <Box
+      ref={ref}
+      role="group"
+      aria-label="Vento dos 14 dias"
+      sx={{ position: 'relative', display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '64px', gap: 0.5, overflowX: 'auto', mt: 1.5, pb: 0.5 }}
+    >
+      {[...byDay.entries()].map(([date, hs], i) => {
+        const d = windDay(spot, hs)
+        const active = date === selectedDate
+        const { wd, dm } = dayLabel(date)
+        const color = d.goodMorning ? brand.green : brand.plum
+        return (
+          <ButtonBase
+            key={date}
+            aria-pressed={active}
+            aria-label={`${wd} ${dm}: ${d.avg == null ? '—' : Math.round(d.avg)} km/h, rajadas ${Math.round(d.gust)}`}
+            onClick={() => onSelectDay(date)}
+            sx={{
+              flexDirection: 'column',
+              py: 0.75,
+              borderRadius: '12px',
+              bgcolor: active ? brand.purple : alpha(brand.purple, 0.04),
+              color: active ? brand.sand : 'text.primary',
+              border: hs.every((h) => h.longRange) && !active ? `1px dashed ${alpha(brand.purple, 0.3)}` : '1px solid transparent',
+            }}
+          >
+            <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', opacity: 0.75 }}>
+              {i === 0 ? 'Hoje' : wd} {dm.slice(0, 2)}
+            </Typography>
+            <Box sx={{ display: 'flex', my: 0.5, color: active ? brand.sand : color }}>
+              <DirArrow deg={d.dir} size={18} />
+            </Box>
+            <Typography sx={{ fontSize: 13, fontWeight: 800, lineHeight: 1.1 }}>{d.avg == null ? '—' : Math.round(d.avg)}</Typography>
+            <Typography sx={{ fontSize: 10, opacity: 0.65 }}>raj {Math.round(d.gust)}</Typography>
+          </ButtonBase>
+        )
+      })}
     </Box>
   )
 }
