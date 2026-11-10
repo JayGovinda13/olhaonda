@@ -97,8 +97,8 @@ export default function ForecastPage() {
         <>
           <NowPanel spot={spot} hour={selected} isNow={selected.time === hours[nowIdx].time} />
           <DayStrip days={days} selected={selDate} onSelect={pickDay} />
-          <PicoPanel spot={spot} hours={hours} selected={selected} onSelect={setSelTime} />
           <HourlyChart spot={spot} hours={dayHours} scaleMax={weekMax} selected={selected.time} onSelect={setSelTime} />
+          <PicoPanel spot={spot} hours={hours} selected={selected} onSelect={setSelTime} />
           <AdSlot format="inline" />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
             <TidePanel spot={spot} hours={dayHours} selected={selected.time} sun={dayWeather} onSelect={setSelTime} />
