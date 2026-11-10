@@ -120,7 +120,7 @@ export default function ForecastPage() {
                 onSelectHour={setSelTime}
               />
               <WindPanel spot={spot} hour={selected} dayHours={dayHours} onSelectHour={setSelTime} />
-              <TidePanel spot={spot} hours={dayHours} selected={selected.time} onSelect={setSelTime} />
+              <TidePanel spot={spot} hours={dayHours} allHours={hours} selected={selected.time} onSelect={setSelTime} onSelectDay={pickDay} />
             </Box>
           </Box>
         </>

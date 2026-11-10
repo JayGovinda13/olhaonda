@@ -6,7 +6,7 @@ import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
 import { tidePortFor } from '../data/tidePorts'
 import { moonInfo } from '../lib/moon'
-import { fmt } from '../lib/surf'
+import { dayLabel, fmt } from '../lib/surf'
 import { MoonIcon } from './MoonIcon'
 import { brand } from '../theme'
 
@@ -40,13 +40,19 @@ function extremes(hours: HourPoint[]): Extreme[] {
 export function TidePanel({
   spot,
   hours: rawHours,
+  allHours,
   selected,
   onSelect,
+  onSelectDay,
 }: {
   spot: Spot
+  /** horas do dia escolhido */
   hours: HourPoint[]
+  /** todas as horas da previsão (14 dias), para a faixa de dias */
+  allHours: HourPoint[]
   selected: string
   onSelect: (time: string) => void
+  onSelectDay: (date: string) => void
 }) {
   const moon = moonInfo(new Date(`${(rawHours[0]?.time ?? selected).slice(0, 10)}T12:00:00-03:00`))
   const modeled = rawHours.some((h) => h.tideModeled)
@@ -152,6 +158,8 @@ export function TidePanel({
           </Stack>
         )}
       </Stack>
+
+      <TideDays allHours={allHours} z0={tidePortFor(spot).z0} selectedDate={selected.slice(0, 10)} onSelectDay={onSelectDay} />
 
       {valid.length ? (
         <Box
@@ -327,5 +335,90 @@ export function TidePanel({
         hora.
       </Typography>
     </Paper>
+  )
+}
+
+/**
+ * Os 14 dias de maré numa faixa que rola de lado: mini curva do dia, amplitude (alta − baixa)
+ * e a lua. Dá para ver de relance a semana de sizígia (amplitude grande) e a de quadratura.
+ */
+function TideDays({
+  allHours,
+  z0,
+  selectedDate,
+  onSelectDay,
+}: {
+  allHours: HourPoint[]
+  z0: number
+  selectedDate: string
+  onSelectDay: (date: string) => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const c = ref.current
+    const el = c?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (c && el) c.scrollTo({ left: el.offsetLeft - c.clientWidth / 2 + el.offsetWidth / 2, behavior: 'smooth' })
+  }, [selectedDate])
+
+  const byDay = new Map<string, HourPoint[]>()
+  for (const h of allHours) {
+    const d = h.time.slice(0, 10)
+    if (!byDay.has(d)) byDay.set(d, [])
+    byDay.get(d)!.push(h)
+  }
+  const all = allHours.map((h) => h.seaLevel).filter((v): v is number => v != null)
+  if (!all.length) return null
+  const lo = Math.min(...all) + z0
+  const hi = Math.max(...all) + z0
+  const SW = 44
+  const SH = 18
+
+  return (
+    <Box
+      ref={ref}
+      role="group"
+      aria-label="Maré dos 14 dias"
+      sx={{ position: 'relative', display: 'grid', gridAutoFlow: 'column', gridAutoColumns: '64px', gap: 0.5, overflowX: 'auto', mt: 1.5, pb: 0.5 }}
+    >
+      {[...byDay.entries()].map(([date, hs], i) => {
+        const lv = hs.map((h) => (h.seaLevel == null ? null : h.seaLevel + z0))
+        const ok = lv.filter((v): v is number => v != null)
+        const amp = ok.length ? Math.max(...ok) - Math.min(...ok) : null
+        const pts = lv
+          .map((v, k) => (v == null ? null : `${((k / Math.max(1, lv.length - 1)) * SW).toFixed(1)},${(SH - ((v - lo) / (hi - lo || 1)) * SH).toFixed(1)}`))
+          .filter(Boolean)
+          .join(' ')
+        const moon = moonInfo(new Date(`${date}T12:00:00-03:00`))
+        const active = date === selectedDate
+        const { wd, dm } = dayLabel(date)
+        return (
+          <ButtonBase
+            key={date}
+            aria-pressed={active}
+            aria-label={`${wd} ${dm}: amplitude ${amp == null ? '—' : m1(amp)}, lua ${moon.name.toLowerCase()}`}
+            onClick={() => onSelectDay(date)}
+            sx={{
+              flexDirection: 'column',
+              py: 0.75,
+              borderRadius: '12px',
+              bgcolor: active ? brand.purple : alpha(brand.purple, 0.04),
+              color: active ? brand.sand : 'text.primary',
+              border: hs.some((h) => h.tideModeled) && !active ? `1px dashed ${alpha(brand.purple, 0.3)}` : '1px solid transparent',
+            }}
+          >
+            <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', opacity: 0.75 }}>
+              {i === 0 ? 'Hoje' : wd} {dm.slice(0, 2)}
+            </Typography>
+            <svg width={SW} height={SH} viewBox={`0 0 ${SW} ${SH}`} aria-hidden style={{ margin: '4px 0' }}>
+              <polyline points={pts} fill="none" stroke={active ? brand.sand : brand.deepGreen} strokeWidth={1.6} strokeLinejoin="round" />
+            </svg>
+            <Typography sx={{ fontSize: 12, fontWeight: 800, lineHeight: 1.1 }}>{amp == null ? '—' : m1(amp)}</Typography>
+            <Box sx={{ mt: 0.5, display: 'flex' }}>
+              <MoonIcon phase={moon.phase} size={14} />
+            </Box>
+          </ButtonBase>
+        )
+      })}
+    </Box>
   )
 }
