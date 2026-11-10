@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Skeleton, Stack } from '@mui/material'
+import { Alert, Box, Button, Skeleton, Stack, Typography } from '@mui/material'
 import { Refresh } from 'iconoir-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
@@ -12,13 +12,14 @@ import { PicoPanel } from '../components/pico/PicoPanel'
 import { SpotPicker } from '../components/SpotPicker'
 import { TidePanel } from '../components/TidePanel'
 import { WeatherPanel } from '../components/WeatherPanel'
+import { WindPanel } from '../components/WindPanel'
 import { DEFAULT_SPOT_ID, SPOT_ALIASES, SPOTS } from '../data/spots'
 import { useForecast } from '../hooks/useForecast'
 import { useLocalState } from '../hooks/useLocalState'
 import { summarizeDays } from '../lib/days'
 import { surfEstimate } from '../lib/breaking'
 import { usePageMeta } from '../lib/meta'
-import { currentHourIndex } from '../lib/surf'
+import { currentHourIndex, dayLabel, fmt } from '../lib/surf'
 
 export default function ForecastPage() {
   // o pico vem do endereço (/pico/:id), que é compartilhável
@@ -47,11 +48,10 @@ export default function ForecastPage() {
   const selDate = selected?.time.slice(0, 10) ?? ''
   const dayHours = days.find((d) => d.date === selDate)?.hours ?? []
   const weather = forecast.data?.sun ?? []
-  const dayWeather = weather.find((s) => s.date === selDate)
 
   usePageMeta({
     title: `${spot.name} (${spot.city}) · Previsão de ondas · OlhaOnda`,
-    description: `Previsão de ondas para ${spot.name}, ${spot.city}: altura, swell, período, força da onda, vento terral ou maral, maré no padrão da Marinha e tempo, hora a hora e para 7 dias.`,
+    description: `Previsão de ondas para ${spot.name}, ${spot.city}: altura, swell, período, força da onda, vento terral ou maral, maré no padrão da Marinha e tempo, hora a hora e para 14 dias.`,
     path: `/pico/${spot.id}`,
   })
 
@@ -100,16 +100,28 @@ export default function ForecastPage() {
           <HourlyChart spot={spot} hours={dayHours} scaleMax={weekMax} selected={selected.time} onSelect={setSelTime} />
           <PicoPanel spot={spot} hours={hours} selected={selected} onSelect={setSelTime} />
           <AdSlot format="inline" />
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-            <TidePanel spot={spot} hours={dayHours} selected={selected.time} sun={dayWeather} onSelect={setSelTime} />
-            <WeatherPanel
-              days={weather}
-              selectedDate={selDate}
-              hour={selected}
-              dayHours={dayHours}
-              onSelectDay={pickDay}
-              onSelectHour={setSelTime}
-            />
+          {/* tempo, vento e maré andam juntos: mesmo dia e mesma hora, escolhidos em qualquer um dos três */}
+          <Box component="section" aria-labelledby="condicoes">
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline', flexWrap: 'wrap', mb: 1.25, px: 0.5 }}>
+              <Typography id="condicoes" variant="h6" component="h2">
+                Tempo, vento e maré
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.7, fontWeight: 700 }}>
+                {dayLabel(selDate).wd} {dayLabel(selDate).dm} · {fmt.hour(selected.time)}
+              </Typography>
+            </Stack>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2 }}>
+              <WeatherPanel
+                days={weather}
+                selectedDate={selDate}
+                hour={selected}
+                dayHours={dayHours}
+                onSelectDay={pickDay}
+                onSelectHour={setSelTime}
+              />
+              <WindPanel spot={spot} hour={selected} dayHours={dayHours} onSelectHour={setSelTime} />
+              <TidePanel spot={spot} hours={dayHours} selected={selected.time} onSelect={setSelTime} />
+            </Box>
           </Box>
         </>
       )}

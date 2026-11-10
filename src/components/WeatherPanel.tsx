@@ -1,6 +1,6 @@
 import { Box, ButtonBase, Collapse, Paper, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { DropletHalf, SunLight, Umbrella, Wind } from 'iconoir-react'
+import { DropletHalf, HalfMoon, SunLight, Umbrella } from 'iconoir-react'
 import { useEffect, useRef, useState } from 'react'
 import type { DayWeather, HourPoint } from '../api/openMeteo'
 import { dayLabel, fmt, weatherLabel } from '../lib/surf'
@@ -36,6 +36,13 @@ export function WeatherPanel({
   // as horas abrem só depois que a pessoa escolhe um dia; tocar de novo no mesmo dia fecha
   const [openDate, setOpenDate] = useState<string | null>(null)
   const strip = useRef<HTMLDivElement>(null)
+  const daysRef = useRef<HTMLDivElement>(null)
+  // dia escolhido sempre visível na faixa de 14 dias
+  useEffect(() => {
+    const c = daysRef.current
+    const el = c?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (c && el) c.scrollTo({ left: el.offsetLeft - c.clientWidth / 2 + el.offsetWidth / 2, behavior: 'smooth' })
+  }, [selectedDate])
   // centraliza a hora escolhida na faixa (sem rolar a página)
   useEffect(() => {
     const c = strip.current
@@ -83,11 +90,13 @@ export function WeatherPanel({
         <Mini icon={<Umbrella {...iconP} />} label="Chuva" value={`${hour.rainChance ?? 0}% · ${(day.rainSum ?? 0).toFixed(1).replace('.', ',')} mm/dia`} />
         <Mini icon={<SunLight {...iconP} />} label="Índice UV" value={uvLabel(day.uvMax)} />
         <Mini icon={<DropletHalf {...iconP} />} label="Nuvens" value={hour.cloudCover == null ? '—' : `${Math.round(hour.cloudCover)}%`} />
-        <Mini icon={<Wind {...iconP} />} label="Vento máx." value={fmt.kmh(day.windMax)} />
+        <Mini icon={<HalfMoon {...iconP} />} label="Nascer e pôr do sol" value={day.sunrise ? `${fmt.hour(day.sunrise)} – ${fmt.hour(day.sunset)}` : '—'} />
       </Box>
 
       <Box
+        ref={daysRef}
         sx={{
+          position: 'relative',
           display: 'grid',
           gridAutoFlow: 'column',
           gridAutoColumns: 'minmax(52px, 1fr)',

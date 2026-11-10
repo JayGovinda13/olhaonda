@@ -4,11 +4,15 @@
  * - Marine API: altura/período/direção de ondulação (swell primário e secundário),
  *   mar de vento, temperatura da água e nível do mar (maré). Usa "best_match",
  *   que combina os modelos ECMWF WAM, Météo-France MFWAM e NOAA GFS-Wave.
+ *   Previsão de 14 dias: depois do horizonte do best_match (~10 dias) as ondas vêm só do
+ *   NOAA GFS-Wave (vai a 16 dias) e a maré é prolongada por análise harmônica (lib/tideHarmonic).
  * - Forecast API: vento a 10 m, rajadas, temperatura do ar, nascer/pôr do sol.
  *
  * Gratuita para uso não comercial, sem chave, com CORS liberado.
  * Para uso comercial use um plano pago e defina VITE_OPEN_METEO_API_KEY.
  */
+
+import { extendTide } from '../lib/tideHarmonic'
 
 const API_KEY = import.meta.env.VITE_OPEN_METEO_API_KEY as string | undefined
 export const MARINE_URL = API_KEY
@@ -33,8 +37,14 @@ const MARINE_HOURLY = [
   'wind_wave_direction',
   'wind_wave_period',
   'sea_surface_temperature',
-  'sea_level_height_msl',
 ] as const
+
+/** dias de previsão */
+export const FORECAST_DAYS = 14
+/** dias passados de nível do mar usados no ajuste harmônico da maré */
+const TIDE_PAST_DAYS = 30
+/** modelo de onda de longo prazo, usado depois do horizonte do best_match */
+const LONG_MODEL = 'ncep_gfswave025'
 
 const WEATHER_HOURLY = [
   'wind_speed_10m',
@@ -86,6 +96,10 @@ export type HourPoint = {
   rain: number | null
   cloudCover: number | null
   uv: number | null
+  /** além do horizonte do best_match: onda só do GFS-Wave (tendência) */
+  longRange: boolean
+  /** nível do mar prolongado pela análise harmônica */
+  tideModeled: boolean
 }
 
 export type DayWeather = {
@@ -143,11 +157,18 @@ export function fetchForecast(lat: number, lon: number, signal?: AbortSignal): P
   const hit = cache.get(key)
   if (hit) return hit
 
-  const common = { latitude: lat, longitude: lon, timezone: 'America/Sao_Paulo', forecast_days: 7 }
+  const common = { latitude: lat, longitude: lon, timezone: 'America/Sao_Paulo', forecast_days: FORECAST_DAYS }
   const marineUrl = buildUrl(MARINE_URL, {
     ...common,
     hourly: MARINE_HOURLY.join(','),
     cell_selection: 'sea',
+    models: `best_match,${LONG_MODEL}`,
+  })
+  const tideUrl = buildUrl(MARINE_URL, {
+    ...common,
+    hourly: 'sea_level_height_msl',
+    cell_selection: 'sea',
+    past_days: TIDE_PAST_DAYS,
   })
   const weatherUrl = buildUrl(WEATHER_URL, {
     ...common,
@@ -162,14 +183,22 @@ export function fetchForecast(lat: number, lon: number, signal?: AbortSignal): P
       weatherUrl,
       signal,
     ),
-  ]).then(([marine, weather]) => {
+    getJson<{ hourly: Hourly }>(tideUrl, signal),
+  ]).then(([marine, weather, tideRes]) => {
     const m = marine.hourly
+    // maré: modelo até onde existe, harmônica depois
+    const tt = tideRes.hourly
+    const tide = extendTide(tt.time, tt.sea_level_height_msl ?? [])
+    const tideAt = new Map(tt.time.map((t, i) => [t, tide[i]]))
     const w = weather.hourly
     const wIndex = new Map(w.time.map((t, i) => [t, i]))
     const hours: HourPoint[] = m.time.map((time, i) => {
       const j = wIndex.get(time)
       const wv = (k: string) => (j === undefined ? null : (w[k]?.[j] ?? null))
-      const mv = (k: string) => m[k]?.[i] ?? null
+      // best_match primeiro; depois do horizonte dele, o modelo de longo prazo
+      const best = (k: string) => m[`${k}_marine_best_match`]?.[i] ?? m[`${k}_best_match`]?.[i] ?? m[k]?.[i] ?? null
+      const mv = (k: string) => best(k) ?? m[`${k}_${LONG_MODEL}`]?.[i] ?? null
+      const td = tideAt.get(time)
       return {
         time,
         waveHeight: mv('wave_height'),
@@ -186,7 +215,7 @@ export function fetchForecast(lat: number, lon: number, signal?: AbortSignal): P
         windWaveDirection: mv('wind_wave_direction'),
         windWavePeriod: mv('wind_wave_period'),
         waterTemp: mv('sea_surface_temperature'),
-        seaLevel: mv('sea_level_height_msl'),
+        seaLevel: td?.level ?? null,
         windSpeed: wv('wind_speed_10m'),
         windDirection: wv('wind_direction_10m'),
         windGusts: wv('wind_gusts_10m'),
@@ -196,6 +225,8 @@ export function fetchForecast(lat: number, lon: number, signal?: AbortSignal): P
         rain: wv('precipitation'),
         cloudCover: wv('cloud_cover'),
         uv: wv('uv_index'),
+        longRange: best('wave_height') == null,
+        tideModeled: !!td?.modeled,
       }
     })
     const d = weather.daily

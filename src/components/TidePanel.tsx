@@ -1,11 +1,13 @@
 import { Box, ButtonBase, Paper, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { ArrowDown, ArrowUp, HalfMoon, SunLight } from 'iconoir-react'
+import { ArrowDown, ArrowUp } from 'iconoir-react'
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
-import type { DayWeather, HourPoint } from '../api/openMeteo'
+import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
 import { tidePortFor } from '../data/tidePorts'
+import { moonInfo } from '../lib/moon'
 import { fmt } from '../lib/surf'
+import { MoonIcon } from './MoonIcon'
 import { brand } from '../theme'
 
 type Extreme = { time: string; level: number; kind: 'alta' | 'baixa' }
@@ -39,15 +41,15 @@ export function TidePanel({
   spot,
   hours: rawHours,
   selected,
-  sun,
   onSelect,
 }: {
   spot: Spot
   hours: HourPoint[]
   selected: string
-  sun?: DayWeather
   onSelect: (time: string) => void
 }) {
+  const moon = moonInfo(new Date(`${(rawHours[0]?.time ?? selected).slice(0, 10)}T12:00:00-03:00`))
+  const modeled = rawHours.some((h) => h.tideModeled)
   // Converte do nível médio (modelo) para o nível de redução da Marinha: altura = nível + Z0
   const port = tidePortFor(spot)
   const hours = rawHours.map((h) => ({ ...h, seaLevel: h.seaLevel == null ? null : h.seaLevel + port.z0 }))
@@ -292,21 +294,32 @@ export function TidePanel({
         })}
       </Box>
 
-      {sun && (
-        <Stack direction="row" spacing={3} sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <SunLight width={18} height={18} color={brand.plum} />
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              {fmt.hour(sun.sunrise)}
-            </Typography>
-          </Stack>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <HalfMoon width={18} height={18} color={brand.plum} />
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              {fmt.hour(sun.sunset)}
-            </Typography>
-          </Stack>
-        </Stack>
+      {/* fase da lua: lua nova e cheia = marés de sizígia (mais amplitude); quartos = quadratura */}
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+        <MoonIcon phase={moon.phase} size={44} />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="body2" sx={{ fontWeight: 800 }}>
+            Lua {moon.name.toLowerCase()} · {Math.round(moon.illumination * 100)}%
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.75 }}>
+            {moon.tideKind === 'sizígia'
+              ? 'Maré de sizígia: altas mais altas e baixas mais baixas'
+              : moon.tideKind === 'quadratura'
+                ? 'Maré de quadratura: pouca diferença entre alta e baixa'
+                : 'Maré intermediária'}
+          </Typography>
+          <Typography variant="caption" sx={{ opacity: 0.6 }}>
+            {moon.next
+              .slice(0, 2)
+              .map((n) => `${n.name.toLowerCase()} ${n.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' })}`)
+              .join(' · ')}
+          </Typography>
+        </Box>
+      </Stack>
+      {modeled && (
+        <Typography variant="caption" sx={{ display: 'block', mt: 1.5, color: brand.plum, fontWeight: 700 }}>
+          Maré deste dia calculada por análise harmônica (além do horizonte do modelo): erro típico de ~10 cm.
+        </Typography>
       )}
       <Typography variant="caption" sx={{ display: 'block', mt: 1.5, opacity: 0.6 }}>
         Padrão Marinha (DHN): alturas em metros acima do nível de redução, porto de referência {port.name}, nível
