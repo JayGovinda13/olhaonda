@@ -31,7 +31,7 @@ export const FEATURES = {
 export const HAS_COMMUNITY = FEATURES.forum || FEATURES.photos
 
 /**
- * Quais picos aparecem: 'prod' = estados da produção (SC e SP, só praias com onda); 'all' = todos.
+ * Quais picos aparecem: 'prod' = estados da produção (SC, SP e RJ, só praias com onda); 'all' = todos.
  * Padrão: 'prod' em produção, 'all' nos outros ambientes.
  * Valores antigos de VITE_SPOT_SCOPE ('baixada', 'sp') valem como 'prod'.
  */

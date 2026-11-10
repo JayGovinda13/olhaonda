@@ -369,12 +369,12 @@ export const ALL_SPOTS: Spot[] = [
 ]
 
 /** Estados no ar na produção. */
-export const PROD_STATES = ['SC', 'SP']
+export const PROD_STATES = ['SC', 'SP', 'RJ']
 
 export type SpotScope = 'prod' | 'baixada' | 'all'
 
 /**
- * Picos de um escopo: 'prod' = estados da produção (SC e SP), só praias com onda; 'baixada' = só a
+ * Picos de um escopo: 'prod' = estados da produção (SC, SP e RJ), só praias com onda; 'baixada' = só a
  * Baixada Santista; 'all' = todos. Sempre sem as praias abrigadas, menos em 'all'.
  */
 export function spotsForScope(scope: SpotScope): Spot[] {

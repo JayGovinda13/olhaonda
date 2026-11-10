@@ -41,7 +41,7 @@ export default function AboutPage() {
         <Section title="O que é">
           <p>
             O OlhaOnda é uma previsão de ondas feita para quem pega onda: surfistas e bodyboarders do litoral brasileiro.
-            Hoje cobrimos {SPOTS.length} picos com onda em {cities.length} cidades de {states.join(' e ')}, cada um com a
+            Hoje cobrimos {SPOTS.length} picos com onda em {cities.length} cidades de {states.length > 1 ? `${states.slice(0, -1).join(', ')} e ${states[states.length - 1]}` : states[0]}, cada um com a
             posição e a orientação da praia conferidas no mapa, porque é isso que decide se o vento é terral ou maral e se o
             swell entra ou não.
           </p>

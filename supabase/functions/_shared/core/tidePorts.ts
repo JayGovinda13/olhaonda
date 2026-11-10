@@ -33,6 +33,8 @@ export const TIDE_PORTS: TidePort[] = [
   { id: 'saosebastiao', name: 'Porto de São Sebastião (SP)', lat: -23.81, lon: -45.4, z0: 0.65, verified: false },
   { id: 'ubatuba', name: 'Ubatuba (SP)', lat: -23.5, lon: -45.12, z0: 0.65, verified: false },
   { id: 'ilhafiscal', name: 'Rio de Janeiro, Ilha Fiscal (RJ)', lat: -22.9, lon: -43.17, z0: 0.69, verified: false },
+  { id: 'angra', name: 'Angra dos Reis (RJ)', lat: -23.01, lon: -44.32, z0: 0.65, verified: false },
+  { id: 'macae', name: 'Macaé, Imbetiba (RJ)', lat: -22.38, lon: -41.77, z0: 0.6, verified: false },
   { id: 'cabofrio', name: 'Arraial do Cabo (RJ)', lat: -22.97, lon: -42.02, z0: 0.65, verified: false },
   { id: 'vitoria', name: 'Porto de Vitória (ES)', lat: -20.32, lon: -40.34, z0: 0.8, verified: false },
   { id: 'ilheus', name: 'Porto de Ilhéus (BA)', lat: -14.78, lon: -39.03, z0: 1.1, verified: false },

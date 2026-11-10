@@ -5,7 +5,7 @@ import { distanceKm, spotsForScope, type Spot } from '../../supabase/functions/_
 export * from '../../supabase/functions/_shared/core/spots.ts'
 
 /**
- * Picos visíveis neste ambiente. Em produção: os estados de PROD_STATES (SC e SP), só praias com
+ * Picos visíveis neste ambiente. Em produção: os estados de PROD_STATES (SC, SP e RJ), só praias com
  * onda. Em staging/dev: todos.
  */
 export const SPOTS: Spot[] = spotsForScope(SPOT_SCOPE)

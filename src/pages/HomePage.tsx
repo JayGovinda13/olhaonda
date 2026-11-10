@@ -45,7 +45,7 @@ export default function HomePage() {
   usePageMeta({
     title: 'OlhaOnda · Previsão de ondas para surf e bodyboard',
     description:
-      'Previsão de ondas de 14 dias, grátis, para surf e bodyboard em Santa Catarina e São Paulo: Florianópolis, Garopaba, Imbituba, Itajaí, Ubatuba, Maresias, Guarujá, Santos e mais. Swell, vento, maré e tempo.',
+      'Previsão de ondas de 14 dias, grátis, para surf e bodyboard em Santa Catarina, São Paulo e Rio de Janeiro: Florianópolis, Garopaba, Ubatuba, Maresias, Guarujá, Saquarema, Arpoador, Búzios e mais. Swell, vento, maré e tempo.',
     path: '/',
   })
 
