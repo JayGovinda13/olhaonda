@@ -1,5 +1,5 @@
-import { Avatar, Box, Button, Container, Divider, IconButton, ListItemIcon, Menu, MenuItem, Stack, Typography } from '@mui/material'
-import { Camera, ChatLines, LogIn, LogOut, SeaWaves, ShoppingBag, Star, Upload, User } from 'iconoir-react'
+import { Avatar, Box, Button, Container, Divider, IconButton, ListItemIcon, Menu, MenuItem, Stack, Tooltip, Typography } from '@mui/material'
+import { Camera, ChatLines, Instagram, LogIn, LogOut, SeaWaves, ShoppingBag, Star, Upload, User } from 'iconoir-react'
 import { useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 import { backend } from '../backend'
@@ -70,6 +70,18 @@ export function Header() {
           ))}
         </Stack>
 
+        <Tooltip title="Siga @olhaonda_ no Instagram">
+          <IconButton
+            component="a"
+            href="https://www.instagram.com/olhaonda_/"
+            target="_blank"
+            rel="noopener"
+            aria-label="Instagram do OlhaOnda (@olhaonda_)"
+            sx={{ color: 'text.primary' }}
+          >
+            <Instagram width={20} height={20} />
+          </IconButton>
+        </Tooltip>
         <ColorModeToggle />
         {!HAS_COMMUNITY ? null : user ? (
           <>

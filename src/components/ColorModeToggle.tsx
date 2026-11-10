@@ -14,7 +14,7 @@ export function ColorModeToggle() {
   const label = dark ? 'Mudar para o modo claro' : 'Mudar para o modo noturno'
   return (
     <Tooltip title={label}>
-      <IconButton onClick={() => setMode(dark ? 'light' : 'dark')} aria-label={label}>
+      <IconButton onClick={() => setMode(dark ? 'light' : 'dark')} aria-label={label} sx={{ color: 'text.primary' }}>
         {dark ? <SunLight width={20} height={20} /> : <HalfMoon width={20} height={20} />}
       </IconButton>
     </Tooltip>
