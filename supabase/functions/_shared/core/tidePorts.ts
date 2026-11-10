@@ -24,6 +24,8 @@ export type TidePort = {
 
 export const TIDE_PORTS: TidePort[] = [
   { id: 'imbituba', name: 'Porto de Imbituba (SC)', lat: -28.23, lon: -48.65, z0: 0.4, verified: false },
+  { id: 'saofranciscodosul', name: 'Porto de São Francisco do Sul (SC)', lat: -26.24, lon: -48.64, z0: 0.8, verified: false },
+  { id: 'itajai', name: 'Porto de Itajaí (SC)', lat: -26.9, lon: -48.66, z0: 0.6, verified: false },
   { id: 'florianopolis', name: 'Florianópolis (SC)', lat: -27.58, lon: -48.56, z0: 0.55, verified: false },
   { id: 'cananeia', name: 'Cananéia (SP)', lat: -25.015, lon: -47.926, z0: 0.8, verified: false },
   { id: 'paranagua', name: 'Porto de Paranaguá (PR)', lat: -25.5, lon: -48.52, z0: 0.8, verified: false },

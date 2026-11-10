@@ -45,7 +45,7 @@ export default function HomePage() {
   usePageMeta({
     title: 'OlhaOnda · Previsão de ondas para surf e bodyboard',
     description:
-      'Previsão de ondas de 14 dias, grátis, para surf e bodyboard no litoral de São Paulo: Ubatuba, Maresias, Ilhabela, Guarujá, Santos, Praia Grande, Peruíbe, Ilha Comprida e mais. Swell, vento, maré e tempo.',
+      'Previsão de ondas de 14 dias, grátis, para surf e bodyboard em Santa Catarina e São Paulo: Florianópolis, Garopaba, Imbituba, Itajaí, Ubatuba, Maresias, Guarujá, Santos e mais. Swell, vento, maré e tempo.',
     path: '/',
   })
 
@@ -269,7 +269,7 @@ export default function HomePage() {
             )}
             {uf && (
               <Link component="button" underline="hover" color="inherit" onClick={() => setLevel({ uf })}>
-                {singleState ? 'Litoral de São Paulo' : (STATE_NAMES[uf] ?? uf)}
+                {singleState ? `Litoral de ${STATE_NAMES[uf] ?? uf}` : (STATE_NAMES[uf] ?? uf)}
               </Link>
             )}
             {city && !nearby && <Typography sx={{ fontSize: 13, fontWeight: 800 }}>{city}</Typography>}

@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
   const onlyAlerts = url.searchParams.get('only') === 'alerts'
   const sb = admin()
   const v = Deno.env.get('SPOT_SCOPE')
-  const scope: SpotScope = v === 'baixada' ? 'baixada' : v === 'sp' ? 'sp' : 'all'
+  const scope: SpotScope = v === 'baixada' ? 'baixada' : v === 'prod' || v === 'sp' ? 'prod' : 'all'
   const apiKey = Deno.env.get('OPEN_METEO_API_KEY') || undefined
   const now = localNow()
 

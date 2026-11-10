@@ -1,7 +1,7 @@
 import { Autocomplete, Box, IconButton, Stack, TextField, Tooltip } from '@mui/material'
 import { Position, Search } from 'iconoir-react'
 import { useState } from 'react'
-import { nearestSpot, SPOTS, type Spot } from '../data/spots'
+import { nearestSpot, spotGroup, SPOTS, type Spot } from '../data/spots'
 import { alpha, brand } from '../theme'
 
 /** Busca de picos agrupada por região, com botão "mais perto de mim". */
@@ -42,7 +42,7 @@ export function SpotPicker({
         options={SPOTS}
         value={value}
         disableClearable={!allowEmpty}
-        groupBy={(s) => s.region ?? s.state}
+        groupBy={spotGroup}
         getOptionLabel={(s) => `${s.name} · ${s.city}`}
         isOptionEqualToValue={(a, b) => a.id === b.id}
         onChange={(_, s) => onChange(s ?? null)}

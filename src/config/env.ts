@@ -31,10 +31,9 @@ export const FEATURES = {
 export const HAS_COMMUNITY = FEATURES.forum || FEATURES.photos
 
 /**
- * Quais picos aparecem: 'sp' = litoral de São Paulo com onda; 'all' = todos.
- * Padrão: 'sp' em produção, 'all' nos outros ambientes.
- * 'baixada' (valor antigo de VITE_SPOT_SCOPE, quando a produção era só a Baixada) vale como 'sp':
- * a produção passou a cobrir o litoral paulista inteiro.
+ * Quais picos aparecem: 'prod' = estados da produção (SC e SP, só praias com onda); 'all' = todos.
+ * Padrão: 'prod' em produção, 'all' nos outros ambientes.
+ * Valores antigos de VITE_SPOT_SCOPE ('baixada', 'sp') valem como 'prod'.
  */
 const scopeVar = import.meta.env.VITE_SPOT_SCOPE as string | undefined
-export const SPOT_SCOPE: 'sp' | 'all' = scopeVar === 'all' ? 'all' : scopeVar ? 'sp' : IS_PRODUCTION ? 'sp' : 'all'
+export const SPOT_SCOPE: 'prod' | 'all' = scopeVar === 'all' ? 'all' : scopeVar ? 'prod' : IS_PRODUCTION ? 'prod' : 'all'

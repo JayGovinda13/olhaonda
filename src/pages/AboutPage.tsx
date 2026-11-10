@@ -1,6 +1,7 @@
 import { Box, Link, Paper, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 import { Link as RouterLink } from 'react-router'
+import { STATE_NAMES } from '../data/hierarchy'
 import { SPOTS } from '../data/spots'
 import { usePageMeta } from '../lib/meta'
 
@@ -23,6 +24,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 /** Sobre e contato: o que é o site, de onde vêm os dados e como falar com a gente. */
 export default function AboutPage() {
   const cities = [...new Set(SPOTS.map((s) => s.city))]
+  const states = [...new Set(SPOTS.map((s) => STATE_NAMES[s.state] ?? s.state))]
   usePageMeta({
     title: 'Sobre e contato · OlhaOnda',
     description: 'O que é o OlhaOnda, de onde vêm os dados da previsão de ondas, como ler swell, vento, força da onda e maré, e como entrar em contato.',
@@ -39,7 +41,7 @@ export default function AboutPage() {
         <Section title="O que é">
           <p>
             O OlhaOnda é uma previsão de ondas feita para quem pega onda: surfistas e bodyboarders do litoral brasileiro.
-            Hoje cobrimos {SPOTS.length} picos com onda em {cities.length} cidades ({cities.join(', ')}), cada um com a
+            Hoje cobrimos {SPOTS.length} picos com onda em {cities.length} cidades de {states.join(' e ')}, cada um com a
             posição e a orientação da praia conferidas no mapa, porque é isso que decide se o vento é terral ou maral e se o
             swell entra ou não.
           </p>

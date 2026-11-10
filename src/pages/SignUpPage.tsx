@@ -21,7 +21,7 @@ import { Link as RouterLink, Navigate, useNavigate } from 'react-router'
 import { useAuth } from '../auth/context'
 import { backend, LEVEL_LABEL, MODALITY_LABEL, USERNAME_RE, type Level, type Modality } from '../backend'
 import { LogoMark } from '../components/Logo'
-import { SPOTS } from '../data/spots'
+import { spotGroup, SPOTS } from '../data/spots'
 import { resetDemoAlerts } from '../hooks/useDemoAlerts'
 import { setPendingFavorites, useFavorites } from '../hooks/useFavorites'
 import { usePageMeta } from '../lib/meta'
@@ -223,7 +223,7 @@ export default function SignUpPage() {
           <Autocomplete
             multiple
             options={SPOTS}
-            groupBy={(s) => s.region ?? s.state}
+            groupBy={spotGroup}
             getOptionLabel={(s) => s.name}
             value={SPOTS.filter((s) => spots.includes(s.id))}
             onChange={(_, v) => setSpots(v.slice(0, 5).map((s) => s.id))}
