@@ -27,7 +27,10 @@ export const STATE_NAMES: Record<string, string> = {
   CE: 'Ceará',
 }
 
-/** Estados na ordem da lista de picos (sul → norte). */
+/** Ordem alfabética em português (acentos não atrapalham: "Águas" vem junto do "A"). */
+const byName = (a: Place, b: Place) => a.name.localeCompare(b.name, 'pt-BR')
+
+/** Estados em ordem alfabética. */
 export function states(): Place[] {
   const out: Place[] = []
   for (const s of SPOTS) {
@@ -35,10 +38,10 @@ export function states(): Place[] {
     const inState = SPOTS.filter((x) => x.state === s.state)
     out.push({ key: s.state, name: STATE_NAMES[s.state] ?? s.state, count: inState.length, ...center(inState) })
   }
-  return out
+  return out.sort(byName)
 }
 
-/** Cidades de um estado, na ordem da lista (sudoeste → nordeste). */
+/** Cidades de um estado em ordem alfabética. */
 export function cities(state: string): Place[] {
   const out: Place[] = []
   for (const s of SPOTS.filter((x) => x.state === state)) {
@@ -46,7 +49,7 @@ export function cities(state: string): Place[] {
     const inCity = SPOTS.filter((x) => x.state === state && x.city === s.city)
     out.push({ key: s.city, name: s.city, count: inCity.length, ...center(inCity) })
   }
-  return out
+  return out.sort(byName)
 }
 
 export function spotsIn(state: string, city: string) {
@@ -62,3 +65,10 @@ export function bounds(points: { lat: number; lon: number }[]): [[number, number
     [Math.max(...lons), Math.max(...lats)],
   ]
 }
+
+/** Picos para os seletores: estado e cidade em ordem alfabética; dentro da cidade, a ordem da lista (pela costa). */
+export const SPOTS_BY_PLACE: Spot[] = [...SPOTS].sort(
+  (a, b) =>
+    (STATE_NAMES[a.state] ?? a.state).localeCompare(STATE_NAMES[b.state] ?? b.state, 'pt-BR') ||
+    (a.region ?? a.city).localeCompare(b.region ?? b.city, 'pt-BR'),
+)

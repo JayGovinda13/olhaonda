@@ -22,6 +22,7 @@ import { useAuth } from '../auth/context'
 import { backend, LEVEL_LABEL, MODALITY_LABEL, USERNAME_RE, type Level, type Modality } from '../backend'
 import { LogoMark } from '../components/Logo'
 import { spotGroup, SPOTS } from '../data/spots'
+import { SPOTS_BY_PLACE } from '../data/hierarchy'
 import { resetDemoAlerts } from '../hooks/useDemoAlerts'
 import { setPendingFavorites, useFavorites } from '../hooks/useFavorites'
 import { usePageMeta } from '../lib/meta'
@@ -222,7 +223,7 @@ export default function SignUpPage() {
 
           <Autocomplete
             multiple
-            options={SPOTS}
+            options={SPOTS_BY_PLACE}
             groupBy={spotGroup}
             getOptionLabel={(s) => s.name}
             value={SPOTS.filter((s) => spots.includes(s.id))}
