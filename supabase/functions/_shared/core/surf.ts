@@ -152,45 +152,82 @@ export function currentHourIndex(hours: HourPoint[]) {
   return idx >= 0 ? idx : 0
 }
 
+const RHO_G = 1025 * 9.81 // água do mar (kg/m³) × gravidade (m/s²)
+
 /**
- * Força da onda como energia, em quilojoules (kJ): energia de uma onda por metro de crista,
+ * Energia de um trem de ondas, em joules (J) por metro de crista:
  * E = ρ·g·H²·L / 8, com L = g·T² / 2π (comprimento de onda em águas profundas).
- * H = altura significativa; T = período de pico do swell (ou período médio, se faltar).
- * É a mesma ideia do "kJ" usado em sites de previsão de surf.
  */
-export function waveEnergy(h: HourPoint) {
-  const hs = h.waveHeight
-  const t = h.swellPeakPeriod ?? h.swellPeriod ?? h.wavePeriod
-  if (hs == null || t == null) return null
-  const rhoG = 1025 * 9.81 // água do mar (kg/m³) × gravidade (m/s²)
+export function trainEnergy(h: number, t: number) {
   const L = (9.81 * t * t) / (2 * Math.PI)
-  return (rhoG * hs * hs * L) / 8 / 1000 // J -> kJ
+  return (RHO_G * h * h * L) / 8
 }
 
+/**
+ * Força da onda: energia de uma onda por metro de crista, em joules (J).
+ * Soma a energia de cada trem com o período dele: swell principal (período de pico),
+ * swell secundário e mar de vento. Usar a altura total com o período do swell
+ * superestimava a força quando havia muito mar de vento (onda curta, pouco comprimento).
+ * Sem as componentes, cai para a altura total com o período médio.
+ */
+export function waveEnergy(h: HourPoint) {
+  const parts: [number | null, number | null][] = [
+    [h.swellHeight, h.swellPeakPeriod ?? h.swellPeriod],
+    [h.swell2Height, h.swell2Period],
+    [h.windWaveHeight, h.windWavePeriod],
+  ]
+  let total = 0
+  let any = false
+  for (const [hh, t] of parts) {
+    if (hh != null && t != null && hh > 0 && t > 0) {
+      total += trainEnergy(hh, t)
+      any = true
+    }
+  }
+  if (any) return total
+  const t = h.wavePeriod ?? h.swellPeakPeriod ?? h.swellPeriod
+  if (h.waveHeight == null || t == null) return null
+  return trainEnergy(h.waveHeight, t)
+}
+
+/** Faixas de força, em joules por metro de crista. */
 export const ENERGY_LEVELS = [
-  { max: 100, label: 'Fraca' },
-  { max: 400, label: 'Moderada' },
-  { max: 1000, label: 'Forte' },
-  { max: 2500, label: 'Muito forte' },
+  { max: 100_000, label: 'Fraca' },
+  { max: 400_000, label: 'Moderada' },
+  { max: 1_000_000, label: 'Forte' },
+  { max: 2_500_000, label: 'Muito forte' },
   { max: Infinity, label: 'Pesada' },
 ] as const
 
-export function energyLabel(kj: number | null) {
-  if (kj == null) return '—'
-  return ENERGY_LEVELS.find((l) => kj < l.max)!.label
+export function energyLabel(j: number | null) {
+  if (j == null) return '—'
+  return ENERGY_LEVELS.find((l) => j < l.max)!.label
 }
 
-/** 0–1 para barras (escala log, satura em ~5000 kJ). */
-export function energyRatio(kj: number | null) {
-  if (kj == null || kj <= 0) return 0
-  return Math.min(1, Math.log10(1 + kj) / Math.log10(5001))
+/** 0–1 para barras (escala log, satura em ~5 000 000 J). */
+export function energyRatio(j: number | null) {
+  if (j == null || j <= 0) return 0
+  const k = j / 1000
+  return Math.min(1, Math.log10(1 + k) / Math.log10(5001))
 }
 
-/** "123 kJ", ou "1,2 MJ" acima de 10 000 kJ. */
-export function fmtEnergy(kj: number | null) {
-  if (kj == null) return '—'
-  if (kj >= 10000) return `${(kj / 1000).toFixed(1).replace('.', ',')} MJ`
-  return `${Math.round(kj).toLocaleString('pt-BR')} kJ`
+/** Arredonda para 3 algarismos significativos (o modelo não tem mais precisão que isso). */
+function sig3(v: number) {
+  if (v <= 0) return 0
+  const p = Math.pow(10, Math.floor(Math.log10(v)) - 2)
+  return Math.round(v / p) * p
+}
+
+/** Só o número, em joules, com separador de milhar: "342.000". */
+export function fmtJoules(j: number | null) {
+  if (j == null) return '—'
+  return Math.round(sig3(j)).toLocaleString('pt-BR')
+}
+
+/** "342.000 J" */
+export function fmtEnergy(j: number | null) {
+  if (j == null) return '—'
+  return `${fmtJoules(j)} J`
 }
 
 /** Códigos WMO usados pela Open-Meteo -> descrição curta. */
@@ -208,17 +245,17 @@ export function weatherLabel(code: number | null | undefined) {
   return 'Trovoadas'
 }
 
-/** Escala de cor da força (energia em kJ): verde claro (fraca) até roxo (pesada). */
+/** Escala de cor da força (energia em J): verde claro (fraca) até roxo (pesada). */
 const ENERGY_STOPS: [number, [number, number, number]][] = [
   [0, [143, 211, 182]], // #8FD3B6
-  [100, [47, 174, 123]], // #2FAE7B
-  [400, [15, 76, 58]], // #0F4C3A
-  [1000, [122, 46, 110]], // #7A2E6E
-  [2500, [75, 29, 90]], // #4B1D5A
+  [100_000, [47, 174, 123]], // #2FAE7B
+  [400_000, [15, 76, 58]], // #0F4C3A
+  [1_000_000, [122, 46, 110]], // #7A2E6E
+  [2_500_000, [75, 29, 90]], // #4B1D5A
 ]
 
-export function energyColor(kj: number | null) {
-  const v = Math.max(0, kj ?? 0)
+export function energyColor(j: number | null) {
+  const v = Math.max(0, j ?? 0)
   for (let i = 1; i < ENERGY_STOPS.length; i++) {
     const [x1, c1] = ENERGY_STOPS[i]
     const [x0, c0] = ENERGY_STOPS[i - 1]
@@ -233,5 +270,5 @@ export function energyColor(kj: number | null) {
 }
 
 /** Gradiente CSS da escala de força (legendas). */
-// posições na mesma escala log de energyRatio (100 kJ ≈ 54%, 400 ≈ 70%, 1000 ≈ 81%, 2500 ≈ 92%)
+// posições na mesma escala log de energyRatio (100 000 J ≈ 54%, 400 000 ≈ 70%, 1 000 000 ≈ 81%, 2 500 000 ≈ 92%)
 export const ENERGY_GRADIENT = 'linear-gradient(90deg, #8FD3B6 0%, #2FAE7B 54%, #0F4C3A 70%, #7A2E6E 81%, #4B1D5A 92%)'

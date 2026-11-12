@@ -80,8 +80,8 @@ export default function AboutPage() {
               chegar no raso, que depende do período. A faixa vai da onda comum até as séries.
             </li>
             <li>
-              <strong>Força da onda:</strong> a energia de uma onda por metro de crista, em quilojoules (kJ). Junta altura e
-              período num número só: até 100 kJ é fraca; acima de 1.000 kJ, forte.
+              <strong>Força da onda:</strong> a energia de uma onda por metro de crista, em joules (J). Soma a energia do swell e do mar de vento, cada um com o seu período, e junta altura e
+              período num número só: até 100.000 J é fraca; acima de 1.000.000 J, forte.
             </li>
             <li>
               <strong>Vento terral ou maral:</strong> terral sopra da terra para o mar e arruma a onda; maral sopra do mar e

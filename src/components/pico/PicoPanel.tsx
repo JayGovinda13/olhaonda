@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react'
 import type { HourPoint } from '../../api/openMeteo'
 import type { Spot } from '../../data/spots'
 import { useLocalState } from '../../hooks/useLocalState'
-import { compass, dirDeg, energyColor, fmt, WIND_LABEL, windKind } from '../../lib/surf'
+import { compass, dirDeg, energyColor, fmt, trainEnergy, WIND_LABEL, windKind } from '../../lib/surf'
 import { brand } from '../../theme'
 import { SpotDetailMap, type FlowMode } from '../SpotDetailMap'
 import { surfEstimate } from '../../lib/breaking'
@@ -12,11 +12,6 @@ import { Timeline } from './Timeline'
 
 const f1 = (v: number) => v.toFixed(1).replace('.', ',')
 
-/** Energia de uma componente (kJ por onda e metro de crista), mesma fórmula da "Força". */
-function energy(h: number, t: number) {
-  const L = (9.81 * t * t) / (2 * Math.PI)
-  return (1025 * 9.81 * h * h * L) / 8 / 1000
-}
 
 function Chip({ label, value, dot }: { label: string; value: string; dot: string }) {
   return (
@@ -105,7 +100,7 @@ export function PicoPanel({
           <Chip
             key={c.label}
             label={c.label}
-            dot={energyColor(energy(c.h!, c.t!))}
+            dot={energyColor(trainEnergy(c.h!, c.t!))}
             value={`${Math.round(c.d!)}° ${compass(c.d)} · ${f1(c.h!)} m · ${f1(c.t!)} s → ${f1(atBeach.get(c.label) ?? 0)} m na praia`}
           />
         ))}

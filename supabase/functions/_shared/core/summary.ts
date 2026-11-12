@@ -7,7 +7,7 @@ import { surfEstimate } from './breaking.ts'
 import { moonInfo } from './moon.ts'
 import type { Forecast, HourPoint } from './openMeteo.ts'
 import type { Spot } from './spots.ts'
-import { compass, dayLabel, dirDeg, waveEnergy, weatherLabel, WIND_LABEL, windKind, type WindKind } from './surf.ts'
+import { compass, dayLabel, dirDeg, fmtEnergy, waveEnergy, weatherLabel, WIND_LABEL, windKind, type WindKind } from './surf.ts'
 import { extremes, m1, tidePortFor } from './tidePorts.ts'
 
 const f1 = (v: number) => v.toFixed(1).replace('.', ',')
@@ -69,7 +69,7 @@ export function dailySummary(spot: Spot, forecast: Forecast, date: string): Dail
   const swellLine =
     ref.swellHeight != null
       ? `Swell: ${f1(ref.swellHeight)} m · ${Math.round(ref.swellPeakPeriod ?? ref.swellPeriod ?? 0)} s de ${dirDeg(ref.swellDirection)}` +
-        (energy != null ? ` · força ${Math.round(energy)} kJ` : '') +
+        (energy != null ? ` · força ${fmtEnergy(energy)}` : '') +
         (ref.swell2Height != null && ref.swell2Height >= 0.3
           ? `\nSwell 2: ${f1(ref.swell2Height)} m · ${Math.round(ref.swell2Period ?? 0)} s de ${dirDeg(ref.swell2Direction)}`
           : '')
