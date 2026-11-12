@@ -659,6 +659,56 @@ const CEARA: Spot[] = [
   { id: 'brq-bitupita', name: 'Bitupitá', ...CE_BRQ, lat: -2.8924, lon: -41.2762, facing: 5, kind: 'beach' },
 ]
 
+const al = (city: string) => ({ city, state: 'AL', region: city, tidePort: 'maceio' }) as const
+const AL_MGG = al('Maragogi')
+const AL_JPT = al('Japaratinga')
+const AL_PPD = al('Porto de Pedras')
+const AL_PCM = al('Passo de Camaragibe')
+const AL_BSA = al('Barra de Santo Antônio')
+const AL_PRP = al('Paripueira')
+const AL_MCZ = al('Maceió')
+const AL_MDD = al('Marechal Deodoro')
+const AL_BSM = al('Barra de São Miguel')
+const AL_JEQ = al('Jequiá da Praia')
+const AL_CRR = al('Coruripe')
+const AL_FDZ = al('Feliz Deserto')
+const AL_PCB = al('Piaçabuçu')
+/** Litoral de Alagoas, de Maragogi (divisa com PE) a Piaçabuçu (divisa com SE). */
+const ALAGOAS: Spot[] = [
+  { id: 'mgg-pontademangue', name: 'Ponta de Mangue', ...AL_MGG, lat: -8.9575, lon: -35.1729, facing: 113, kind: 'beach' },
+  { id: 'jpt-boqueirao', name: 'Barreiras do Boqueirão', ...AL_JPT, lat: -9.0755, lon: -35.2433, facing: 115, kind: 'beach' },
+  { id: 'jpt-pontal', name: 'Pontal (Japaratinga)', ...AL_JPT, lat: -9.095, lon: -35.2584, facing: 98, kind: 'beach' },
+  { id: 'ppd-patacho', name: 'Patacho', ...AL_PPD, lat: -9.1458, lon: -35.2867, facing: 100, kind: 'beach' },
+  { id: 'ppd-tatuamunha', name: 'Tatuamunha', ...AL_PPD, lat: -9.2195, lon: -35.3291, facing: 113, kind: 'beach' },
+  { id: 'pcm-morro', name: 'Praia do Morro', ...AL_PCM, lat: -9.3, lon: -35.3951, facing: 113, kind: 'beach' },
+  { id: 'pcm-marceneiro', name: 'Marceneiro', ...AL_PCM, lat: -9.335, lon: -35.4309, facing: 90, kind: 'beach' },
+  { id: 'bsa-carroquebrado', name: 'Carro Quebrado', ...AL_BSA, lat: -9.3624, lon: -35.47, facing: 110, kind: 'beach' },
+  { id: 'bsa-tabuba', name: 'Tabuba', ...AL_BSA, lat: -9.3853, lon: -35.493, facing: 113, kind: 'beach' },
+  { id: 'prp-sonhoverde', name: 'Sonho Verde', ...AL_PRP, lat: -9.4543, lon: -35.5291, facing: 100, kind: 'beach' },
+  { id: 'mcz-ipioca', name: 'Ipioca', ...AL_MCZ, lat: -9.5128, lon: -35.5878, facing: 120, kind: 'beach' },
+  { id: 'mcz-sereia', name: 'Praia da Sereia', ...AL_MCZ, lat: -9.553, lon: -35.633, facing: 125, kind: 'beach' },
+  { id: 'mcz-riachodoce', name: 'Riacho Doce', ...AL_MCZ, lat: -9.566, lon: -35.648, facing: 130, kind: 'beach' },
+  { id: 'mcz-garcatorta', name: 'Garça Torta', ...AL_MCZ, lat: -9.5852, lon: -35.6612, facing: 130, kind: 'beach' },
+  { id: 'mcz-jacarecica', name: 'Jacarecica', ...AL_MCZ, lat: -9.6192, lon: -35.6903, facing: 120, kind: 'beach' },
+  { id: 'mcz-cruzdasalmas', name: 'Cruz das Almas', ...AL_MCZ, lat: -9.634, lon: -35.6969, facing: 108, kind: 'beach' },
+  { id: 'mcz-jatiuca', name: 'Jatiúca', ...AL_MCZ, lat: -9.6486, lon: -35.6996, facing: 110, kind: 'beach' },
+  { id: 'mcz-pajucara', name: 'Pajuçara', ...AL_MCZ, lat: -9.6715, lon: -35.7148, facing: 125, kind: 'beach' },
+  { id: 'mcz-avenida', name: 'Praia da Avenida', ...AL_MCZ, lat: -9.6712, lon: -35.7373, facing: 165, kind: 'beach' },
+  { id: 'mcz-sobral', name: 'Sobral', ...AL_MCZ, lat: -9.6786, lon: -35.7544, facing: 150, kind: 'beach' },
+  { id: 'mcz-pontaldabarra', name: 'Pontal da Barra', ...AL_MCZ, lat: -9.6948, lon: -35.7736, facing: 138, kind: 'beach' },
+  { id: 'mdd-frances', name: 'Praia do Francês', ...AL_MDD, lat: -9.7733, lon: -35.8436, facing: 130, kind: 'reef' },
+  { id: 'bsm-barra', name: 'Barra de São Miguel', ...AL_BSM, lat: -9.8279, lon: -35.8807, facing: 123, kind: 'beach' },
+  { id: 'jeq-gunga', name: 'Gunga', ...AL_JEQ, lat: -9.852, lon: -35.9148, facing: 110, kind: 'beach' },
+  { id: 'jeq-lagoaazeda', name: 'Lagoa Azeda', ...AL_JEQ, lat: -9.9916, lon: -35.9954, facing: 128, kind: 'beach' },
+  { id: 'jeq-marape', name: 'Dunas de Marapé', ...AL_JEQ, lat: -10.0453, lon: -36.0267, facing: 120, kind: 'beach' },
+  { id: 'crr-poxim', name: 'Barra do Poxim', ...AL_CRR, lat: -10.072, lon: -36.088, facing: 125, kind: 'beach' },
+  { id: 'crr-lagoadopau', name: 'Lagoa do Pau', ...AL_CRR, lat: -10.1194, lon: -36.1057, facing: 118, kind: 'beach' },
+  { id: 'crr-pontal', name: 'Pontal de Coruripe', ...AL_CRR, lat: -10.158, lon: -36.135, facing: 120, kind: 'beach' },
+  { id: 'crr-miai', name: 'Miaí de Cima', ...AL_CRR, lat: -10.2488, lon: -36.2411, facing: 125, kind: 'beach' },
+  { id: 'fdz-japu', name: 'Praia do Japu', ...AL_FDZ, lat: -10.3149, lon: -36.2993, facing: 130, kind: 'beach' },
+  { id: 'pcb-peba', name: 'Pontal do Peba', ...AL_PCB, lat: -10.3561, lon: -36.2954, facing: 133, kind: 'beach' },
+]
+
 /**
  * Picos do litoral brasileiro, do Sul ao Nordeste.
  * Coordenadas e orientação aproximadas; ajuste conforme o conhecimento local.
@@ -676,7 +726,7 @@ export const ALL_SPOTS: Spot[] = [
   ...ESPIRITO_SANTO,
   { id: 'itacare', name: 'Tiririca', city: 'Itacaré', state: 'BA', lat: -14.29, lon: -38.99, facing: 90, kind: 'beach' },
   { id: 'stellamaris', name: 'Stella Maris', city: 'Salvador', state: 'BA', lat: -12.94, lon: -38.33, facing: 130, kind: 'reef' },
-  { id: 'frances', name: 'Praia do Francês', city: 'Marechal Deodoro', state: 'AL', lat: -9.77, lon: -35.84, facing: 130, kind: 'reef' },
+  ...ALAGOAS,
   { id: 'maracaipe', name: 'Maracaípe', city: 'Ipojuca', state: 'PE', lat: -8.53, lon: -34.995, facing: 110, kind: 'reef' },
   { id: 'pipa', name: 'Praia do Amor', city: 'Pipa', state: 'RN', lat: -6.23, lon: -35.04, facing: 90, kind: 'reef' },
   ...CEARA,
@@ -684,12 +734,12 @@ export const ALL_SPOTS: Spot[] = [
 ]
 
 /** Estados no ar na produção. */
-export const PROD_STATES = ['SC', 'SP', 'RJ', 'ES', 'CE']
+export const PROD_STATES = ['SC', 'SP', 'RJ', 'ES', 'AL', 'CE']
 
 export type SpotScope = 'prod' | 'baixada' | 'all'
 
 /**
- * Picos de um escopo: 'prod' = estados da produção (SC, SP, RJ, ES e CE), só praias com onda; 'baixada' = só a
+ * Picos de um escopo: 'prod' = estados da produção (SC, SP, RJ, ES, AL e CE), só praias com onda; 'baixada' = só a
  * Baixada Santista; 'all' = todos. Sempre sem as praias abrigadas, menos em 'all'.
  */
 export function spotsForScope(scope: SpotScope): Spot[] {
@@ -718,6 +768,7 @@ export const SPOT_ALIASES: Record<string, string> = {
   jacaraipe: 'ser-jacaraipe',
   paracuru: 'prc-pedrameio',
   jeri: 'jij-jericoacoara',
+  frances: 'mdd-frances',
 }
 
 export const KIND_LABEL: Record<Spot['kind'], string> = {
