@@ -709,6 +709,12 @@ const ALAGOAS: Spot[] = [
   { id: 'pcb-peba', name: 'Pontal do Peba', ...AL_PCB, lat: -10.3561, lon: -36.2954, facing: 133, kind: 'beach' },
 ]
 
+/** Amapá: costa de manguezal e foz do Amazonas, com maré de vários metros. Posições aproximadas. */
+const AMAPA: Spot[] = [
+  { id: 'mcp-parazinho', name: 'Ilha do Parazinho', city: 'Macapá', state: 'AP', region: 'Macapá', tidePort: 'bailique', lat: 0.93, lon: -49.92, facing: 60, kind: 'beach', note: 'Reserva Biológica do Parazinho, na foz do Amazonas' },
+  { id: 'oia-caboorange', name: 'Cabo Orange', city: 'Oiapoque', state: 'AP', region: 'Oiapoque', tidePort: 'caboorange', lat: 4.38, lon: -51.47, facing: 50, kind: 'beach', note: 'Parque Nacional do Cabo Orange' },
+]
+
 /**
  * Picos do litoral brasileiro, do Sul ao Nordeste.
  * Coordenadas e orientação aproximadas; ajuste conforme o conhecimento local.
@@ -730,16 +736,17 @@ export const ALL_SPOTS: Spot[] = [
   { id: 'maracaipe', name: 'Maracaípe', city: 'Ipojuca', state: 'PE', lat: -8.53, lon: -34.995, facing: 110, kind: 'reef' },
   { id: 'pipa', name: 'Praia do Amor', city: 'Pipa', state: 'RN', lat: -6.23, lon: -35.04, facing: 90, kind: 'reef' },
   ...CEARA,
+  ...AMAPA,
   { id: 'cacimba', name: 'Cacimba do Padre', city: 'Fernando de Noronha', state: 'PE', region: 'PE · Fernando de Noronha', lat: -3.85, lon: -32.44, facing: 330, kind: 'beach' },
 ]
 
 /** Estados no ar na produção. */
-export const PROD_STATES = ['SC', 'SP', 'RJ', 'ES', 'AL', 'CE']
+export const PROD_STATES = ['SC', 'SP', 'RJ', 'ES', 'AL', 'CE', 'AP']
 
 export type SpotScope = 'prod' | 'baixada' | 'all'
 
 /**
- * Picos de um escopo: 'prod' = estados da produção (SC, SP, RJ, ES, AL e CE), só praias com onda; 'baixada' = só a
+ * Picos de um escopo: 'prod' = estados da produção (SC, SP, RJ, ES, AL, CE e AP), só praias com onda; 'baixada' = só a
  * Baixada Santista; 'all' = todos. Sempre sem as praias abrigadas, menos em 'all'.
  */
 export function spotsForScope(scope: SpotScope): Spot[] {

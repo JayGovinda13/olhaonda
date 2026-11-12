@@ -42,6 +42,8 @@ export const TIDE_PORTS: TidePort[] = [
   { id: 'maceio', name: 'Porto de Maceió (AL)', lat: -9.68, lon: -35.73, z0: 1.1, verified: false },
   { id: 'recife', name: 'Porto do Recife (PE)', lat: -8.05, lon: -34.87, z0: 1.2, verified: false },
   { id: 'natal', name: 'Porto de Natal (RN)', lat: -5.77, lon: -35.2, z0: 1.3, verified: false },
+  { id: 'bailique', name: 'Arquipélago do Bailique (AP)', lat: 1.0, lon: -50.0, z0: 2.4, verified: false },
+  { id: 'caboorange', name: 'Cabo Orange (AP)', lat: 4.4, lon: -51.5, z0: 1.7, verified: false },
   { id: 'mucuripe', name: 'Fortaleza, Mucuripe (CE)', lat: -3.72, lon: -38.48, z0: 1.5, verified: false },
   { id: 'noronha', name: 'Fernando de Noronha (PE)', lat: -3.83, lon: -32.4, z0: 1.2, verified: false },
 ]
