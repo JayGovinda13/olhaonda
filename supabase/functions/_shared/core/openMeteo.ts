@@ -113,7 +113,13 @@ export type DayWeather = {
   windMax: number | null
 }
 
-export type Forecast = { hours: HourPoint[]; sun: DayWeather[]; fetchedAt: number }
+export type Forecast = {
+  hours: HourPoint[]
+  sun: DayWeather[]
+  fetchedAt: number
+  /** última previsão guardada no aparelho, mostrada porque a consulta falhou */
+  stale?: boolean
+}
 
 type Hourly = Record<string, (number | null)[]> & { time: string[] }
 
@@ -124,27 +130,56 @@ function buildUrl(base: string, params: Record<string, string | number>, apiKey?
   return url.toString()
 }
 
+const RETRY_DELAYS_MS = [900, 2500, 6000]
+
+function sleep(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(signal.reason ?? new Error('aborted'))
+    const t = setTimeout(resolve, ms + Math.random() * 400)
+    signal?.addEventListener('abort', () => {
+      clearTimeout(t)
+      reject(signal.reason ?? new Error('aborted'))
+    })
+  })
+}
+
+/**
+ * GET em JSON com novas tentativas: a Open-Meteo responde 5xx ("service is overloaded") nos picos de uso
+ * e some com o CORS nos limites (o fetch só falha). Nos dois casos vale esperar um pouco e tentar de novo.
+ */
 export async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
-  let res: Response
-  try {
-    res = await fetch(url, { signal })
-  } catch (e) {
-    if (signal?.aborted) throw e
-    // sem conexão, bloqueio de rede ou limite de uso (respostas 429 chegam sem CORS)
-    throw new Error('Não foi possível carregar a previsão agora. Verifique sua conexão e tente de novo em instantes.')
-  }
-  if (res.status === 429) throw new Error('Muitas consultas à previsão no momento. Tente de novo em alguns minutos.')
-  if (!res.ok) {
-    let reason = `${res.status}`
+  let lastError = new Error('Não foi possível carregar a previsão agora. Verifique sua conexão e tente de novo em instantes.')
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    if (attempt > 0) await sleep(RETRY_DELAYS_MS[attempt - 1], signal)
+    let res: Response
     try {
-      const body = (await res.json()) as { reason?: string }
-      if (body.reason) reason = body.reason
-    } catch {
-      /* corpo não é JSON */
+      res = await fetch(url, { signal })
+    } catch (e) {
+      if (signal?.aborted) throw e
+      // sem conexão, bloqueio de rede ou limite de uso (respostas 429 chegam sem CORS)
+      lastError = new Error('Não foi possível carregar a previsão agora. Verifique sua conexão e tente de novo em instantes.')
+      continue
     }
-    throw new Error(`Falha ao consultar a previsão (${reason})`)
+    if (res.status === 429) {
+      lastError = new Error('Muitas consultas à previsão no momento. Tente de novo em alguns minutos.')
+      continue
+    }
+    if (!res.ok) {
+      let reason = `${res.status}`
+      try {
+        const body = (await res.json()) as { reason?: string }
+        if (body.reason) reason = body.reason
+      } catch {
+        /* corpo não é JSON */
+      }
+      if (/overload/i.test(reason)) lastError = new Error('O serviço de previsão está sobrecarregado agora. Tente de novo em instantes.')
+      else lastError = new Error(`Falha ao consultar a previsão (${reason})`)
+      if (res.status >= 500) continue // erro do servidor: vale tentar de novo
+      throw lastError // 4xx (parâmetro inválido etc.): repetir não ajuda
+    }
+    return (await res.json()) as T
   }
-  return (await res.json()) as T
+  throw lastError
 }
 
 /** Busca e monta a previsão de 14 dias de um ponto (sem cache: quem chama decide). */

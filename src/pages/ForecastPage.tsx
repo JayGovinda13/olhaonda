@@ -104,6 +104,19 @@ export default function ForecastPage() {
 
       {forecast.status === 'ready' && selected && hours && (
         <>
+          {forecast.data.stale && (
+            <Alert
+              severity="warning"
+              variant="outlined"
+              action={
+                <Button color="inherit" startIcon={<Refresh width={16} height={16} />} onClick={forecast.retry}>
+                  Atualizar
+                </Button>
+              }
+            >
+              O serviço de previsão está sobrecarregado. Mostrando a última previsão guardada neste aparelho.
+            </Alert>
+          )}
           <NowPanel spot={spot} hour={selected} isNow={selected.time === hours[nowIdx].time} />
           <DayStrip days={days} selected={selDate} onSelect={pickDay} />
           <HourlyChart spot={spot} hours={dayHours} scaleMax={weekMax} selected={selected.time} onSelect={setSelTime} />
