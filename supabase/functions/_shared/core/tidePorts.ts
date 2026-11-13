@@ -38,6 +38,8 @@ export const TIDE_PORTS: TidePort[] = [
   { id: 'cabofrio', name: 'Arraial do Cabo (RJ)', lat: -22.97, lon: -42.02, z0: 0.65, verified: false },
   { id: 'vitoria', name: 'Porto de Vitória (ES)', lat: -20.32, lon: -40.34, z0: 0.8, verified: false },
   { id: 'ilheus', name: 'Porto de Ilhéus (BA)', lat: -14.78, lon: -39.03, z0: 1.1, verified: false },
+  { id: 'caravelas', name: 'Caravelas (BA)', lat: -17.73, lon: -39.2, z0: 1.3, verified: false },
+  { id: 'portoseguro', name: 'Porto Seguro (BA)', lat: -16.45, lon: -39.07, z0: 1.3, verified: false },
   { id: 'salvador', name: 'Porto de Salvador (BA)', lat: -12.97, lon: -38.52, z0: 1.3, verified: false },
   { id: 'maceio', name: 'Porto de Maceió (AL)', lat: -9.68, lon: -35.73, z0: 1.1, verified: false },
   { id: 'recife', name: 'Porto do Recife (PE)', lat: -8.05, lon: -34.87, z0: 1.2, verified: false },

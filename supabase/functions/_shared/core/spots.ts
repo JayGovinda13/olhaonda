@@ -715,6 +715,197 @@ const AMAPA: Spot[] = [
   { id: 'oia-caboorange', name: 'Cabo Orange', city: 'Oiapoque', state: 'AP', region: 'Oiapoque', tidePort: 'caboorange', lat: 4.38, lon: -51.47, facing: 50, kind: 'beach', note: 'Parque Nacional do Cabo Orange' },
 ]
 
+const ba = (city: string, tidePort: string) => ({ city, state: 'BA', region: city, tidePort }) as const
+const BA_JDR = ba('Jandaíra', 'salvador')
+const BA_CND = ba('Conde', 'salvador')
+const BA_ESP = ba('Esplanada', 'salvador')
+const BA_ENT = ba('Entre Rios', 'salvador')
+const BA_MSJ = ba('Mata de São João', 'salvador')
+const BA_CAM = ba('Camaçari', 'salvador')
+const BA_LDF = ba('Lauro de Freitas', 'salvador')
+const BA_SSA = ba('Salvador', 'salvador')
+const BA_VCZ = ba('Vera Cruz', 'salvador')
+const BA_JGP = ba('Jaguaripe', 'salvador')
+const BA_VAL = ba('Valença', 'salvador')
+const BA_CAI = ba('Cairu', 'salvador')
+const BA_NIP = ba('Nilo Peçanha', 'salvador')
+const BA_ITB = ba('Ituberá', 'salvador')
+const BA_IGP = ba('Igrapiúna', 'salvador')
+const BA_MAU = ba('Maraú', 'ilheus')
+const BA_ITC = ba('Itacaré', 'ilheus')
+const BA_URC = ba('Uruçuca', 'ilheus')
+const BA_ILH = ba('Ilhéus', 'ilheus')
+const BA_UNA = ba('Una', 'ilheus')
+const BA_CNV = ba('Canavieiras', 'portoseguro')
+const BA_BLM = ba('Belmonte', 'portoseguro')
+const BA_SCC = ba('Santa Cruz Cabrália', 'portoseguro')
+const BA_PSE = ba('Porto Seguro', 'portoseguro')
+const BA_PRD = ba('Prado', 'portoseguro')
+const BA_ALC = ba('Alcobaça', 'caravelas')
+const BA_CRV = ba('Caravelas', 'caravelas')
+const BA_NVI = ba('Nova Viçosa', 'caravelas')
+const BA_MUC = ba('Mucuri', 'caravelas')
+/** Litoral da Bahia, de Mangue Seco (divisa com SE) a Mucuri (divisa com o ES). */
+const BAHIA: Spot[] = [
+  { id: 'jdr-mangueseco', name: 'Mangue Seco', ...BA_JDR, lat: -11.462, lon: -37.364, facing: 100, kind: 'beach' },
+  { id: 'jdr-coqueiro', name: 'Coqueiro', ...BA_JDR, lat: -11.49, lon: -37.385, facing: 110, kind: 'beach' },
+  { id: 'jdr-costaazul', name: 'Costa Azul', ...BA_JDR, lat: -11.5136, lon: -37.3922, facing: 125, kind: 'beach' },
+  { id: 'cnd-mangueseco', name: 'Mangue Seco (Conde)', ...BA_CND, lat: -11.5366, lon: -37.4066, facing: 120, kind: 'beach' },
+  { id: 'cnd-siribinha', name: 'Siribinha', ...BA_CND, lat: -11.6188, lon: -37.4499, facing: 115, kind: 'beach' },
+  { id: 'cnd-costaazul', name: 'Costa Azul (Conde)', ...BA_CND, lat: -11.6737, lon: -37.4772, facing: 115, kind: 'beach' },
+  { id: 'cnd-sitiodoconde', name: 'Sítio do Conde', ...BA_CND, lat: -11.8556, lon: -37.5647, facing: 115, kind: 'beach' },
+  { id: 'cnd-itariri', name: 'Barra do Itariri', ...BA_CND, lat: -11.9604, lon: -37.6133, facing: 118, kind: 'beach' },
+  { id: 'esp-baixio', name: 'Baixio', ...BA_ESP, lat: -12.1043, lon: -37.6896, facing: 120, kind: 'beach' },
+  { id: 'ent-massarandupio', name: 'Massarandupió', ...BA_ENT, lat: -12.1473, lon: -37.715, facing: 120, kind: 'beach' },
+  { id: 'ent-sabauma', name: 'Sabaúma', ...BA_ENT, lat: -12.2004, lon: -37.74, facing: 125, kind: 'beach' },
+  { id: 'ent-portodesauipe', name: 'Porto de Sauípe', ...BA_ENT, lat: -12.3839, lon: -37.8762, facing: 123, kind: 'beach' },
+  { id: 'msj-costadesauipe', name: 'Costa de Sauípe', ...BA_MSJ, lat: -12.44, lon: -37.924, facing: 130, kind: 'beach' },
+  { id: 'msj-sabauma', name: 'Sabaúma (Mata de São João)', ...BA_MSJ, lat: -12.2997, lon: -37.8195, facing: 128, kind: 'beach' },
+  { id: 'msj-imbassai', name: 'Imbassaí', ...BA_MSJ, lat: -12.4938, lon: -37.9561, facing: 120, kind: 'beach' },
+  { id: 'msj-santoantonio', name: 'Santo Antônio', ...BA_MSJ, lat: -12.5349, lon: -37.9799, facing: 190, kind: 'beach' },
+  { id: 'msj-pedragrande', name: 'Pedra Grande', ...BA_MSJ, lat: -12.5501, lon: -37.9859, facing: 118, kind: 'beach' },
+  { id: 'msj-lord', name: 'Praia do Lord', ...BA_MSJ, lat: -12.5645, lon: -37.9938, facing: 110, kind: 'beach' },
+  { id: 'msj-praiadoforte', name: 'Praia do Forte', ...BA_MSJ, lat: -12.5792, lon: -38.0047, facing: 145, kind: 'beach' },
+  { id: 'cam-barradojacuipe', name: 'Barra do Jacuípe', ...BA_CAM, lat: -12.6304, lon: -38.0446, facing: 100, kind: 'beach' },
+  { id: 'cam-guarajuba', name: 'Guarajuba', ...BA_CAM, lat: -12.665, lon: -38.0676, facing: 90, kind: 'beach' },
+  { id: 'cam-itacimirim', name: 'Itacimirim', ...BA_CAM, lat: -12.69, lon: -38.0567, facing: 270, kind: 'beach' },
+  { id: 'cam-buscavida', name: 'Busca Vida', ...BA_CAM, lat: -12.73, lon: -38.1335, facing: 90, kind: 'beach' },
+  { id: 'cam-arembepe', name: 'Arembepe', ...BA_CAM, lat: -12.7722, lon: -38.1752, facing: 125, kind: 'beach' },
+  { id: 'cam-genipabu', name: 'Genipabu', ...BA_CAM, lat: -12.8364, lon: -38.2334, facing: 125, kind: 'beach' },
+  { id: 'cam-interlagos', name: 'Interlagos', ...BA_CAM, lat: -12.8618, lon: -38.2565, facing: 178, kind: 'beach' },
+  { id: 'cam-jaua', name: 'Jauá', ...BA_CAM, lat: -12.8751, lon: -38.2728, facing: 95, kind: 'beach' },
+  { id: 'ldf-villas', name: 'Villas do Atlântico', ...BA_LDF, lat: -12.8745, lon: -38.2708, facing: 170, kind: 'beach' },
+  { id: 'ldf-ipitanga', name: 'Ipitanga', ...BA_LDF, lat: -12.8828, lon: -38.2818, facing: 125, kind: 'beach' },
+  { id: 'ldf-buraquinho', name: 'Buraquinho', ...BA_LDF, lat: -12.8965, lon: -38.2935, facing: 130, kind: 'beach' },
+  { id: 'ssa-flamengo', name: 'Flamengo', ...BA_SSA, lat: -12.9306, lon: -38.3202, facing: 140, kind: 'beach' },
+  { id: 'ssa-stellamaris', name: 'Stella Maris', ...BA_SSA, lat: -12.9405, lon: -38.3306, facing: 135, kind: 'reef' },
+  { id: 'ssa-itapoa', name: 'Itapuã', ...BA_SSA, lat: -12.951, lon: -38.3638, facing: 208, kind: 'beach' },
+  { id: 'ssa-catussaba', name: 'Catussaba', ...BA_SSA, lat: -12.9557, lon: -38.3516, facing: 145, kind: 'beach' },
+  { id: 'ssa-barravento', name: 'Barravento', ...BA_SSA, lat: -12.9529, lon: -38.3625, facing: 225, kind: 'beach' },
+  { id: 'ssa-jaguaribe', name: 'Jaguaribe', ...BA_SSA, lat: -12.9586, lon: -38.391, facing: 150, kind: 'beach' },
+  { id: 'ssa-corsario', name: 'Corsário', ...BA_SSA, lat: -12.9664, lon: -38.4035, facing: 140, kind: 'beach' },
+  { id: 'ssa-paciencia', name: 'Paciência', ...BA_SSA, lat: -12.9766, lon: -38.4186, facing: 153, kind: 'beach' },
+  { id: 'ssa-bocadorio', name: 'Boca do Rio', ...BA_SSA, lat: -12.98, lon: -38.4253, facing: 143, kind: 'beach' },
+  { id: 'ssa-armacao', name: 'Armação', ...BA_SSA, lat: -12.9883, lon: -38.4347, facing: 130, kind: 'beach' },
+  { id: 'ssa-jardimdealah', name: 'Jardim de Alah', ...BA_SSA, lat: -12.9993, lon: -38.4469, facing: 145, kind: 'beach' },
+  { id: 'ssa-pituba', name: 'Pituba', ...BA_SSA, lat: -13.0039, lon: -38.4521, facing: 143, kind: 'beach' },
+  { id: 'ssa-terceiraponte', name: 'Terceira Ponte', ...BA_SSA, lat: -13.0015, lon: -38.4725, facing: 150, kind: 'beach' },
+  { id: 'ssa-amaralina', name: 'Amaralina', ...BA_SSA, lat: -13.014, lon: -38.4735, facing: 180, kind: 'beach' },
+  { id: 'ssa-riovermelho', name: 'Rio Vermelho', ...BA_SSA, lat: -13.0121, lon: -38.4921, facing: 208, kind: 'beach' },
+  { id: 'ssa-jardimdosnamorados', name: 'Jardim dos Namorados', ...BA_SSA, lat: -13.011, lon: -38.5032, facing: 188, kind: 'beach' },
+  { id: 'ssa-ondina', name: 'Ondina', ...BA_SSA, lat: -13.0113, lon: -38.5116, facing: 175, kind: 'beach' },
+  { id: 'ssa-farol', name: 'Farol da Barra', ...BA_SSA, lat: -13.0097, lon: -38.5267, facing: 195, kind: 'beach' },
+  { id: 'ssa-portodabarra', name: 'Porto da Barra', ...BA_SSA, lat: -13.0072, lon: -38.533, facing: 200, kind: 'beach' },
+  { id: 'vcz-penha', name: 'Praia da Penha', ...BA_VCZ, lat: -12.88, lon: -38.617, facing: 270, kind: 'beach' },
+  { id: 'vcz-ilhadosol', name: 'Ilha do Sol', ...BA_VCZ, lat: -12.9029, lon: -38.64, facing: 18, kind: 'beach' },
+  { id: 'vcz-acapulco', name: 'Acapulco', ...BA_VCZ, lat: -12.9695, lon: -38.6096, facing: 115, kind: 'beach' },
+  { id: 'vcz-barradogil', name: 'Barra do Gil', ...BA_VCZ, lat: -12.9952, lon: -38.6306, facing: 138, kind: 'beach' },
+  { id: 'vcz-paratinga', name: 'Paratinga', ...BA_VCZ, lat: -12.9962, lon: -38.7039, facing: 298, kind: 'beach' },
+  { id: 'vcz-barragrande', name: 'Barra Grande (Vera Cruz)', ...BA_VCZ, lat: -13.0383, lon: -38.6732, facing: 148, kind: 'beach' },
+  { id: 'vcz-canoa', name: 'Praia da Canoa', ...BA_VCZ, lat: -13.0283, lon: -38.7236, facing: 309, kind: 'beach' },
+  { id: 'vcz-cachapregos', name: 'Cacha Pregos', ...BA_VCZ, lat: -13.038, lon: -38.7257, facing: 20, kind: 'beach' },
+  { id: 'vcz-conceicao', name: 'Praia da Conceição', ...BA_VCZ, lat: -13.0158, lon: -38.6444, facing: 123, kind: 'beach' },
+  { id: 'vcz-araua', name: 'Enseada do Arauá', ...BA_VCZ, lat: -13.0548, lon: -38.6945, facing: 138, kind: 'beach' },
+  { id: 'vcz-barradopote', name: 'Barra do Pote', ...BA_VCZ, lat: -13.0773, lon: -38.7269, facing: 270, kind: 'beach' },
+  { id: 'jgp-pontinha', name: 'Pontinha', ...BA_JGP, lat: -13.1499, lon: -38.8224, facing: 160, kind: 'beach' },
+  { id: 'jgp-pontadogarcez', name: 'Ponta do Garcez', ...BA_JGP, lat: -13.1803, lon: -38.8641, facing: 120, kind: 'beach' },
+  { id: 'jgp-jiquirica', name: 'Barra do Jiquiriçá', ...BA_JGP, lat: -13.2142, lon: -38.915, facing: 160, kind: 'beach' },
+  { id: 'val-taquari', name: 'Taquari', ...BA_VAL, lat: -13.3105, lon: -38.9663, facing: 90, kind: 'beach' },
+  { id: 'val-guaibim', name: 'Guaibim', ...BA_VAL, lat: -13.2839, lon: -38.9627, facing: 105, kind: 'beach' },
+  { id: 'val-pontadocurral', name: 'Ponta do Curral', ...BA_VAL, lat: -13.3679, lon: -38.9715, facing: 210, kind: 'beach' },
+  { id: 'cai-primeira', name: 'Primeira Praia', ...BA_CAI, lat: -13.3803, lon: -38.9099, facing: 48, kind: 'beach' },
+  { id: 'cai-quarta', name: 'Quarta Praia', ...BA_CAI, lat: -13.3801, lon: -38.9213, facing: 333, kind: 'beach' },
+  { id: 'cai-cueira', name: 'Cueira', ...BA_CAI, lat: -13.3885, lon: -38.9311, facing: 335, kind: 'beach' },
+  { id: 'cai-forte', name: 'Praia do Forte (Cairu)', ...BA_CAI, lat: -13.3972, lon: -38.942, facing: 333, kind: 'beach' },
+  { id: 'cai-pontal', name: 'Pontal (Cairu)', ...BA_CAI, lat: -13.4038, lon: -38.9545, facing: 350, kind: 'beach' },
+  { id: 'cai-morere', name: 'Moreré', ...BA_CAI, lat: -13.5117, lon: -38.9251, facing: 120, kind: 'beach' },
+  { id: 'nip-pontal', name: 'Pontal (Nilo Peçanha)', ...BA_NIP, lat: -13.6576, lon: -38.8972, facing: 150, kind: 'beach' },
+  { id: 'itb-serinhaem', name: 'Barra do Serinhaém', ...BA_ITB, lat: -13.8252, lon: -38.9846, facing: 100, kind: 'beach' },
+  { id: 'itb-pratigi', name: 'Pratigi', ...BA_ITB, lat: -13.7135, lon: -38.9865, facing: 118, kind: 'beach' },
+  { id: 'igp-quiepe', name: 'Ilha de Quiepe', ...BA_IGP, lat: -13.85, lon: -39.011, facing: 100, kind: 'beach' },
+  { id: 'mau-barragrande', name: 'Barra Grande', ...BA_MAU, lat: -13.882, lon: -38.9426, facing: 98, kind: 'beach' },
+  { id: 'mau-taipus', name: 'Taipus de Fora', ...BA_MAU, lat: -14.0309, lon: -38.9475, facing: 110, kind: 'beach' },
+  { id: 'mau-algodoes', name: 'Algodões', ...BA_MAU, lat: -14.1722, lon: -38.9813, facing: 130, kind: 'beach' },
+  { id: 'mau-saquaira', name: 'Saquaíra', ...BA_MAU, lat: -14.07, lon: -38.957, facing: 95, kind: 'beach' },
+  { id: 'mau-cassange', name: 'Cassange', ...BA_MAU, lat: -14.1002, lon: -38.9631, facing: 120, kind: 'beach' },
+  { id: 'mau-pontadomuta', name: 'Ponta do Mutá', ...BA_MAU, lat: -13.93, lon: -38.931, facing: 95, kind: 'beach' },
+  { id: 'mau-bombaca', name: 'Bombaça', ...BA_MAU, lat: -14.1398, lon: -38.9753, facing: 100, kind: 'beach' },
+  { id: 'mau-trescoqueiros', name: 'Três Coqueiros', ...BA_MAU, lat: -14.205, lon: -38.991, facing: 95, kind: 'beach' },
+  { id: 'itc-camboinha', name: 'Camboinha', ...BA_ITC, lat: -14.2245, lon: -38.9901, facing: 118, kind: 'beach' },
+  { id: 'itc-piracanga', name: 'Piracanga', ...BA_ITC, lat: -14.2116, lon: -38.9915, facing: 80, kind: 'beach' },
+  { id: 'itc-ribeira', name: 'Ribeira', ...BA_ITC, lat: -14.2693, lon: -38.9942, facing: 73, kind: 'beach' },
+  { id: 'itc-pontal', name: 'Pontal (Itacaré)', ...BA_ITC, lat: -14.2738, lon: -38.9923, facing: 50, kind: 'beach' },
+  { id: 'itc-costa', name: 'Praia da Costa', ...BA_ITC, lat: -14.2854, lon: -38.9851, facing: 103, kind: 'beach' },
+  { id: 'itc-tiririca', name: 'Tiririca', ...BA_ITC, lat: -14.2883, lon: -38.9853, facing: 78, kind: 'beach' },
+  { id: 'itc-resende', name: 'Resende', ...BA_ITC, lat: -14.2899, lon: -38.9847, facing: 58, kind: 'beach' },
+  { id: 'itc-prainha', name: 'Prainha', ...BA_ITC, lat: -14.3066, lon: -38.9881, facing: 125, kind: 'beach' },
+  { id: 'itc-saojose', name: 'São José', ...BA_ITC, lat: -14.3136, lon: -38.9913, facing: 128, kind: 'beach' },
+  { id: 'itc-havaizinho', name: 'Havaizinho', ...BA_ITC, lat: -14.3203, lon: -38.9937, facing: 100, kind: 'beach' },
+  { id: 'itc-engenhoca', name: 'Engenhoca', ...BA_ITC, lat: -14.3585, lon: -39.0007, facing: 130, kind: 'beach' },
+  { id: 'itc-itacarezinho', name: 'Itacarezinho', ...BA_ITC, lat: -14.3694, lon: -39.0074, facing: 118, kind: 'beach' },
+  { id: 'itc-jeribucacu', name: 'Jeribucaçu', ...BA_ITC, lat: -14.411, lon: -39.0124, facing: 90, kind: 'beach' },
+  { id: 'itc-corais', name: 'Arrecife Corais', ...BA_ITC, lat: -14.3297, lon: -38.9963, facing: 115, kind: 'beach' },
+  { id: 'urc-sargi', name: 'Sargi', ...BA_URC, lat: -14.4407, lon: -39.0221, facing: 103, kind: 'beach' },
+  { id: 'urc-pompilho', name: 'Pompilho', ...BA_URC, lat: -14.47, lon: -39.0269, facing: 105, kind: 'beach' },
+  { id: 'urc-pedeserra', name: 'Pé de Serra', ...BA_URC, lat: -14.4996, lon: -39.035, facing: 90, kind: 'beach' },
+  { id: 'ilh-batuba', name: 'Batuba', ...BA_ILH, lat: -14.6088, lon: -39.057, facing: 188, kind: 'beach' },
+  { id: 'ilh-mamoa', name: 'Mamoã', ...BA_ILH, lat: -14.6306, lon: -39.063, facing: 98, kind: 'beach' },
+  { id: 'ilh-juerana', name: 'Juerana', ...BA_ILH, lat: -14.6682, lon: -39.0654, facing: 93, kind: 'beach' },
+  { id: 'ilh-saomiguel', name: 'São Miguel', ...BA_ILH, lat: -14.6899, lon: -39.04, facing: 180, kind: 'beach' },
+  { id: 'ilh-norte', name: 'Praia do Norte', ...BA_ILH, lat: -14.7324, lon: -39.03, facing: 180, kind: 'beach' },
+  { id: 'ilh-pontadoramo', name: 'Ponta do Ramo', ...BA_ILH, lat: -14.7809, lon: -39.031, facing: 5, kind: 'beach' },
+  { id: 'ilh-avenida', name: 'Praia da Avenida', ...BA_ILH, lat: -14.7838, lon: -39.0291, facing: 60, kind: 'beach' },
+  { id: 'ilh-malhado', name: 'Malhado', ...BA_ILH, lat: -14.795, lon: -39.0278, facing: 100, kind: 'beach' },
+  { id: 'ilh-backdoor', name: 'Back Door', ...BA_ILH, lat: -14.8001, lon: -39.029, facing: 103, kind: 'beach' },
+  { id: 'ilh-pontadatulha', name: 'Ponta da Tulha', ...BA_ILH, lat: -14.8076, lon: -39.0279, facing: 5, kind: 'beach' },
+  { id: 'ilh-sul', name: 'Praia do Sul', ...BA_ILH, lat: -14.8195, lon: -39.0247, facing: 90, kind: 'beach' },
+  { id: 'ilh-milionarios', name: 'Milionários', ...BA_ILH, lat: -14.8395, lon: -39.0247, facing: 90, kind: 'beach' },
+  { id: 'ilh-miache', name: 'Miache', ...BA_ILH, lat: -14.8595, lon: -39.0241, facing: 90, kind: 'beach' },
+  { id: 'una-acuipe', name: 'Acuípe', ...BA_UNA, lat: -15.1079, lon: -38.9964, facing: 88, kind: 'beach' },
+  { id: 'una-itapororoca', name: 'Itapororoca', ...BA_UNA, lat: -15.297, lon: -38.9883, facing: 75, kind: 'beach' },
+  { id: 'una-comandatuba', name: 'Comandatuba', ...BA_UNA, lat: -15.3519, lon: -38.979, facing: 80, kind: 'beach' },
+  { id: 'cnv-barravelha', name: 'Barra Velha', ...BA_CNV, lat: -15.5992, lon: -38.9407, facing: 88, kind: 'beach' },
+  { id: 'cnv-costa', name: 'Praia da Costa', ...BA_CNV, lat: -15.6577, lon: -38.9364, facing: 10, kind: 'beach' },
+  { id: 'cnv-atalaia', name: 'Atalaia', ...BA_CNV, lat: -15.6694, lon: -38.9339, facing: 75, kind: 'beach' },
+  { id: 'cnv-norte', name: 'Praia do Norte (Barra do Albino)', ...BA_CNV, lat: -15.738, lon: -38.924, facing: 95, kind: 'beach' },
+  { id: 'blm-norte', name: 'Praia do Norte', ...BA_BLM, lat: -15.8424, lon: -38.867, facing: 131, kind: 'beach' },
+  { id: 'blm-barra', name: 'Praia da Barra', ...BA_BLM, lat: -15.8613, lon: -38.8624, facing: 103, kind: 'beach' },
+  { id: 'blm-marmoreno', name: 'Mar Moreno', ...BA_BLM, lat: -15.8992, lon: -38.8747, facing: 113, kind: 'beach' },
+  { id: 'blm-garuzau', name: 'Garuzau', ...BA_BLM, lat: -15.9402, lon: -38.88, facing: 180, kind: 'beach' },
+  { id: 'blm-mogiquicaba', name: 'Mogiquiçaba', ...BA_BLM, lat: -16.0511, lon: -38.9136, facing: 90, kind: 'beach' },
+  { id: 'scc-arakakai', name: 'Arakakai', ...BA_SCC, lat: -16.2487, lon: -39.0079, facing: 30, kind: 'beach' },
+  { id: 'scc-mutari', name: 'Mutari', ...BA_SCC, lat: -16.2777, lon: -39.0191, facing: 108, kind: 'beach' },
+  { id: 'scc-guaiau', name: 'Guaiaú', ...BA_SCC, lat: -16.3096, lon: -39, facing: 180, kind: 'beach' },
+  { id: 'scc-coroavermelha', name: 'Coroa Vermelha', ...BA_SCC, lat: -16.3559, lon: -39.0129, facing: 78, kind: 'beach' },
+  { id: 'pse-pescadores', name: 'Pescadores', ...BA_PSE, lat: -16.4299, lon: -39.0602, facing: 113, kind: 'beach' },
+  { id: 'pse-mucuge', name: 'Mucugê', ...BA_PSE, lat: -16.4939, lon: -39.0683, facing: 105, kind: 'beach' },
+  { id: 'pse-apagafogo', name: 'Apaga Fogo', ...BA_PSE, lat: -16.478, lon: -39.0645, facing: 118, kind: 'beach' },
+  { id: 'pse-itacimirim', name: 'Itacimirim (Porto Seguro)', ...BA_PSE, lat: -16.4976, lon: -39.0694, facing: 108, kind: 'beach' },
+  { id: 'pse-riodoverde', name: 'Rio Verde', ...BA_PSE, lat: -16.5098, lon: -39.06, facing: 180, kind: 'beach' },
+  { id: 'pse-taipe', name: 'Taípe', ...BA_PSE, lat: -16.5283, lon: -39.0805, facing: 103, kind: 'beach' },
+  { id: 'pse-riodosfrades', name: 'Barra do Rio dos Frades', ...BA_PSE, lat: -16.62, lon: -39.0564, facing: 270, kind: 'beach' },
+  { id: 'pse-caraiva', name: 'Barra de Caraíva', ...BA_PSE, lat: -16.7974, lon: -39.1446, facing: 90, kind: 'beach' },
+  { id: 'prd-novoprado', name: 'Novo Prado', ...BA_PRD, lat: -17.3426, lon: -39.2163, facing: 90, kind: 'beach' },
+  { id: 'prd-barra', name: 'Praia da Barra', ...BA_PRD, lat: -17.3314, lon: -39.2181, facing: 83, kind: 'beach' },
+  { id: 'prd-paixao', name: 'Paixão', ...BA_PRD, lat: -17.338, lon: -39.1825, facing: 90, kind: 'beach' },
+  { id: 'prd-ostras', name: 'Praia das Ostras', ...BA_PRD, lat: -17.3506, lon: -39.2, facing: 180, kind: 'beach' },
+  { id: 'prd-mestrecharles', name: 'Mestre Charles', ...BA_PRD, lat: -17.3829, lon: -39.2083, facing: 75, kind: 'beach' },
+  { id: 'prd-barradocai', name: 'Barra do Caí', ...BA_PRD, lat: -17.4008, lon: -39.203, facing: 83, kind: 'beach' },
+  { id: 'prd-japaramirim', name: 'Japara Mirim', ...BA_PRD, lat: -17.4493, lon: -39.1921, facing: 88, kind: 'beach' },
+  { id: 'prd-tororao', name: 'Tororão', ...BA_PRD, lat: -17.4693, lon: -39.1923, facing: 90, kind: 'beach' },
+  { id: 'alc-alcobaca', name: 'Alcobaça', ...BA_ALC, lat: -17.5212, lon: -39.1917, facing: 90, kind: 'beach' },
+  { id: 'alc-coqueiro', name: 'Coqueiro (Alcobaça)', ...BA_ALC, lat: -17.5497, lon: -39.1895, facing: 80, kind: 'beach' },
+  { id: 'crv-pontadabaleia', name: 'Ponta da Baleia', ...BA_CRV, lat: -17.6859, lon: -39.117, facing: 120, kind: 'beach' },
+  { id: 'crv-barranova', name: 'Barra Nova', ...BA_CRV, lat: -17.7537, lon: -39.1973, facing: 330, kind: 'beach' },
+  { id: 'nvi-barravelha', name: 'Barra Velha (Nova Viçosa)', ...BA_NVI, lat: -17.86, lon: -39.302, facing: 100, kind: 'beach' },
+  { id: 'nvi-costadoatlantico', name: 'Costa do Atlântico', ...BA_NVI, lat: -17.8843, lon: -39.3051, facing: 83, kind: 'beach' },
+  { id: 'nvi-lugarcomum', name: 'Lugar Comum', ...BA_NVI, lat: -17.891, lon: -39.3509, facing: 185, kind: 'beach' },
+  { id: 'nvi-coroavermelha', name: 'Ilha da Coroa Vermelha', ...BA_NVI, lat: -17.8991, lon: -39.3609, facing: 85, kind: 'beach' },
+  { id: 'muc-jucutinga', name: 'Jucutinga', ...BA_MUC, lat: -18.0511, lon: -39.5268, facing: 120, kind: 'beach' },
+  { id: 'muc-mucuri', name: 'Mucuri', ...BA_MUC, lat: -18.0887, lon: -39.5464, facing: 118, kind: 'beach' },
+  { id: 'muc-costadourada', name: 'Costa Dourada', ...BA_MUC, lat: -18.1046, lon: -39.5531, facing: 128, kind: 'beach' },
+]
+
 /**
  * Picos do litoral brasileiro, do Sul ao Nordeste.
  * Coordenadas e orientação aproximadas; ajuste conforme o conhecimento local.
@@ -730,8 +921,7 @@ export const ALL_SPOTS: Spot[] = [
   ...LITORAL_NORTE,
   ...RIO_DE_JANEIRO,
   ...ESPIRITO_SANTO,
-  { id: 'itacare', name: 'Tiririca', city: 'Itacaré', state: 'BA', lat: -14.29, lon: -38.99, facing: 90, kind: 'beach' },
-  { id: 'stellamaris', name: 'Stella Maris', city: 'Salvador', state: 'BA', lat: -12.94, lon: -38.33, facing: 130, kind: 'reef' },
+  ...BAHIA,
   ...ALAGOAS,
   { id: 'maracaipe', name: 'Maracaípe', city: 'Ipojuca', state: 'PE', lat: -8.53, lon: -34.995, facing: 110, kind: 'reef' },
   { id: 'pipa', name: 'Praia do Amor', city: 'Pipa', state: 'RN', lat: -6.23, lon: -35.04, facing: 90, kind: 'reef' },
@@ -741,12 +931,12 @@ export const ALL_SPOTS: Spot[] = [
 ]
 
 /** Estados no ar na produção. */
-export const PROD_STATES = ['SC', 'SP', 'RJ', 'ES', 'AL', 'CE', 'AP']
+export const PROD_STATES = ['SC', 'SP', 'RJ', 'ES', 'AL', 'CE', 'AP', 'BA']
 
 export type SpotScope = 'prod' | 'baixada' | 'all'
 
 /**
- * Picos de um escopo: 'prod' = estados da produção (SC, SP, RJ, ES, AL, CE e AP), só praias com onda; 'baixada' = só a
+ * Picos de um escopo: 'prod' = estados da produção (SC, SP, RJ, ES, AL, CE, AP e BA), só praias com onda; 'baixada' = só a
  * Baixada Santista; 'all' = todos. Sempre sem as praias abrigadas, menos em 'all'.
  */
 export function spotsForScope(scope: SpotScope): Spot[] {
@@ -776,6 +966,8 @@ export const SPOT_ALIASES: Record<string, string> = {
   paracuru: 'prc-pedrameio',
   jeri: 'jij-jericoacoara',
   frances: 'mdd-frances',
+  itacare: 'itc-tiririca',
+  stellamaris: 'ssa-stellamaris',
 }
 
 export const KIND_LABEL: Record<Spot['kind'], string> = {

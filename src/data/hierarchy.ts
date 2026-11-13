@@ -2,7 +2,7 @@ import { SPOTS, type Spot } from './spots'
 
 /**
  * Navegação em níveis: estado → cidade → pico.
- * A produção tem SC, SP, RJ, ES, AL, CE e AP: a página inicial começa no estado; com um estado só, esse nível é pulado.
+ * A produção tem SC, SP, RJ, ES, AL, CE, AP e BA: a página inicial começa no estado; com um estado só, esse nível é pulado.
  */
 export type Place = { key: string; name: string; lat: number; lon: number; count: number }
 

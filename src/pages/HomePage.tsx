@@ -45,7 +45,7 @@ export default function HomePage() {
   usePageMeta({
     title: 'OlhaOnda · Previsão de ondas para surf e bodyboard',
     description:
-      'Previsão de ondas de 14 dias, grátis, para surf e bodyboard em SC, SP, RJ, ES, AL, CE e AP: Florianópolis, Garopaba, Ubatuba, Maresias, Guarujá, Saquarema, Arpoador, Búzios, Itaúnas, Regência, Maceió, Praia do Francês, Paracuru, Jericoacoara e mais. Swell, vento, maré e tempo.',
+      'Previsão de ondas de 14 dias, grátis, para surf e bodyboard em SC, SP, RJ, ES, AL, CE, AP e BA: Florianópolis, Garopaba, Ubatuba, Maresias, Guarujá, Saquarema, Arpoador, Búzios, Itaúnas, Regência, Maceió, Salvador, Itacaré, Praia do Francês, Paracuru, Jericoacoara e mais. Swell, vento, maré e tempo.',
     path: '/',
   })
 
