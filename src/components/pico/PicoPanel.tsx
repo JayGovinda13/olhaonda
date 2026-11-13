@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react'
 import type { HourPoint } from '../../api/openMeteo'
 import type { Spot } from '../../data/spots'
 import { useLocalState } from '../../hooks/useLocalState'
-import { compass, dirDeg, energyColor, fmt, trainEnergy, WIND_LABEL, windKind } from '../../lib/surf'
+import { compass, dirDeg, energyColor, fmt, trainEnergyFromPeriod, WIND_LABEL, windKind } from '../../lib/surf'
 import { brand } from '../../theme'
 import { SpotDetailMap, type FlowMode } from '../SpotDetailMap'
 import { surfEstimate } from '../../lib/breaking'
@@ -100,7 +100,7 @@ export function PicoPanel({
           <Chip
             key={c.label}
             label={c.label}
-            dot={energyColor(trainEnergy(c.h!, c.t!))}
+            dot={energyColor(trainEnergyFromPeriod(c.h!, c.t!))}
             value={`${Math.round(c.d!)}° ${compass(c.d)} · ${f1(c.h!)} m · ${f1(c.t!)} s → ${f1(atBeach.get(c.label) ?? 0)} m na praia`}
           />
         ))}

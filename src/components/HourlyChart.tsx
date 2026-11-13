@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 import type { HourPoint } from '../api/openMeteo'
 import type { Spot } from '../data/spots'
 import { surfEstimate } from '../lib/breaking'
-import { energyRatio, fmt, fmtJoules, rate, ratingColor, waveEnergy, windKind } from '../lib/surf'
+import { energyRatio, fmt, fmtKJ, rate, ratingColor, waveEnergy, windKind } from '../lib/surf'
 import { alpha, brand } from '../theme'
 import { DirArrow } from './bits'
 import { WeatherIcon } from './WeatherIcon'
@@ -23,7 +23,7 @@ const ROWS = [
   { key: 'hora', label: 'Hora', h: 22 },
   { key: 'swell', label: 'Período', h: 22 },
   { key: 'swelldir', label: 'Swell °', h: 22 },
-  { key: 'forca', label: 'Energia (J)', h: 30 },
+  { key: 'forca', label: 'Energia', unit: 'kJ', h: 30 },
   { key: 'vento', label: 'Vento', h: 50 },
   { key: 'tempo', label: 'Tempo', h: 28 },
 ] as const
@@ -86,6 +86,11 @@ export function HourlyChart({
           {ROWS.map((r) => (
             <Typography key={r.key} sx={{ ...ROW_LABEL, height: r.h }}>
               {r.label}
+              {'unit' in r && (
+                <Box component="span" sx={{ textTransform: 'none', ml: '0.3em' }}>
+                  ({r.unit})
+                </Box>
+              )}
             </Typography>
           ))}
         </Box>
@@ -150,7 +155,7 @@ export function HourlyChart({
                 </Typography>
                 <Box sx={{ height: ROWS[3].h, flexDirection: 'column', gap: '3px' }}>
                   <Typography sx={{ fontSize: 10, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
-                    {fmtJoules(energy)}
+                    {fmtKJ(energy)}
                   </Typography>
                   <Box sx={{ width: '60%', height: 3, borderRadius: 2, bgcolor: alpha(brand.purple, 0.1), overflow: 'hidden' }}>
                     <Box sx={{ width: `${energyRatio(energy) * 100}%`, height: '100%', bgcolor: brand.plum }} />
@@ -172,7 +177,7 @@ export function HourlyChart({
         </Box>
       </Box>
       <Typography variant="caption" sx={{ display: 'block', mt: 1.5, opacity: 0.6 }}>
-        Barras: altura estimada na arrebentação (séries, m). Swell °: direção de onde vem o swell, em graus. Energia: joules (J) de cada onda por metro de crista. Vento em km/h e graus (de onde sopra); verde = terral ou fraco, vinho =
+        Barras: altura estimada na arrebentação (séries, m). Swell °: direção de onde vem o swell, em graus. Energia: kJ de cada onda por metro de crista. Vento em km/h e graus (de onde sopra); verde = terral ou fraco, vinho =
         maral/lateral.
       </Typography>
     </Paper>
