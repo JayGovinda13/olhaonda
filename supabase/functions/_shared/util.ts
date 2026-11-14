@@ -7,10 +7,12 @@ export const env = (k: string) => {
   return v
 }
 
-const SITE_URL = Deno.env.get('SITE_URL') ?? '*'
+// Staging e produção podem dividir o mesmo projeto Supabase (plano grátis: 2 projetos). Como as funções autenticam pelo
+// token de login (não por cookie), liberar qualquer origem é seguro; CORS_ORIGIN restringe, se quiser.
+const ORIGIN = Deno.env.get('CORS_ORIGIN') ?? '*'
 
 export const cors = {
-  'Access-Control-Allow-Origin': SITE_URL,
+  'Access-Control-Allow-Origin': ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }

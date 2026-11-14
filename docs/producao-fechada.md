@@ -11,24 +11,42 @@ Sem fotos e sem WhatsApp. Os avisos saem pelo sino do site e pelo push do navega
 - Limite de liberados (padrão **10**, administradores não contam): `app_settings.max_members`.
 - Quem se cadastra fica "aguardando"; a rodada de avisos ignora contas não liberadas.
 
+## Um só projeto Supabase para staging e produção (plano grátis: 2 projetos)
+
+Produção e staging usam o **mesmo** projeto Supabase. Consequências:
+
+- Contas, fórum e favoritos são compartilhados entre os dois sites. Cuidado ao testar no staging: o que for criado lá aparece em produção.
+- Uma migração ruim testada no staging afeta a produção. Enquanto forem só 10 pessoas é aceitável; ao abrir para todos, crie um projeto
+  separado (plano Pro, US$ 25/mês).
+- Só **uma** rodada de avisos deve rodar: use o agendador que já existe (`daily-forecast.yml`, environment `staging`). Não crie o `production-cron`.
+- `SITE_URL` e `SPOT_SCOPE` valem para o projeto inteiro: defina só no environment `production` e deixe vazios no `staging`
+  (o deploy só grava o que não estiver vazio).
+- Pergunta de segurança já tratada: as funções aceitam qualquer origem (CORS `*`), porque exigem o token de login.
+
 ## Passo a passo
 
-1. **Supabase de produção**: crie o projeto (região São Paulo, se disponível). Anote o *project ref*, a senha do banco, a URL e a chave `anon`.
-2. **GitHub → Settings → Environments → `production`**: segredos `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `CRON_SECRET`
-   (senha longa). Variáveis `SITE_URL=https://olhaonda.com` e `SPOT_SCOPE=prod`. Mantenha os revisores obrigatórios.
-3. **Agendador**: crie o environment `production-cron` **sem revisores**, com `SUPABASE_PROJECT_REF` e o mesmo `CRON_SECRET`.
-   (O `production` pede aprovação a cada execução e travaria os avisos de 3 em 3 horas.)
-4. **Chaves de push**: `npx web-push generate-vapid-keys`; a privada e `VAPID_SUBJECT=mailto:...` vão como segredo do `production`.
-5. **Cloudflare (produção)**: `VITE_FEATURE_FORUM=true`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_VAPID_PUBLIC_KEY`,
-   `VITE_PRIVACY_CONTROLLER="Seu nome ou razão social, CNPJ/CPF"`. Deixe `VITE_FEATURE_PHOTOS` e `VITE_FEATURE_WHATSAPP` desligados (padrão).
-6. **Supabase → Auth**: ligue *Confirm email*, defina o *Site URL* `https://olhaonda.com` e configure um SMTP próprio (o e-mail padrão tem limite baixo).
-7. **Publicar**: o push no `main` roda o `supabase-deploy`; aprove o environment `production`. Ele aplica as migrações e publica as funções.
-8. **Primeiro administrador**: crie a sua conta no site, confirme o e-mail e rode no *SQL Editor* do Supabase:
+1. **GitHub → Environments → `production`**: copie do `staging` os mesmos `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`,
+   `SUPABASE_DB_PASSWORD` e `CRON_SECRET`. Variáveis: `SITE_URL=https://olhaonda.com`, `SPOT_SCOPE=prod`. Mantenha os revisores obrigatórios.
+   No `staging`, apague as variáveis `SITE_URL` e `SPOT_SCOPE`.
+2. **Chaves de push** (se ainda não existem no projeto): `npx web-push generate-vapid-keys`; a privada e `VAPID_SUBJECT=mailto:...`
+   viram segredos (`supabase secrets set`). A pública vai no `VITE_VAPID_PUBLIC_KEY` dos dois sites.
+3. **Cloudflare (produção)**: `VITE_FEATURE_FORUM=true`, a **mesma** `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` do staging,
+   `VITE_VAPID_PUBLIC_KEY` e `VITE_PRIVACY_CONTROLLER="Seu nome ou razão social, CNPJ/CPF"`.
+   Deixe `VITE_FEATURE_PHOTOS` e `VITE_FEATURE_WHATSAPP` desligados (padrão).
+4. **Supabase → Auth → URL Configuration**: *Site URL* `https://olhaonda.com`; em *Redirect URLs* inclua também
+   `https://staging.olhaonda.com/**`. Ligue *Confirm email* e configure um SMTP próprio (o e-mail padrão tem limite baixo).
+5. **Zerar quem já tinha acesso**: a migração liberou todas as contas que existiam no staging. Para o teste valer só para as 10 pessoas
+   (e para as contas de teste não ocuparem as vagas), rode no *SQL Editor*:
+   ```sql
+   update public.profiles set approved_at = null, approved_by = null where role = 'user';
+   ```
+6. **Publicar**: o deploy do `staging` (ou do `main`, com aprovação) aplica a migração e publica as funções, inclusive `account-delete`.
+7. **Primeiro administrador**: crie a sua conta, confirme o e-mail e rode:
    ```sql
    update public.profiles set role = 'admin', approved_at = now()
    where id = (select id from auth.users where email = 'SEU@EMAIL');
    ```
-9. Entre no site → menu da conta → **Administração**. Quem se cadastrar aparece em "Aguardando"; ligue a chave para liberar.
+8. Entre no site → menu da conta → **Administração**. Quem se cadastrar aparece em "Aguardando"; ligue a chave para liberar.
 
 ## Ajustes por SQL
 
