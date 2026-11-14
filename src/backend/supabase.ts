@@ -107,8 +107,7 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
       level: (data?.level as Level | null) ?? null,
       bio: (data?.bio as string | null) ?? null,
       email: user.email ?? null,
-      pendingEmail: user.new_email ?? null,
-      canChangeEmail: user.app_metadata?.provider === 'email',
+      hasPassword: user.app_metadata?.provider === 'email',
       approved: Boolean((await sb.rpc('is_member')).data),
       isAdmin: data?.role === 'admin',
     }
@@ -186,21 +185,16 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         if (error) return true // na dúvida não bloqueia; o banco garante a unicidade
         return Boolean(data)
       },
-      async changeEmail(newEmail, password) {
+      async changePassword(current, next) {
         const { data } = await sb.auth.getUser()
-        const current = data.user?.email
-        if (!current) throw new Error('Entre na sua conta para continuar.')
-        const email = newEmail.trim().toLowerCase()
-        if (email === current.toLowerCase()) throw new Error('Esse já é o seu e-mail.')
-        // confere a senha atual: quem pegar o celular aberto não consegue trocar o e-mail da conta
-        const check = await sb.auth.signInWithPassword({ email: current, password })
+        const email = data.user?.email
+        if (!email) throw new Error('Entre na sua conta para continuar.')
+        if (next.length < 8) throw new Error('A nova senha precisa ter pelo menos 8 caracteres.')
+        // confere a senha atual: quem pegar o celular aberto não consegue trocar a senha da conta
+        const check = await sb.auth.signInWithPassword({ email, password: current })
         if (check.error) throw new Error('Senha atual incorreta.')
-        const { error } = await sb.auth.updateUser({ email }, { emailRedirectTo: `${location.origin}/perfil` })
-        if (error) {
-          if (/already|registered|exists/i.test(error.message)) throw new Error('Já existe uma conta com esse e-mail.')
-          throw new Error(error.message)
-        }
-        return { needsConfirmation: true }
+        const { error } = await sb.auth.updateUser({ password: next })
+        if (error) throw new Error(/different|same/i.test(error.message) ? 'A nova senha precisa ser diferente da atual.' : error.message)
       },
       async updateProfile(patch) {
         const id = await uidOrThrow()

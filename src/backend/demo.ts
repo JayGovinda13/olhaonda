@@ -220,7 +220,7 @@ export const demoBackend: Backend = {
       const profile: Profile = {
         id: `u-${uid()}`,
         email,
-        canChangeEmail: true,
+        hasPassword: true,
         name: input.name.trim(),
         username,
         city: input.city.trim() || null,
@@ -238,18 +238,14 @@ export const demoBackend: Backend = {
       const u = username.trim().toLowerCase()
       return delay(USERNAME_RE.test(u) && !db.users.some((x) => x.profile.username === u))
     },
-    async changeEmail(newEmail, password) {
+    async changePassword(current, next) {
       const me = requireMe()
       const u = db.users.find((x) => x.profile.id === me.id)
-      if (!u || u.password !== password) throw new Error('Senha atual incorreta.')
-      const email = newEmail.trim().toLowerCase()
-      if (email === u.email) throw new Error('Esse já é o seu e-mail.')
-      if (db.users.some((x) => x.email === email)) throw new Error('Já existe uma conta com esse e-mail.')
-      // na demonstração não há e-mail para confirmar: a troca vale na hora
-      u.email = email
-      u.profile = { ...u.profile, email }
-      setMe(u.profile)
-      return { needsConfirmation: false }
+      if (!u || u.password !== current) throw new Error('Senha atual incorreta.')
+      if (next.length < 8) throw new Error('A nova senha precisa ter pelo menos 8 caracteres.')
+      if (next === current) throw new Error('A nova senha precisa ser diferente da atual.')
+      u.password = next
+      save()
     },
     async updateProfile(patch) {
       const me = requireMe()
