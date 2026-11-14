@@ -10,7 +10,7 @@
  * Uma janela que simplesmente passou (a sessão de ontem acabou) não é "saiu da condição": o estado volta a
  * parado em silêncio e o próximo aviso é um ENTROU novo.
  */
-import { checkHour, findMatches, tideStates, type Failure, type Match, type SpotPrefs } from './prefs.ts'
+import { checkHour, findMatches, MIN_RUN_HOURS, tideStates, type Failure, type Match, type SpotPrefs } from './prefs.ts'
 import type { HourPoint } from './openMeteo.ts'
 import type { Spot } from './spots.ts'
 import { dayLabel, dirDeg } from './surf.ts'
@@ -116,7 +116,7 @@ export function explainDate(spot: Spot, hours: HourPoint[], prefs: SpotPrefs, da
     }
     return best
   })()
-  if (okRun > 0 && okRun < prefs.minHours) return `${dayShort(date)}: só ${okRun} ${okRun === 1 ? 'hora seguida boa' : 'horas seguidas boas'} (você pediu ${prefs.minHours})`
+  if (okRun > 0 && okRun < MIN_RUN_HOURS) return `${dayShort(date)}: só ${okRun} hora seguida boa (precisa de pelo menos ${MIN_RUN_HOURS})`
   // a hora com menos falhas; no empate, a que erra por menos tamanho/vento (a primeira da lista serve)
   const best = checks.reduce((a, b) => (b.c.failures.length < a.c.failures.length ? b : a))
   if (!best.c.failures.length) return `${dayShort(date)}: as condições mudaram`

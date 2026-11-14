@@ -281,12 +281,6 @@ export function PrefsDialog({
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
             <Box sx={{ flex: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                Sessão de pelo menos {p.minHours} {p.minHours === 1 ? 'hora' : 'horas'}
-              </Typography>
-              <Slider value={p.minHours} min={1} max={5} step={1} marks onChange={(_, v) => set('minHours', v as number)} color="success" aria-label="Horas seguidas" />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>
                 Avisar com até {p.daysAhead} {p.daysAhead === 1 ? 'dia' : 'dias'} de antecedência
               </Typography>
               <Slider value={p.daysAhead} min={1} max={7} step={1} marks onChange={(_, v) => set('daysAhead', v as number)} color="success" aria-label="Antecedência do aviso" />

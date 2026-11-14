@@ -25,7 +25,6 @@ export type SpotPrefs = {
   /** partes do dia (vazio = qualquer hora com luz) */
   dayParts: DayPart[]
   /** horas seguidas mínimas para valer a sessão */
-  minHours: number
   /** quantos dias à frente avisar (padrão 7) */
   daysAhead: number
   /** direção da ondulação principal (graus, de onde vem) com tolerância ±; null = qualquer direção */
@@ -51,7 +50,6 @@ export const DEFAULT_PREFS: SpotPrefs = {
   minPeriod: 7,
   tide: [],
   dayParts: ['manha', 'tarde'],
-  minHours: 2,
   daysAhead: 7,
   swellDir: null,
   swellDirTol: 45,
@@ -199,6 +197,9 @@ export type Match = {
  * Janelas de horas seguidas que batem com o gosto, a partir de `from` (ISO local) até `daysAhead` dias.
  * Uma janela por dia (a mais longa).
  */
+/** Janela mínima para avisar: horas seguidas boas. Fixa (não é opção): evita avisos de 1 hora só, que passam rápido. */
+export const MIN_RUN_HOURS = 2
+
 export function findMatches(spot: Spot, hours: HourPoint[], prefs: SpotPrefs, from: string, daysAhead = prefs.daysAhead): Match[] {
   const tides = tideStates(hours)
   const last = new Date(`${from.slice(0, 10)}T12:00:00Z`)
@@ -207,7 +208,7 @@ export function findMatches(spot: Spot, hours: HourPoint[], prefs: SpotPrefs, fr
   const best = new Map<string, Match>()
   let run: { i: number; checks: HourCheck[] }[] = []
   const flush = () => {
-    if (run.length >= prefs.minHours) {
+    if (run.length >= MIN_RUN_HOURS) {
       const hs = run.map((r) => hours[r.i])
       const date = hs[0].time.slice(0, 10)
       const hbs = run.map((r) => r.checks[0].hb)
