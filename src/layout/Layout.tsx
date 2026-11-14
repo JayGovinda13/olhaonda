@@ -1,6 +1,7 @@
 import { Alert, Box, Container, Link, Skeleton, Stack, Typography } from '@mui/material'
 import { Suspense } from 'react'
 import { Link as RouterLink, Outlet, ScrollRestoration } from 'react-router'
+import { useAuth } from '../auth/context'
 import { backend } from '../backend'
 import { APP_ENV, FEATURES, HAS_COMMUNITY } from '../config/env'
 import { AdSlot } from '../components/AdSlot'
@@ -10,6 +11,7 @@ import { LogoMark } from '../components/Logo'
 import { CommunityEffects } from './CommunityEffects'
 
 export function Layout() {
+  const { user } = useAuth()
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {APP_ENV !== 'production' && (
@@ -61,7 +63,7 @@ export function Layout() {
             (ECMWF WAM, Météo-France MFWAM, NOAA GFS-Wave), CC BY 4.0.
           </Typography>
           <Stack direction="row" sx={{ columnGap: 2, rowGap: 0.5, flexWrap: 'wrap' }}>
-            {FEATURES.forum && (
+            {FEATURES.forum && user && (
               <Link component={RouterLink} to="/forum" color="inherit" variant="body2">
                 Fórum
               </Link>

@@ -2,6 +2,7 @@ import { Alert, Box, Button, Skeleton, Stack, Typography } from '@mui/material'
 import { Refresh } from 'iconoir-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router'
+import { useAuth } from '../auth/context'
 import { AdSlot } from '../components/AdSlot'
 import { DayStrip } from '../components/DayStrip'
 import { HourlyChart } from '../components/HourlyChart'
@@ -23,6 +24,7 @@ import { usePageMeta } from '../lib/meta'
 import { currentHourIndex, dayLabel, fmt } from '../lib/surf'
 
 export default function ForecastPage() {
+  const { user } = useAuth()
   // o pico vem do endereço (/pico/:id), que é compartilhável
   const { id = '' } = useParams()
   const navigate = useNavigate()
@@ -77,7 +79,7 @@ export default function ForecastPage() {
         <Box sx={{ flex: '0 1 420px', minWidth: 0 }}>
           <SpotPicker value={spot} onChange={(s) => s && setSpot(s.id)} locate={false} />
         </Box>
-        {HAS_COMMUNITY && <FavoriteButton spot={spot} compact />}
+        {HAS_COMMUNITY && user && <FavoriteButton spot={spot} compact />}
       </Stack>
 
       {forecast.status === 'error' && (
@@ -141,7 +143,7 @@ export default function ForecastPage() {
         </>
       )}
 
-      {HAS_COMMUNITY && <SpotCommunity spot={spot} />}
+      {HAS_COMMUNITY && user && <SpotCommunity spot={spot} />}
     </Stack>
   )
 }

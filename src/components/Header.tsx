@@ -10,14 +10,16 @@ import { LogoMark, Wordmark } from './Logo'
 import { NotificationsBell } from './community/NotificationsBell'
 import { ColorModeToggle } from './ColorModeToggle'
 
-const NAV: { to: string; label: string; icon: ReactNode; end?: boolean; on: boolean }[] = [
+/** `login`: só aparece para quem está logado */
+const NAV: { to: string; label: string; icon: ReactNode; end?: boolean; on: boolean; login?: boolean }[] = [
   { to: '/', label: 'Previsão', icon: <SeaWaves width={18} height={18} />, end: true, on: true },
-  { to: '/forum', label: 'Fórum', icon: <ChatLines width={18} height={18} />, on: FEATURES.forum },
+  { to: '/forum', label: 'Fórum', icon: <ChatLines width={18} height={18} />, on: FEATURES.forum, login: true },
   { to: '/fotos', label: 'Fotos', icon: <Camera width={18} height={18} />, on: FEATURES.photos },
 ].filter((n) => n.on)
 
 export function Header() {
   const { user, requireLogin } = useAuth()
+  const nav = NAV.filter((n) => !n.login || user)
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const navigate = useNavigate()
   const go = (to: string) => {
@@ -48,7 +50,7 @@ export function Header() {
         </Box>
 
         <Stack component="nav" direction="row" spacing={0.5} sx={{ flex: 1, justifyContent: { xs: 'center', md: 'flex-start' } }}>
-          {NAV.length > 1 && NAV.map((n) => (
+          {nav.length > 1 && nav.map((n) => (
             <Button
               key={n.to}
               component={NavLink}
