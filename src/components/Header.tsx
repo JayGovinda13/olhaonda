@@ -10,7 +10,7 @@ import { LogoMark, Wordmark } from './Logo'
 import { NotificationsBell } from './community/NotificationsBell'
 import { ColorModeToggle } from './ColorModeToggle'
 
-/** `login`: só aparece para quem está logado */
+/** `login`: só aparece para quem está logado e com acesso liberado */
 const NAV: { to: string; label: string; icon: ReactNode; end?: boolean; on: boolean; login?: boolean }[] = [
   { to: '/', label: 'Previsão', icon: <SeaWaves width={18} height={18} />, end: true, on: true },
   { to: '/forum', label: 'Fórum', icon: <ChatLines width={18} height={18} />, on: FEATURES.forum, login: true },
@@ -19,7 +19,8 @@ const NAV: { to: string; label: string; icon: ReactNode; end?: boolean; on: bool
 
 export function Header() {
   const { user, requireLogin } = useAuth()
-  const nav = NAV.filter((n) => !n.login || user)
+  const member = Boolean(user?.approved) // acesso liberado (teste fechado)
+  const nav = NAV.filter((n) => !n.login || member)
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const navigate = useNavigate()
   const go = (to: string) => {
@@ -87,7 +88,7 @@ export function Header() {
         <ColorModeToggle />
         {!HAS_COMMUNITY ? null : user ? (
           <>
-            <NotificationsBell />
+            {member && <NotificationsBell />}
             <IconButton onClick={(e) => setAnchor(e.currentTarget)} aria-label="Minha conta" sx={{ p: 0.25 }}>
               <Avatar src={user.avatarUrl ?? undefined} sx={{ width: 36, height: 36, bgcolor: brand.plum, color: brand.sand, fontWeight: 800 }}>
                 {user.name.slice(0, 1).toUpperCase()}
@@ -102,12 +103,14 @@ export function Header() {
                 </Typography>
               </Box>
               <Divider />
-              <MenuItem onClick={() => go('/meus-picos')}>
-                <ListItemIcon>
-                  <Star width={18} height={18} />
-                </ListItemIcon>
-                Meus picos e alertas
-              </MenuItem>
+              {member && (
+                <MenuItem onClick={() => go('/meus-picos')}>
+                  <ListItemIcon>
+                    <Star width={18} height={18} />
+                  </ListItemIcon>
+                  Meus picos e alertas
+                </MenuItem>
+              )}
               <MenuItem onClick={() => go('/perfil')}>
                 <ListItemIcon>
                   <User width={18} height={18} />

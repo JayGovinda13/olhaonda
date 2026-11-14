@@ -63,7 +63,7 @@ export function Layout() {
             (ECMWF WAM, Météo-France MFWAM, NOAA GFS-Wave), CC BY 4.0.
           </Typography>
           <Stack direction="row" sx={{ columnGap: 2, rowGap: 0.5, flexWrap: 'wrap' }}>
-            {FEATURES.forum && user && (
+            {FEATURES.forum && user?.approved && (
               <Link component={RouterLink} to="/forum" color="inherit" variant="body2">
                 Fórum
               </Link>

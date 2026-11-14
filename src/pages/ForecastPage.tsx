@@ -79,7 +79,7 @@ export default function ForecastPage() {
         <Box sx={{ flex: '0 1 420px', minWidth: 0 }}>
           <SpotPicker value={spot} onChange={(s) => s && setSpot(s.id)} locate={false} />
         </Box>
-        {HAS_COMMUNITY && user && <FavoriteButton spot={spot} compact />}
+        {HAS_COMMUNITY && user?.approved && <FavoriteButton spot={spot} compact />}
       </Stack>
 
       {forecast.status === 'error' && (
@@ -143,7 +143,7 @@ export default function ForecastPage() {
         </>
       )}
 
-      {HAS_COMMUNITY && user && <SpotCommunity spot={spot} />}
+      {HAS_COMMUNITY && user?.approved && <SpotCommunity spot={spot} />}
     </Stack>
   )
 }
