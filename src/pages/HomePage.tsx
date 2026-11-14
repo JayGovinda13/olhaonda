@@ -9,6 +9,7 @@ import { SpotPicker } from '../components/SpotPicker'
 import { cities, spotsIn, STATE_NAMES, states } from '../data/hierarchy'
 import { DEFAULT_SPOT_ID, distanceKm, KIND_LABEL, SPOTS, type Spot } from '../data/spots'
 import { useLocalState } from '../hooks/useLocalState'
+import { getPosition } from '../lib/geo'
 import { usePageMeta } from '../lib/meta'
 import { dirDeg } from '../lib/surf'
 import { alpha, brand } from '../theme'
@@ -95,30 +96,26 @@ export default function HomePage() {
   const legacy = params.get('pico')
   if (legacy && SPOTS.some((s) => s.id === legacy)) return <Navigate to={`/pico/${legacy}`} replace />
 
-  const nearMe = () => {
+  const nearMe = async () => {
     setGeoError(null)
-    if (!navigator.geolocation) return setGeoError('Este navegador não informa a localização.')
     setLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocating(false)
-        const { latitude, longitude } = pos.coords
-        const all = SPOTS.map((spot) => ({ spot, km: distanceKm(latitude, longitude, spot.lat, spot.lon) })).sort((a, b) => a.km - b.km)
-        const within = all.filter((x) => x.km <= 10)
-        setNearby(within.length ? { within: true, list: within } : { within: false, list: all.slice(0, 3) })
-        // no celular a lista fica abaixo: rola até ela
-        setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
-      },
-      (err) => {
-        setLocating(false)
-        setGeoError(
-          err.code === err.PERMISSION_DENIED
-            ? 'Permita o acesso à localização no navegador para ver os picos perto de você.'
+    const r = await getPosition()
+    setLocating(false)
+    if (!r.ok) {
+      setGeoError(
+        r.reason === 'unsupported'
+          ? 'Este navegador não informa a localização.'
+          : r.reason === 'denied'
+            ? 'A localização está bloqueada. Libere o acesso ao site nos ajustes do navegador e toque de novo.'
             : 'Não foi possível descobrir sua localização agora. Tente de novo.',
-        )
-      },
-      { timeout: 10000, maximumAge: 5 * 60_000 },
-    )
+      )
+      return
+    }
+    const all = SPOTS.map((spot) => ({ spot, km: distanceKm(r.lat, r.lon, spot.lat, spot.lon) })).sort((a, b) => a.km - b.km)
+    const within = all.filter((x) => x.km <= 10)
+    setNearby(within.length ? { within: true, list: within } : { within: false, list: all.slice(0, 3) })
+    // no celular a lista fica abaixo: rola até ela
+    setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
   const fmtKm = (km: number) => (km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1).replace('.', ',')} km`)
 

@@ -1,6 +1,7 @@
 import { Autocomplete, Box, IconButton, Stack, TextField, Tooltip } from '@mui/material'
 import { Position, Search } from 'iconoir-react'
 import { useState } from 'react'
+import { getPosition } from '../lib/geo'
 import { nearestSpot, spotGroup, type Spot } from '../data/spots'
 import { SPOTS_BY_PLACE } from '../data/hierarchy'
 import { alpha, brand } from '../theme'
@@ -23,17 +24,11 @@ export function SpotPicker({
 }) {
   const [locating, setLocating] = useState(false)
 
-  const findMe = () => {
-    if (!navigator.geolocation) return
+  const findMe = async () => {
     setLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocating(false)
-        onChange(nearestSpot(pos.coords.latitude, pos.coords.longitude))
-      },
-      () => setLocating(false),
-      { timeout: 8000 },
-    )
+    const r = await getPosition()
+    setLocating(false)
+    if (r.ok) onChange(nearestSpot(r.lat, r.lon))
   }
 
   return (
