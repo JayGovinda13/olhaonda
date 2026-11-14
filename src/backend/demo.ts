@@ -5,6 +5,7 @@
 import type { AlertState } from '../../supabase/functions/_shared/core/alerts.ts'
 import { USERNAME_RE } from './types'
 import type {
+  AdminOverview,
   AppNotification,
   Backend,
   Favorite,
@@ -30,6 +31,9 @@ type DB = {
   alertStates?: Record<string, Record<string, AlertState>>
   /** WhatsApp "ligado" por usuário (simulado: nenhuma mensagem sai do navegador) */
   whatsapp?: Record<string, { phone: string; enabled: boolean }>
+  /** liberação por usuário e registro de quem liberou/bloqueou (tela de administração) */
+  approvedAt?: Record<string, string>
+  audit?: AdminOverview['audit']
   threads: Thread[]
   posts: Post[]
   sessions: PhotoSession[]
@@ -200,7 +204,7 @@ export const demoBackend: Backend = {
       return () => listeners.delete(cb)
     },
     async signInWithEmail(email) {
-      setMe({ id: `u-${email}`, name: email.split('@')[0], isPhotographer: false })
+      setMe({ id: `u-${email}`, name: email.split('@')[0], isPhotographer: false, approved: true, isAdmin: true })
     },
     async signInWithPassword(email, password) {
       const u = db.users.find((x) => x.email === email.trim().toLowerCase())
@@ -221,6 +225,8 @@ export const demoBackend: Backend = {
         modality: input.modality,
         level: input.level,
         isPhotographer: false,
+        approved: true,
+        isAdmin: true,
       }
       db.users.push({ profile, email, password: input.password })
       setMe(profile)
@@ -238,10 +244,10 @@ export const demoBackend: Backend = {
       setMe(next)
     },
     async signInWithGoogle() {
-      setMe({ id: 'u-google', name: 'Surfista', isPhotographer: false })
+      setMe({ id: 'u-google', name: 'Surfista', isPhotographer: false, approved: true, isAdmin: true })
     },
     async signInDemo(name, isPhotographer) {
-      setMe({ id: `u-${name.toLowerCase().replace(/\W+/g, '-')}`, name, isPhotographer, paymentsConnected: isPhotographer })
+      setMe({ id: `u-${name.toLowerCase().replace(/\W+/g, '-')}`, name, isPhotographer, paymentsConnected: isPhotographer, approved: true, isAdmin: true })
     },
     async signOut() {
       setMe(null)
@@ -374,6 +380,56 @@ export const demoBackend: Backend = {
       save()
       emitNotif()
       return n
+    },
+  },
+
+  admin: {
+    // no modo demonstração não há bloqueio: a tela só mostra as contas criadas neste navegador
+    async overview(): Promise<AdminOverview> {
+      const users = db.users.map((u) => ({
+        id: u.profile.id,
+        name: u.profile.name,
+        username: u.profile.username ?? null,
+        email: u.email,
+        city: u.profile.city ?? null,
+        createdAt: iso(),
+        emailConfirmed: true,
+        approvedAt: db.approvedAt?.[u.profile.id] ?? iso(),
+        role: 'user' as const,
+      }))
+      return delay({ inviteOnly: true, limit: 10, members: users.filter((u) => u.approvedAt).length, users, audit: db.audit ?? [] })
+    },
+    async setAccess(userId, allow) {
+      const me = requireMe()
+      db.approvedAt = { ...(db.approvedAt ?? {}) }
+      if (allow) db.approvedAt[userId] = iso()
+      else delete db.approvedAt[userId]
+      const target = db.users.find((u) => u.profile.id === userId)?.profile.name ?? null
+      db.audit = [{ at: iso(), action: allow ? ('liberou' as const) : ('bloqueou' as const), admin: me.name, target }, ...(db.audit ?? [])].slice(0, 20)
+      save()
+    },
+  },
+
+  account: {
+    async exportData() {
+      const me = requireMe()
+      return delay({
+        geradoEm: iso(),
+        perfil: me,
+        picosFavoritos: db.favorites[me.id] ?? [],
+        avisosRecebidos: db.notifications[me.id] ?? [],
+        topicosNoForum: db.threads.filter((t) => t.authorId === me.id),
+        respostasNoForum: db.posts.filter((p) => p.authorId === me.id),
+      })
+    },
+    async deleteAccount() {
+      const me = requireMe()
+      db.users = db.users.filter((u) => u.profile.id !== me.id)
+      delete db.favorites[me.id]
+      delete db.notifications[me.id]
+      db.threads = db.threads.filter((t) => t.authorId !== me.id)
+      db.posts = db.posts.filter((p) => p.authorId !== me.id)
+      setMe(null)
     },
   },
 

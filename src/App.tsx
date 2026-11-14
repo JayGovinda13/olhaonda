@@ -2,6 +2,7 @@ import { lazy } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider, type RouteObject } from 'react-router'
 import { AuthProvider } from './auth/AuthProvider'
 import { FEATURES, HAS_COMMUNITY } from './config/env'
+import { AccessGate } from './components/community/AccessGate'
 import { Layout } from './layout/Layout'
 import ForecastPage from './pages/ForecastPage'
 import HomePage from './pages/HomePage'
@@ -19,6 +20,7 @@ const SpotForumPage = lazy(() => import('./pages/forum/SpotForumPage'))
 const SignUpPage = lazy(() => import('./pages/SignUpPage'))
 const MySpotsPage = lazy(() => import('./pages/MySpotsPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const AdminPage = lazy(() => import('./pages/AdminPage'))
 
 // Rotas desligadas no ambiente (ex.: fórum e fotos em produção) nem entram no roteador.
 const routes: RouteObject[] = [
@@ -28,17 +30,18 @@ const routes: RouteObject[] = [
   { path: 'sobre', element: <AboutPage /> },
   ...(FEATURES.forum
     ? [
-        { path: 'forum', element: <ForumPage /> },
-        { path: 'forum/:id', element: <ThreadPage /> },
-        { path: 'pico/:id/forum', element: <SpotForumPage /> },
+        { path: 'forum', element: <AccessGate><ForumPage /></AccessGate> },
+        { path: 'forum/:id', element: <AccessGate><ThreadPage /></AccessGate> },
+        { path: 'pico/:id/forum', element: <AccessGate><SpotForumPage /></AccessGate> },
       ]
     : []),
   // conta, favoritos e alertas existem onde há comunidade (staging hoje)
   ...(HAS_COMMUNITY
     ? [
         { path: 'cadastro', element: <SignUpPage /> },
-        { path: 'meus-picos', element: <MySpotsPage /> },
+        { path: 'meus-picos', element: <AccessGate><MySpotsPage /></AccessGate> },
         { path: 'perfil', element: <ProfilePage /> },
+        { path: 'admin', element: <AdminPage /> },
       ]
     : []),
   ...(FEATURES.photos

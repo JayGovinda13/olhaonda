@@ -25,6 +25,8 @@ const flag = (v: string | undefined, fallback: boolean) => (v == null || v === '
 export const FEATURES = {
   forum: flag(import.meta.env.VITE_FEATURE_FORUM, !IS_PRODUCTION),
   photos: flag(import.meta.env.VITE_FEATURE_PHOTOS, !IS_PRODUCTION),
+  /** Avisos no WhatsApp (precisa da conta Meta configurada). Em produção só com VITE_FEATURE_WHATSAPP=true. */
+  whatsapp: flag(import.meta.env.VITE_FEATURE_WHATSAPP, !IS_PRODUCTION),
 }
 
 /** Algum recurso que exige conta (login) está ligado. */

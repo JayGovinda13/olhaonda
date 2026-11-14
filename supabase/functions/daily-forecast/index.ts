@@ -41,8 +41,13 @@ Deno.serve(async (req) => {
   const stateOf = new Map<string, AlertState>((stateRows ?? []).map((r) => [`${r.user_id}:${r.spot_id}`, { ...EMPTY_ALERT, ...(r.state as Partial<AlertState>) }]))
   const { data: contacts } = await sb.from('whatsapp_contacts').select('user_id, phone').eq('enabled', true).is('opted_out_at', null)
   const phoneOf = new Map<string, string>((contacts ?? []).map((c) => [c.user_id, c.phone]))
+  // teste fechado: só avisa quem tem acesso liberado (ou todos, se o app estiver aberto)
+  const { data: cfg } = await sb.from('app_settings').select('invite_only').maybeSingle()
+  const { data: allowed } = await sb.from('profiles').select('id').or('approved_at.not.is.null,role.in.(moderator,admin)')
+  const allowedIds = new Set((allowed ?? []).map((p) => p.id as string))
   const favBySpot = new Map<string, { user_id: string; prefs: unknown }[]>()
   for (const f of favs ?? []) {
+    if (cfg?.invite_only !== false && !allowedIds.has(f.user_id)) continue
     if (!favBySpot.has(f.spot_id)) favBySpot.set(f.spot_id, [])
     favBySpot.get(f.spot_id)!.push(f)
   }
@@ -53,6 +58,12 @@ Deno.serve(async (req) => {
     const s = ALL_SPOTS.find((x) => x.id === id)
     if (s) spots.push(s)
   }
+
+  // retenção (LGPD): registros técnicos de mensagens e códigos não ficam guardados para sempre
+  const day = 86_400_000
+  await sb.from('whatsapp_messages').delete().lt('created_at', new Date(Date.now() - 90 * day).toISOString())
+  await sb.from('whatsapp_codes').delete().lt('expires_at', new Date(Date.now() - day).toISOString())
+  await sb.from('notifications').delete().lt('created_at', new Date(Date.now() - 180 * day).toISOString())
 
   const out = { date: now.date, spots: spots.length, posted: 0, notified: 0, pushed: 0, whatsapp: 0, errors: [] as string[] }
 

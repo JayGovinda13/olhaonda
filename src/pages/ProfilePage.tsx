@@ -1,6 +1,6 @@
-import { Alert, Box, Button, InputAdornment, Paper, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, InputAdornment, Paper, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router'
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router'
 import { useAuth } from '../auth/context'
 import { backend, LEVEL_LABEL, MODALITY_LABEL, USERNAME_RE, type Level, type Modality, type Profile } from '../backend'
 import { usePageMeta } from '../lib/meta'
@@ -12,7 +12,93 @@ export default function ProfilePage() {
   usePageMeta({ title: 'Meu perfil · OlhaOnda', description: 'Seus dados no OlhaOnda.', path: '/perfil' })
   if (ready && !user) return <Navigate to="/cadastro" replace />
   if (!user) return null
-  return <ProfileForm key={user.id} user={user} onSaved={refresh} />
+  return (
+    <Stack spacing={3} sx={{ maxWidth: 640, mx: 'auto' }}>
+      <ProfileForm key={user.id} user={user} onSaved={refresh} />
+      <DataRights />
+    </Stack>
+  )
+}
+
+/** LGPD: levar os próprios dados e excluir a conta, sem precisar pedir por e-mail. */
+function DataRights() {
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [confirm, setConfirm] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  const download = async () => {
+    setBusy(true)
+    setMsg(null)
+    try {
+      const data = await backend.account.exportData()
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
+      const a = Object.assign(document.createElement('a'), { href: url, download: 'meus-dados-olhaonda.json' })
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Não foi possível gerar o arquivo.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const remove = async () => {
+    setBusy(true)
+    try {
+      await backend.account.deleteAccount()
+      navigate('/', { replace: true })
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Não foi possível excluir a conta.' })
+      setOpen(false)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Paper sx={{ p: { xs: 2.5, sm: 4 } }}>
+      <Typography variant="h6" component="h2">
+        Seus dados (LGPD)
+      </Typography>
+      <Typography variant="body2" sx={{ opacity: 0.75, mt: 0.5 }}>
+        Você pode levar uma cópia de tudo o que guardamos sobre você ou excluir a conta quando quiser. Mais detalhes na{' '}
+        <Box component={RouterLink} to="/privacidade" sx={{ color: brand.plum, fontWeight: 700 }}>
+          política de privacidade
+        </Box>
+        .
+      </Typography>
+      {msg && (
+        <Alert severity={msg.ok ? 'success' : 'error'} sx={{ mt: 1.5 }}>
+          {msg.text}
+        </Alert>
+      )}
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 2 }}>
+        <Button variant="outlined" disabled={busy} onClick={() => void download()}>
+          Baixar meus dados
+        </Button>
+        <Button color="error" disabled={busy} onClick={() => setOpen(true)}>
+          Excluir minha conta
+        </Button>
+      </Stack>
+      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Excluir a conta?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Isso apaga o seu perfil, os favoritos, os avisos e o que você publicou no fórum. Não dá para desfazer. Digite <b>EXCLUIR</b> para confirmar.
+          </Typography>
+          <TextField fullWidth size="small" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoFocus />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button color="error" variant="contained" disabled={busy || confirm !== 'EXCLUIR'} onClick={() => void remove()}>
+            Excluir para sempre
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Paper>
+  )
 }
 
 function ProfileForm({ user, onSaved }: { user: Profile; onSaved: () => Promise<void> }) {
@@ -48,7 +134,7 @@ function ProfileForm({ user, onSaved }: { user: Profile; onSaved: () => Promise<
   } as const
 
   return (
-    <Paper component="form" onSubmit={submit} sx={{ p: { xs: 2.5, sm: 4 }, maxWidth: 640, mx: 'auto' }}>
+    <Paper component="form" onSubmit={submit} sx={{ p: { xs: 2.5, sm: 4 } }}>
       <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
         Meu perfil
       </Typography>

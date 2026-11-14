@@ -23,6 +23,32 @@ export type Profile = {
   modality?: Modality | null
   level?: Level | null
   bio?: string | null
+  /** Acesso liberado ao fórum e aos avisos (teste fechado). */
+  approved: boolean
+  isAdmin: boolean
+}
+
+/** Versão da política de privacidade e das regras aceitas no cadastro (registrada na conta). */
+export const TERMS_VERSION = '2026-11'
+
+export type AdminUser = {
+  id: string
+  name: string
+  username: string | null
+  email: string
+  city: string | null
+  createdAt: string
+  emailConfirmed: boolean
+  approvedAt: string | null
+  role: 'user' | 'moderator' | 'admin'
+}
+export type AdminOverview = {
+  inviteOnly: boolean
+  /** máximo de pessoas liberadas (null = sem limite) */
+  limit: number | null
+  members: number
+  users: AdminUser[]
+  audit: { at: string; action: 'liberou' | 'bloqueou'; admin: string | null; target: string | null }[]
 }
 
 export type SignUpInput = {
@@ -187,6 +213,17 @@ export interface Backend {
     onChange(cb: () => void): () => void
     /** Só no modo demonstração: registra um aviso; devolve null se já existia para esse pico e dia. */
     add?(n: NewNotification): Promise<AppNotification | null>
+  }
+
+  admin: {
+    overview(): Promise<AdminOverview>
+    setAccess(userId: string, allow: boolean): Promise<void>
+  }
+
+  /** Direitos do titular (LGPD): levar os dados e excluir a conta. */
+  account: {
+    exportData(): Promise<Record<string, unknown>>
+    deleteAccount(): Promise<void>
   }
 
   alerts: {

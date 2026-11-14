@@ -6,7 +6,8 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import { EMPTY_ALERT, type AlertState } from '../../supabase/functions/_shared/core/alerts.ts'
 import type { SpotPrefs } from '../../supabase/functions/_shared/core/prefs.ts'
 import { normalizePrefs } from '../../supabase/functions/_shared/core/prefs.ts'
-import type { AppNotification, Backend, Favorite, ForumCategory, Level, Modality, Photo, PhotoSession, Post, Profile, Purchase, Thread } from './types'
+import { TERMS_VERSION } from './types'
+import type { AdminOverview, AppNotification, Backend, Favorite, ForumCategory, Level, Modality, Photo, PhotoSession, Post, Profile, Purchase, Thread } from './types'
 
 type Row = Record<string, unknown>
 
@@ -105,6 +106,8 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
       modality: (data?.modality as Modality | null) ?? null,
       level: (data?.level as Level | null) ?? null,
       bio: (data?.bio as string | null) ?? null,
+      approved: Boolean((await sb.rpc('is_member')).data),
+      isAdmin: data?.role === 'admin',
     }
   }
 
@@ -114,8 +117,9 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
     return data.user.id
   }
 
-  function check<T>(res: { data: T; error: { message: string } | null }) {
-    if (res.error) throw new Error(res.error.message)
+  function check<T>(res: { data: T; error: { message: string; code?: string } | null }) {
+    // 42501 = o banco recusou: no teste fechado, conta ainda não liberada
+    if (res.error) throw new Error(res.error.code === '42501' ? 'Seu acesso ainda não foi liberado.' : res.error.message)
     return res.data
   }
 
@@ -167,6 +171,7 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
               city: input.city.trim(),
               modality: input.modality,
               level: input.level,
+              terms_version: TERMS_VERSION, // aceite da política de privacidade e das regras (LGPD)
             },
           },
         })
@@ -277,6 +282,26 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
           .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => cb())
           .subscribe()
         return () => void sb.removeChannel(ch)
+      },
+    },
+
+    admin: {
+      async overview() {
+        return check(await sb.rpc('admin_overview')) as AdminOverview
+      },
+      async setAccess(userId, allow) {
+        const { error } = await sb.rpc('admin_set_access', { target: userId, allow })
+        if (error) throw new Error(error.message)
+      },
+    },
+
+    account: {
+      async exportData() {
+        return check(await sb.rpc('export_my_data')) as Record<string, unknown>
+      },
+      async deleteAccount() {
+        await invoke('account-delete', { confirm: 'EXCLUIR' })
+        await sb.auth.signOut()
       },
     },
 

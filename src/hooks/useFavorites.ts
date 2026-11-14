@@ -77,7 +77,7 @@ export function setPendingFavorites(ids: string[]) {
 export function usePendingFavorites() {
   const { user } = useAuth()
   const { save } = useFavorites()
-  const uid = user?.id
+  const uid = user?.approved ? user.id : undefined // teste fechado: espera a liberação
   useEffect(() => {
     if (!uid) return
     let ids: string[] = []

@@ -20,6 +20,7 @@ import { Link as RouterLink } from 'react-router'
 import { useEffect, useMemo, useState } from 'react'
 import { fetchForecast, type Forecast } from '../../api/openMeteo'
 import type { SpotPrefs } from '../../backend'
+import { FEATURES } from '../../config/env'
 import type { Spot } from '../../data/spots'
 import { useWhatsApp, maskPhone } from '../../hooks/useWhatsApp'
 import { enablePush, pushState, type PushState } from '../../lib/push'
@@ -325,7 +326,7 @@ export function PrefsDialog({
                 início para receber.
               </Alert>
             )}
-            {notify && (
+            {notify && FEATURES.whatsapp && (
               <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, opacity: 0.85, mt: 0.5 }}>
                 <ChatBubble width={14} height={14} />
                 {wa.phone && wa.enabled ? (

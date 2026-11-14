@@ -68,6 +68,7 @@ export default function SignUpPage() {
   const [level, setLevel] = useState<Level>('intermediario')
   const [spots, setSpots] = useState<string[]>([])
   const [accept, setAccept] = useState(false)
+  const [adult, setAdult] = useState(false)
   const [available, setAvailable] = useState<{ name: string; ok: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -111,9 +112,11 @@ export default function SignUpPage() {
         setPendingFavorites(spots)
         setConfirm(email)
       } else {
-        for (const id of spots) await save(id, DEFAULT_PREFS, true)
         const me = await backend.auth.current()
-        if (me) resetDemoAlerts(me.id) // confere os alertas dos picos recém-favoritados
+        if (me?.approved) {
+          for (const id of spots) await save(id, DEFAULT_PREFS, true)
+          resetDemoAlerts(me.id) // confere os alertas dos picos recém-favoritados
+        } else setPendingFavorites(spots) // teste fechado: salva quando o acesso for liberado
         navigate('/meus-picos?bemvindo=1')
       }
     } catch (err) {
@@ -132,7 +135,7 @@ export default function SignUpPage() {
         </Typography>
         <Typography sx={{ mt: 1.5, opacity: 0.8 }}>
           Enviamos um link para <b>{confirm}</b>. Abra o e-mail e toque no link para ativar a conta. Seus picos favoritos já ficam salvos
-          quando você entrar.
+          para quando o seu acesso for liberado.
         </Typography>
       </Paper>
     )
@@ -245,12 +248,20 @@ export default function SignUpPage() {
                 <Link component={RouterLink} to="/privacidade" target="_blank">
                   política de privacidade
                 </Link>{' '}
-                e as regras do fórum (respeito, sem ofensas nem spam).
+                e as regras do fórum (respeito, sem ofensas nem spam). Autorizo o uso do meu nome, e-mail e dados do perfil para operar a minha conta,
+                como explicado nela.
               </Typography>
             }
           />
+          <FormControlLabel
+            control={<Checkbox checked={adult} onChange={(e) => setAdult(e.target.checked)} color="success" />}
+            label={<Typography variant="body2">Tenho 18 anos ou mais.</Typography>}
+          />
+          <Alert severity="info" variant="outlined">
+            O fórum e os avisos estão em teste fechado: depois de criar a conta, o acesso é liberado manualmente.
+          </Alert>
 
-          <Button type="submit" variant="contained" size="large" disabled={busy || !accept}>
+          <Button type="submit" variant="contained" size="large" disabled={busy || !accept || !adult}>
             Criar conta
           </Button>
         </Stack>

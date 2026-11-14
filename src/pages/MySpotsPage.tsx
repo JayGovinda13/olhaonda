@@ -6,6 +6,7 @@ import { fetchForecast } from '../api/openMeteo'
 import { useAuth } from '../auth/context'
 import { backend, type Favorite } from '../backend'
 import { PrefsDialog } from '../components/community/PrefsDialog'
+import { FEATURES } from '../config/env'
 import { WhatsAppCard } from '../components/community/WhatsAppCard'
 import { SpotPicker } from '../components/SpotPicker'
 import { ALL_SPOTS, type Spot } from '../data/spots'
@@ -135,7 +136,7 @@ export default function MySpotsPage() {
       </Paper>
 
       {/* WhatsApp */}
-      <WhatsAppCard />
+      {FEATURES.whatsapp && <WhatsAppCard />}
 
       {/* favoritos */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}>

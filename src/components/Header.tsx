@@ -1,5 +1,5 @@
 import { Avatar, Box, Button, Container, Divider, IconButton, ListItemIcon, Menu, MenuItem, Stack, Tooltip, Typography } from '@mui/material'
-import { Camera, ChatLines, Instagram, LogIn, LogOut, SeaWaves, ShoppingBag, Star, Upload, User } from 'iconoir-react'
+import { Camera, ChatLines, Instagram, LogIn, Lock, LogOut, SeaWaves, ShoppingBag, Star, Upload, User } from 'iconoir-react'
 import { useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 import { backend } from '../backend'
@@ -112,6 +112,14 @@ export function Header() {
                 </ListItemIcon>
                 Meu perfil
               </MenuItem>
+              {user.isAdmin && (
+                <MenuItem onClick={() => go('/admin')}>
+                  <ListItemIcon>
+                    <Lock width={18} height={18} />
+                  </ListItemIcon>
+                  Administração
+                </MenuItem>
+              )}
               <Divider />
               {/* MUI Menu não aceita Fragment como filho: itens condicionais em array */}
               {FEATURES.photos && [

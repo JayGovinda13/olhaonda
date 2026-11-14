@@ -1,12 +1,15 @@
 import { Box, Button, Link, Paper, Stack, Typography } from '@mui/material'
 import { type ReactNode } from 'react'
+import { Link as RouterLink } from 'react-router'
 import { ADS_ENABLED } from '../config/ads'
 import { FEATURES, HAS_COMMUNITY } from '../config/env'
 import { consentStore, useConsent } from '../lib/consent'
 import { usePageMeta } from '../lib/meta'
 
 const CONTACT = (import.meta.env.VITE_PRIVACY_CONTACT as string | undefined) ?? 'privacidade@olhaonda.com'
-const UPDATED = '9 de novembro de 2026'
+const UPDATED = '15 de novembro de 2026'
+// Quem responde pelos dados (controlador). Preencha com o nome e o CNPJ/CPF reais antes de publicar.
+const CONTROLLER = (import.meta.env.VITE_PRIVACY_CONTROLLER as string | undefined) ?? 'OlhaOnda'
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -45,7 +48,7 @@ export default function PrivacyPage() {
       <Stack spacing={3}>
         <Section title="Quem somos">
           <p>
-            O OlhaOnda é um site de previsão de ondas para surf e bodyboard. Dúvidas ou pedidos sobre seus dados:{' '}
+            O OlhaOnda é um site de previsão de ondas para surf e bodyboard. O controlador dos dados pessoais é {CONTROLLER}. Dúvidas ou pedidos sobre seus dados:{' '}
             <Link href={`mailto:${CONTACT}`} color="secondary">
               {CONTACT}
             </Link>
@@ -69,9 +72,25 @@ export default function PrivacyPage() {
             </li>
             {HAS_COMMUNITY && (
               <li>
-                <b>Conta</b>: ao entrar, guardamos nome, e-mail e foto do perfil (Supabase) e o que você publica
-                {FEATURES.forum ? ' no fórum' : ''}
-                {FEATURES.photos ? '. Pagamentos de fotos são processados pelo Mercado Pago; não vemos dados do seu cartão' : ''}.
+                <b>Conta</b>: nome, apelido, e-mail, senha (guardada de forma criptografada, nunca em texto), cidade, modalidade, nível e
+                texto de apresentação, mais a data e a versão do aceite desta política.
+              </li>
+            )}
+            {HAS_COMMUNITY && (
+              <li>
+                <b>Uso da conta</b>: seus picos favoritos e condições preferidas, os avisos que enviamos a você
+                {FEATURES.forum ? ', e o que você publica no fórum (tópicos e respostas, visíveis para os outros integrantes)' : ''}.
+                {FEATURES.photos ? ' Pagamentos de fotos são processados pelo Mercado Pago; não vemos dados do seu cartão.' : ''}
+              </li>
+            )}
+            {HAS_COMMUNITY && (
+              <li>
+                <b>Avisos no navegador</b>: se você ativar, guardamos o endereço técnico que o seu navegador gera para receber notificações.
+              </li>
+            )}
+            {HAS_COMMUNITY && FEATURES.whatsapp && (
+              <li>
+                <b>WhatsApp</b>: se você ligar, guardamos seu número, a data do seu aceite e um registro das mensagens enviadas (por 90 dias).
               </li>
             )}
           </ul>
@@ -111,10 +130,70 @@ export default function PrivacyPage() {
           )}
         </Section>
 
+
+        {HAS_COMMUNITY && (
+          <Section title="Para que usamos e em que base legal">
+            <ul>
+              <li>Criar e manter a sua conta, liberar o acesso e mostrar o fórum: execução do serviço que você pediu e o seu consentimento (aceite no cadastro).</li>
+              <li>Avisar quando a previsão combinar com o seu gosto: o seu consentimento, que você retira desligando o aviso do pico ou pausando na conta.</li>
+              <li>Segurança, moderação e prevenção a abusos: legítimo interesse.</li>
+              <li>Não vendemos seus dados e não usamos o conteúdo da conta para anúncios.</li>
+            </ul>
+            <p>
+              Este serviço é destinado a maiores de 18 anos. Durante o teste, o acesso é liberado manualmente: quem administra o site vê
+              nome, apelido, e-mail e cidade de quem se cadastrou, só para decidir a liberação, e as liberações ficam registradas.
+            </p>
+          </Section>
+        )}
+
+        {HAS_COMMUNITY && (
+          <Section title="Com quem compartilhamos e onde ficam os dados">
+            <ul>
+              <li>
+                <b>Supabase</b> (banco de dados, login e funções do servidor) e <b>Cloudflare</b> (hospedagem do site). Os servidores podem
+                ficar fora do Brasil; nesse caso a transferência segue a LGPD (art. 33), com as garantias contratuais desses fornecedores.
+              </li>
+              <li>
+                <b>Open-Meteo</b> (previsão): recebe só as coordenadas do pico.
+              </li>
+              {FEATURES.whatsapp && (
+                <li>
+                  <b>Meta (WhatsApp)</b>: recebe seu número e o texto dos avisos que você pediu.
+                </li>
+              )}
+              <li>Autoridades, quando a lei exigir.</li>
+            </ul>
+          </Section>
+        )}
+
+        {HAS_COMMUNITY && (
+          <Section title="Por quanto tempo guardamos">
+            <p>
+              Enquanto a sua conta existir. Avisos antigos são apagados depois de 180 dias, o registro técnico de mensagens do WhatsApp
+              depois de 90 dias. Ao excluir a conta, apagamos seu perfil, favoritos, avisos, inscrições e o que você publicou; cópias de
+              segurança do fornecedor saem do sistema em até 30 dias.
+            </p>
+          </Section>
+        )}
+
         <Section title="Seus direitos (LGPD)">
           <p>
-            Pela Lei Geral de Proteção de Dados (Lei 13.709/2018) você pode pedir acesso, correção, portabilidade ou
-            exclusão dos seus dados e revogar consentimentos a qualquer momento, pelo e-mail acima.
+            Pela Lei Geral de Proteção de Dados (Lei 13.709/2018) você pode pedir confirmação do tratamento, acesso, correção,
+            portabilidade, anonimização ou exclusão dos seus dados, saber com quem os compartilhamos e revogar consentimentos a
+            qualquer momento, pelo e-mail acima. Respondemos em até 15 dias.
+          </p>
+          {HAS_COMMUNITY && (
+            <p>
+              Com a conta criada, você faz isso sozinho em{' '}
+              <Link component={RouterLink} to="/perfil" color="secondary">
+                Meu perfil
+              </Link>
+              : baixar todos os seus dados (arquivo JSON) e excluir a conta. Também pode reclamar à Autoridade Nacional de Proteção de
+              Dados (gov.br/anpd).
+            </p>
+          )}
+          <p>
+            Se houver um incidente de segurança que possa causar risco a você, avisaremos você e a ANPD, como a lei determina.
           </p>
         </Section>
       </Stack>
