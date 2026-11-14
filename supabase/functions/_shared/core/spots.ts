@@ -906,6 +906,59 @@ const BAHIA: Spot[] = [
   { id: 'muc-costadourada', name: 'Costa Dourada', ...BA_MUC, lat: -18.1046, lon: -39.5531, facing: 128, kind: 'beach' },
 ]
 
+const pe = (city: string) => ({ city, state: 'PE', region: city, tidePort: 'recife' }) as const
+const PE_GOI = pe('Goiana')
+const PE_ITK = pe('Ilha de Itamaracá')
+const PE_PLS = pe('Paulista')
+const PE_OLI = pe('Olinda')
+const PE_REC = pe('Recife')
+const PE_JAB = pe('Jaboatão dos Guararapes')
+const PE_CAB = pe('Cabo de Santo Agostinho')
+const PE_IPJ = pe('Ipojuca')
+const PE_SIR = pe('Sirinhaém')
+const PE_TAM = pe('Tamandaré')
+const PE_BRR = pe('Barreiros')
+const PE_SJC = pe('São José da Coroa Grande')
+/** Litoral de Pernambuco, de Goiana (divisa com a PB) a São José da Coroa Grande (divisa com AL). */
+const PERNAMBUCO: Spot[] = [
+  { id: 'goi-carnedevaca', name: 'Carne de Vaca', ...PE_GOI, lat: -7.5768, lon: -34.8304, facing: 75, kind: 'beach' },
+  { id: 'itk-jaguaribe', name: 'Jaguaribe', ...PE_ITK, lat: -7.7312, lon: -34.8251, facing: 80, kind: 'beach' },
+  { id: 'itk-pilar', name: 'Pilar', ...PE_ITK, lat: -7.7511, lon: -34.8235, facing: 95, kind: 'beach' },
+  { id: 'itk-forteorange', name: 'Forte Orange', ...PE_ITK, lat: -7.811, lon: -34.838, facing: 110, kind: 'beach' },
+  { id: 'pls-mariafarinha', name: 'Maria Farinha', ...PE_PLS, lat: -7.8534, lon: -34.8351, facing: 78, kind: 'beach' },
+  { id: 'pls-conceicao', name: 'Praia da Conceição', ...PE_PLS, lat: -7.8834, lon: -34.8254, facing: 65, kind: 'beach' },
+  { id: 'pls-pauamarelo', name: 'Pau Amarelo', ...PE_PLS, lat: -7.9059, lon: -34.8248, facing: 75, kind: 'beach' },
+  { id: 'pls-janga', name: 'Janga', ...PE_PLS, lat: -7.9323, lon: -34.8221, facing: 107, kind: 'beach' },
+  { id: 'oli-bairronovo', name: 'Bairro Novo', ...PE_OLI, lat: -8.0022, lon: -34.8394, facing: 100, kind: 'beach' },
+  { id: 'oli-delchifre', name: 'Del Chifre (Milagres)', ...PE_OLI, lat: -8.0216, lon: -34.8505, facing: 110, kind: 'beach' },
+  { id: 'rec-pina', name: 'Pina', ...PE_REC, lat: -8.092, lon: -34.881, facing: 100, kind: 'beach' },
+  { id: 'rec-boaviagem', name: 'Boa Viagem', ...PE_REC, lat: -8.1258, lon: -34.8969, facing: 108, kind: 'beach' },
+  { id: 'jab-piedade', name: 'Piedade', ...PE_JAB, lat: -8.1751, lon: -34.9155, facing: 105, kind: 'beach' },
+  { id: 'jab-candeias', name: 'Candeias', ...PE_JAB, lat: -8.195, lon: -34.9174, facing: 82, kind: 'beach' },
+  { id: 'cab-paiva', name: 'Paiva', ...PE_CAB, lat: -8.2746, lon: -34.9462, facing: 100, kind: 'beach' },
+  { id: 'cab-itapuama', name: 'Itapuama', ...PE_CAB, lat: -8.298, lon: -34.9524, facing: 68, kind: 'beach' },
+  { id: 'cab-xareu', name: 'Pedra do Xaréu', ...PE_CAB, lat: -8.3027, lon: -34.9477, facing: 90, kind: 'beach' },
+  { id: 'cab-nordestao', name: 'Nordestão', ...PE_CAB, lat: -8.3125, lon: -34.9469, facing: 110, kind: 'beach' },
+  { id: 'cab-enseadadoscorais', name: 'Enseada dos Corais', ...PE_CAB, lat: -8.322, lon: -34.9485, facing: 100, kind: 'beach' },
+  { id: 'cab-gaibu', name: 'Gaibu', ...PE_CAB, lat: -8.3366, lon: -34.9507, facing: 85, kind: 'beach' },
+  { id: 'cab-calhetas', name: 'Calhetas', ...PE_CAB, lat: -8.3453, lon: -34.9406, facing: 60, kind: 'beach' },
+  { id: 'ipj-suape', name: 'Porto de Suape', ...PE_IPJ, lat: -8.3988, lon: -34.9596, facing: 116, kind: 'beach' },
+  { id: 'ipj-muroalto', name: 'Muro Alto', ...PE_IPJ, lat: -8.4274, lon: -34.9776, facing: 112, kind: 'beach' },
+  { id: 'ipj-cupe', name: 'Cupe', ...PE_IPJ, lat: -8.4627, lon: -34.988, facing: 128, kind: 'beach' },
+  { id: 'ipj-portodegalinhas', name: 'Porto de Galinhas', ...PE_IPJ, lat: -8.5055, lon: -35.0004, facing: 100, kind: 'beach' },
+  { id: 'ipj-borete', name: 'Borete', ...PE_IPJ, lat: -8.515, lon: -35.0051, facing: 110, kind: 'beach' },
+  { id: 'ipj-maracaipe', name: 'Maracaípe', ...PE_IPJ, lat: -8.531, lon: -35.0069, facing: 83, kind: 'reef' },
+  { id: 'ipj-pontalmaracaipe', name: 'Pontal de Maracaípe', ...PE_IPJ, lat: -8.5435, lon: -35.005, facing: 110, kind: 'beach' },
+  { id: 'ipj-serrambi', name: 'Ponta de Serrambi', ...PE_IPJ, lat: -8.5599, lon: -35.0177, facing: 130, kind: 'reef' },
+  { id: 'sir-barra', name: 'Barra de Sirinhaém', ...PE_SIR, lat: -8.6126, lon: -35.0478, facing: 120, kind: 'beach' },
+  { id: 'sir-santoaleixo', name: 'Ilha de Santo Aleixo', ...PE_SIR, lat: -8.6124, lon: -35.0221, facing: 94, kind: 'beach' },
+  { id: 'tam-carneiros', name: 'Carneiros', ...PE_TAM, lat: -8.7007, lon: -35.0772, facing: 113, kind: 'beach' },
+  { id: 'tam-tamandare', name: 'Tamandaré', ...PE_TAM, lat: -8.7604, lon: -35.0985, facing: 110, kind: 'beach' },
+  { id: 'brr-porto', name: 'Praia do Porto', ...PE_BRR, lat: -8.8099, lon: -35.1209, facing: 118, kind: 'beach' },
+  { id: 'brr-varzeadouna', name: 'Várzea do Una', ...PE_BRR, lat: -8.8386, lon: -35.1342, facing: 98, kind: 'beach' },
+  { id: 'sjc-saojose', name: 'São José da Coroa Grande', ...PE_SJC, lat: -8.8909, lon: -35.1428, facing: 98, kind: 'beach' },
+]
+
 /**
  * Picos do litoral brasileiro, do Sul ao Nordeste.
  * Coordenadas e orientação aproximadas; ajuste conforme o conhecimento local.
@@ -923,7 +976,7 @@ export const ALL_SPOTS: Spot[] = [
   ...ESPIRITO_SANTO,
   ...BAHIA,
   ...ALAGOAS,
-  { id: 'maracaipe', name: 'Maracaípe', city: 'Ipojuca', state: 'PE', lat: -8.53, lon: -34.995, facing: 110, kind: 'reef' },
+  ...PERNAMBUCO,
   { id: 'pipa', name: 'Praia do Amor', city: 'Pipa', state: 'RN', lat: -6.23, lon: -35.04, facing: 90, kind: 'reef' },
   ...CEARA,
   ...AMAPA,
@@ -931,12 +984,12 @@ export const ALL_SPOTS: Spot[] = [
 ]
 
 /** Estados no ar na produção. */
-export const PROD_STATES = ['SC', 'SP', 'RJ', 'ES', 'AL', 'CE', 'AP', 'BA']
+export const PROD_STATES = ['SC', 'SP', 'RJ', 'ES', 'AL', 'CE', 'AP', 'BA', 'PE']
 
 export type SpotScope = 'prod' | 'baixada' | 'all'
 
 /**
- * Picos de um escopo: 'prod' = estados da produção (SC, SP, RJ, ES, AL, CE, AP e BA), só praias com onda; 'baixada' = só a
+ * Picos de um escopo: 'prod' = estados da produção (SC, SP, RJ, ES, BA, AL, PE, CE e AP), só praias com onda; 'baixada' = só a
  * Baixada Santista; 'all' = todos. Sempre sem as praias abrigadas, menos em 'all'.
  */
 export function spotsForScope(scope: SpotScope): Spot[] {
@@ -966,6 +1019,7 @@ export const SPOT_ALIASES: Record<string, string> = {
   paracuru: 'prc-pedrameio',
   jeri: 'jij-jericoacoara',
   frances: 'mdd-frances',
+  maracaipe: 'ipj-maracaipe',
   itacare: 'itc-tiririca',
   stellamaris: 'ssa-stellamaris',
 }
