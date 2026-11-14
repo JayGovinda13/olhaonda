@@ -15,8 +15,81 @@ export default function ProfilePage() {
   return (
     <Stack spacing={3} sx={{ maxWidth: 640, mx: 'auto' }}>
       <ProfileForm key={user.id} user={user} onSaved={refresh} />
+      <EmailSection user={user} onChanged={refresh} />
       <DataRights />
     </Stack>
+  )
+}
+
+/** Trocar o e-mail de login: pede a senha atual e confirma pelo link enviado ao novo endereço. */
+function EmailSection({ user, onChanged }: { user: Profile; onChanged: () => Promise<void> }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  if (!user.email) return null
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    setMsg(null)
+    try {
+      const r = await backend.auth.changeEmail(email, password)
+      setEmail('')
+      setPassword('')
+      await onChanged()
+      setMsg({
+        ok: true,
+        text: r.needsConfirmation
+          ? 'Enviamos um link de confirmação para o novo e-mail. Abra a mensagem e toque no link para concluir a troca. Se o link também chegar no e-mail antigo, confirme nos dois. Até lá você continua entrando com o e-mail atual.'
+          : 'E-mail atualizado.',
+      })
+    } catch (err) {
+      setMsg({ ok: false, text: err instanceof Error ? err.message : 'Não foi possível trocar o e-mail.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Paper component="form" onSubmit={submit} sx={{ p: { xs: 2.5, sm: 4 } }}>
+      <Typography variant="h6" component="h2">
+        E-mail de login
+      </Typography>
+      <Typography variant="body2" sx={{ opacity: 0.75, mt: 0.5 }}>
+        Atual: <b>{user.email}</b>
+        {user.pendingEmail ? (
+          <>
+            {' '}
+            · aguardando confirmação de <b>{user.pendingEmail}</b>
+          </>
+        ) : null}
+      </Typography>
+      {!user.canChangeEmail ? (
+        <Alert severity="info" sx={{ mt: 1.5 }}>
+          Sua conta entra pelo Google. Para trocar o e-mail, altere a conta Google que você usa para entrar.
+        </Alert>
+      ) : (
+        <Stack spacing={2} sx={{ mt: 2 }}>
+          {msg && <Alert severity={msg.ok ? 'success' : 'error'}>{msg.text}</Alert>}
+          <TextField label="Novo e-mail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+          <TextField
+            label="Sua senha atual"
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            helperText="Pedimos a senha para ninguém trocar o e-mail da sua conta sem você saber."
+          />
+          <Box>
+            <Button type="submit" variant="contained" disabled={busy || !email || !password}>
+              Trocar e-mail
+            </Button>
+          </Box>
+        </Stack>
+      )}
+    </Paper>
   )
 }
 

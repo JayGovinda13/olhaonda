@@ -106,6 +106,9 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
       modality: (data?.modality as Modality | null) ?? null,
       level: (data?.level as Level | null) ?? null,
       bio: (data?.bio as string | null) ?? null,
+      email: user.email ?? null,
+      pendingEmail: user.new_email ?? null,
+      canChangeEmail: user.app_metadata?.provider === 'email',
       approved: Boolean((await sb.rpc('is_member')).data),
       isAdmin: data?.role === 'admin',
     }
@@ -182,6 +185,22 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         const { data, error } = await sb.rpc('username_available', { name: username.trim().toLowerCase() })
         if (error) return true // na dúvida não bloqueia; o banco garante a unicidade
         return Boolean(data)
+      },
+      async changeEmail(newEmail, password) {
+        const { data } = await sb.auth.getUser()
+        const current = data.user?.email
+        if (!current) throw new Error('Entre na sua conta para continuar.')
+        const email = newEmail.trim().toLowerCase()
+        if (email === current.toLowerCase()) throw new Error('Esse já é o seu e-mail.')
+        // confere a senha atual: quem pegar o celular aberto não consegue trocar o e-mail da conta
+        const check = await sb.auth.signInWithPassword({ email: current, password })
+        if (check.error) throw new Error('Senha atual incorreta.')
+        const { error } = await sb.auth.updateUser({ email }, { emailRedirectTo: `${location.origin}/perfil` })
+        if (error) {
+          if (/already|registered|exists/i.test(error.message)) throw new Error('Já existe uma conta com esse e-mail.')
+          throw new Error(error.message)
+        }
+        return { needsConfirmation: true }
       },
       async updateProfile(patch) {
         const id = await uidOrThrow()

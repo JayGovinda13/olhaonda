@@ -23,6 +23,12 @@ export type Profile = {
   modality?: Modality | null
   level?: Level | null
   bio?: string | null
+  /** E-mail de login (só o próprio usuário vê). */
+  email?: string | null
+  /** Novo e-mail aguardando confirmação pelo link enviado. */
+  pendingEmail?: string | null
+  /** Conta com e-mail e senha (quem entra pelo Google troca o e-mail no Google). */
+  canChangeEmail?: boolean
   /** Acesso liberado ao fórum e aos avisos (teste fechado). */
   approved: boolean
   isAdmin: boolean
@@ -179,6 +185,8 @@ export interface Backend {
     /** Cria a conta. needsConfirmation = precisa confirmar o e-mail antes de entrar. */
     signUp(input: SignUpInput): Promise<{ needsConfirmation: boolean }>
     usernameAvailable(username: string): Promise<boolean>
+    /** Pede a troca do e-mail de login. Confere a senha atual; a troca vale depois de confirmar pelo link enviado. */
+    changeEmail(newEmail: string, password: string): Promise<{ needsConfirmation: boolean }>
     updateProfile(patch: ProfilePatch): Promise<void>
     signInWithGoogle(): Promise<void>
     /** Só no modo demonstração. */
