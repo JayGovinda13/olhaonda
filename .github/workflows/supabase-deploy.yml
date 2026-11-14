@@ -56,19 +56,19 @@ jobs:
           for k in CRON_SECRET OPEN_METEO_API_KEY SITE_URL SPOT_SCOPE; do
             [ -n "${!k}" ] && args+=("$k=${!k}")
           done
-          if [ ${#args[@]} -gt 0 ]; then supabase secrets set "${args[@]}" --project-ref "$PROJECT_REF" --yes; fi
+          if [ ${#args[@]} -gt 0 ]; then supabase secrets set "${args[@]}" --yes; fi
       - name: Migrações do banco
         if: steps.cfg.outputs.ok == 'true'
-        run: supabase db push --password "$SUPABASE_DB_PASSWORD" --yes
+        run: supabase db push --remote --password "$SUPABASE_DB_PASSWORD" --yes
       - name: Edge Functions
         if: steps.cfg.outputs.ok == 'true'
         run: |
-          supabase functions deploy create-checkout --project-ref "$PROJECT_REF" --yes
-          supabase functions deploy mp-webhook --no-verify-jwt --project-ref "$PROJECT_REF" --yes
-          supabase functions deploy mp-oauth --no-verify-jwt --project-ref "$PROJECT_REF" --yes
+          supabase functions deploy create-checkout --yes
+          supabase functions deploy mp-webhook --no-verify-jwt --yes
+          supabase functions deploy mp-oauth --no-verify-jwt --yes
           # rodada diária: protegida pelo cabeçalho x-cron-secret (não usa login)
-          supabase functions deploy daily-forecast --no-verify-jwt --project-ref "$PROJECT_REF" --yes
-          supabase functions deploy push-test --project-ref "$PROJECT_REF" --yes
-          supabase functions deploy account-delete --project-ref "$PROJECT_REF" --yes
-          supabase functions deploy whatsapp-link --project-ref "$PROJECT_REF" --yes
-          supabase functions deploy whatsapp-webhook --no-verify-jwt --project-ref "$PROJECT_REF" --yes
+          supabase functions deploy daily-forecast --no-verify-jwt --yes
+          supabase functions deploy push-test --yes
+          supabase functions deploy account-delete --yes
+          supabase functions deploy whatsapp-link --yes
+          supabase functions deploy whatsapp-webhook --no-verify-jwt --yes
