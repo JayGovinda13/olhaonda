@@ -25,6 +25,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [closeDialog],
   )
 
+  // chegou por um link de redefinição de senha (mesmo que o e-mail aponte para outra página): abre a tela de nova senha
+  useEffect(() => {
+    const go = () => {
+      if (location.pathname !== '/redefinir-senha') {
+        window.history.pushState({}, '', '/redefinir-senha')
+        window.dispatchEvent(new PopStateEvent('popstate'))
+      }
+    }
+    if (backend.auth.recoveryActive()) go()
+    return backend.auth.onRecovery(go)
+  }, [])
+
   useEffect(() => {
     let alive = true
     backend.auth.current().then((p) => {

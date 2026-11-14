@@ -21,6 +21,7 @@ const SignUpPage = lazy(() => import('./pages/SignUpPage'))
 const MySpotsPage = lazy(() => import('./pages/MySpotsPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 
 // Rotas desligadas no ambiente (ex.: fórum e fotos em produção) nem entram no roteador.
 const routes: RouteObject[] = [
@@ -42,6 +43,7 @@ const routes: RouteObject[] = [
         { path: 'meus-picos', element: <AccessGate><MySpotsPage /></AccessGate> },
         { path: 'perfil', element: <ProfilePage /> },
         { path: 'admin', element: <AdminPage /> },
+        { path: 'redefinir-senha', element: <ResetPasswordPage /> },
       ]
     : []),
   ...(FEATURES.photos

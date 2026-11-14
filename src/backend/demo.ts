@@ -33,6 +33,8 @@ type DB = {
   whatsapp?: Record<string, { phone: string; enabled: boolean }>
   /** liberação por usuário e registro de quem liberou/bloqueou (tela de administração) */
   approvedAt?: Record<string, string>
+  /** conta que pediu "esqueci a senha" (na demonstração não há e-mail: o link abre a tela direto) */
+  recoveryFor?: string
   audit?: AdminOverview['audit']
   threads: Thread[]
   posts: Post[]
@@ -237,6 +239,23 @@ export const demoBackend: Backend = {
     async usernameAvailable(username) {
       const u = username.trim().toLowerCase()
       return delay(USERNAME_RE.test(u) && !db.users.some((x) => x.profile.username === u))
+    },
+    async requestPasswordReset(email) {
+      const u = db.users.find((x) => x.email === email.trim().toLowerCase())
+      if (!u) return {}
+      db.recoveryFor = u.profile.id
+      save()
+      return { demoLink: '/redefinir-senha' }
+    },
+    recoveryActive: () => Boolean(db.recoveryFor),
+    onRecovery: () => () => {},
+    async setNewPassword(next) {
+      const u = db.users.find((x) => x.profile.id === db.recoveryFor)
+      if (!u) throw new Error('Este link não vale mais. Peça um novo em "Esqueci minha senha".')
+      if (next.length < 8) throw new Error('A nova senha precisa ter pelo menos 8 caracteres.')
+      u.password = next
+      db.recoveryFor = undefined
+      setMe(u.profile)
     },
     async changePassword(current, next) {
       const me = requireMe()

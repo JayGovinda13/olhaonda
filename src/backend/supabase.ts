@@ -66,6 +66,27 @@ function toPost(r: Row): Post {
 
 export function createSupabaseBackend(url: string, anonKey: string): Backend {
   const sb: SupabaseClient = createClient(url, anonKey)
+
+  // Link de redefinição de senha: o Supabase abre uma sessão especial (evento PASSWORD_RECOVERY). Guardamos a marca na aba
+  // para a tela de nova senha só funcionar para quem veio do link (e não para qualquer sessão aberta).
+  const RECOVERY = 'olhaonda:recovery'
+  const recoveryListeners = new Set<() => void>()
+  const setRecovery = (on: boolean) => {
+    try {
+      if (on) sessionStorage.setItem(RECOVERY, '1')
+      else sessionStorage.removeItem(RECOVERY)
+    } catch {
+      /* sem storage */
+    }
+  }
+  if (typeof location !== 'undefined' && /type=recovery/.test(location.hash)) setRecovery(true)
+  sb.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      setRecovery(true)
+      recoveryListeners.forEach((l) => l())
+    }
+    if (event === 'SIGNED_OUT') setRecovery(false)
+  })
   const previewUrl = (path: string | null | undefined) =>
     path ? sb.storage.from('previews').getPublicUrl(path).data.publicUrl : null
 
@@ -184,6 +205,38 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         const { data, error } = await sb.rpc('username_available', { name: username.trim().toLowerCase() })
         if (error) return true // na dúvida não bloqueia; o banco garante a unicidade
         return Boolean(data)
+      },
+      async requestPasswordReset(email) {
+        const { error } = await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${location.origin}/redefinir-senha` })
+        if (error && /rate|seconds|too many/i.test(error.message)) throw new Error('Aguarde um minuto para pedir outro link.')
+        return {} // sempre a mesma resposta: não revela se o e-mail tem conta
+      },
+      recoveryActive() {
+        try {
+          return sessionStorage.getItem(RECOVERY) === '1'
+        } catch {
+          return false
+        }
+      },
+      onRecovery(cb) {
+        recoveryListeners.add(cb)
+        return () => void recoveryListeners.delete(cb)
+      },
+      async setNewPassword(next) {
+        const { data } = await sb.auth.getSession()
+        let active = false
+        try {
+          active = sessionStorage.getItem(RECOVERY) === '1'
+        } catch {
+          /* sem storage */
+        }
+        if (!data.session || !active) throw new Error('Este link não vale mais. Peça um novo em "Esqueci minha senha".')
+        if (next.length < 8) throw new Error('A nova senha precisa ter pelo menos 8 caracteres.')
+        const { error } = await sb.auth.updateUser({ password: next })
+        if (error) throw new Error(/different|same/i.test(error.message) ? 'A nova senha precisa ser diferente da anterior.' : error.message)
+        setRecovery(false)
+        // quem perdeu a senha pode ter deixado outros aparelhos conectados: encerra os outros
+        await sb.auth.signOut({ scope: 'others' }).catch(() => {})
       },
       async changePassword(current, next) {
         const { data } = await sb.auth.getUser()

@@ -183,6 +183,14 @@ export interface Backend {
     /** Cria a conta. needsConfirmation = precisa confirmar o e-mail antes de entrar. */
     signUp(input: SignUpInput): Promise<{ needsConfirmation: boolean }>
     usernameAvailable(username: string): Promise<boolean>
+    /** "Esqueci a senha": manda o link de redefinição. Não revela se o e-mail tem conta. */
+    requestPasswordReset(email: string): Promise<{ demoLink?: string }>
+    /** A sessão atual veio de um link de redefinição de senha (só nela vale setNewPassword). */
+    recoveryActive(): boolean
+    /** Avisa quando a pessoa chega por um link de redefinição. */
+    onRecovery(cb: () => void): () => void
+    /** Define a nova senha SEM pedir a antiga; só vale na sessão aberta pelo link de redefinição. */
+    setNewPassword(next: string): Promise<void>
     /** Troca a senha. Confere a senha atual antes. */
     changePassword(current: string, next: string): Promise<void>
     updateProfile(patch: ProfilePatch): Promise<void>

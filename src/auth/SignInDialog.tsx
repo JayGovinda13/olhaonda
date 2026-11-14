@@ -26,7 +26,10 @@ function softNavigate(path: string) {
 export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?: string; onClose: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [magic, setMagic] = useState(false)
+  const [mode, setMode] = useState<'password' | 'magic' | 'reset'>('password')
+  const [demoLink, setDemoLink] = useState<string | null>(null)
+  const magic = mode === 'magic'
+  const reset = mode === 'reset'
   const [quick, setQuick] = useState(false)
   const [name, setName] = useState('')
   const [photographer, setPhotographer] = useState(false)
@@ -50,7 +53,11 @@ export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?
   const submitEmail = (e: FormEvent) => {
     e.preventDefault()
     void run(async () => {
-      if (magic) {
+      if (reset) {
+        const r = await backend.auth.requestPasswordReset(email.trim())
+        setDemoLink(r.demoLink ?? null)
+        setSent(true)
+      } else if (magic) {
         await backend.auth.signInWithEmail(email.trim())
         setSent(true)
       } else await backend.auth.signInWithPassword(email.trim(), password)
@@ -82,9 +89,37 @@ export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?
           {error && <Alert severity="error">{error}</Alert>}
 
           {sent ? (
-            <Alert severity="success">
-              Enviamos um link de acesso para <b>{email}</b>. Abra seu e-mail neste aparelho para entrar.
-            </Alert>
+            <Stack spacing={1.5}>
+              <Alert severity="success">
+                {reset ? (
+                  <>
+                    Se existir uma conta com <b>{email}</b>, enviamos um link para criar uma nova senha. Abra o e-mail neste aparelho (veja também o spam). O link vale por pouco
+                    tempo.
+                  </>
+                ) : (
+                  <>
+                    Enviamos um link de acesso para <b>{email}</b>. Abra seu e-mail neste aparelho para entrar.
+                  </>
+                )}
+              </Alert>
+              {demoLink && (
+                <Alert severity="info" variant="outlined">
+                  Modo demonstração: não há e-mail.{' '}
+                  <Box
+                    component="a"
+                    href={demoLink}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      onClose()
+                      softNavigate(demoLink)
+                    }}
+                    sx={{ fontWeight: 800 }}
+                  >
+                    Abrir a tela de nova senha
+                  </Box>
+                </Alert>
+              )}
+            </Stack>
           ) : demo && quick ? (
             <Box component="form" onSubmit={submitDemo}>
               <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
@@ -128,7 +163,7 @@ export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
                   />
-                  {!magic && (
+                  {mode === 'password' && (
                     <TextField
                       type="password"
                       label="Senha"
@@ -143,13 +178,24 @@ export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?
                     variant="contained"
                     size="large"
                     disabled={busy}
-                    startIcon={magic ? <Mail width={18} height={18} /> : <Lock width={18} height={18} />}
+                    startIcon={mode === 'password' ? <Lock width={18} height={18} /> : <Mail width={18} height={18} />}
                   >
-                    {magic ? 'Receber link de acesso' : 'Entrar'}
+                    {reset ? 'Enviar link para criar nova senha' : magic ? 'Receber link de acesso' : 'Entrar'}
                   </Button>
-                  {!demo && (
-                    <Button size="small" onClick={() => setMagic((m) => !m)}>
-                      {magic ? 'Entrar com senha' : 'Esqueci a senha / entrar sem senha'}
+                  {mode === 'password' ? (
+                    <Stack direction="row" sx={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                      <Button size="small" onClick={() => setMode('reset')}>
+                        Esqueci minha senha
+                      </Button>
+                      {!demo && (
+                        <Button size="small" onClick={() => setMode('magic')}>
+                          Entrar sem senha
+                        </Button>
+                      )}
+                    </Stack>
+                  ) : (
+                    <Button size="small" onClick={() => setMode('password')}>
+                      Entrar com senha
                     </Button>
                   )}
                 </Stack>
