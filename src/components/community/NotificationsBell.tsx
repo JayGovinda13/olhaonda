@@ -2,6 +2,7 @@ import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Stack, Typogra
 import { Bell } from 'iconoir-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import { NotificationBody } from './NotificationBody'
 import { useNotifications } from '../../hooks/useNotifications'
 import { ALERT_KIND } from '../../lib/alertKinds'
 import { timeAgo } from '../../lib/time'
@@ -24,7 +25,7 @@ export function NotificationsBell() {
         anchorEl={anchor}
         open={!!anchor}
         onClose={() => setAnchor(null)}
-        slotProps={{ paper: { sx: { borderRadius: '16px', width: 360, maxWidth: 'calc(100vw - 24px)', maxHeight: 460 } } }}
+        slotProps={{ paper: { sx: { borderRadius: '16px', width: 400, maxWidth: 'calc(100vw - 24px)', maxHeight: 560 } } }}
       >
         <Stack direction="row" sx={{ px: 2, py: 1, alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography sx={{ fontWeight: 800 }}>Avisos</Typography>
@@ -58,9 +59,7 @@ export function NotificationsBell() {
                 <span aria-hidden="true">{ALERT_KIND[n.kind].emoji} </span>
                 {n.title}
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                {n.body}
-              </Typography>
+              <NotificationBody n={n} />
               <Typography variant="caption" sx={{ opacity: 0.55 }}>
                 {timeAgo(n.createdAt)}
               </Typography>

@@ -7,6 +7,7 @@ import { useAuth } from '../auth/context'
 import { backend, type Favorite } from '../backend'
 import { PrefsDialog } from '../components/community/PrefsDialog'
 import { FEATURES } from '../config/env'
+import { NotificationBody } from '../components/community/NotificationBody'
 import { WhatsAppCard } from '../components/community/WhatsAppCard'
 import { SpotPicker } from '../components/SpotPicker'
 import { ALL_SPOTS, type Spot } from '../data/spots'
@@ -206,10 +207,8 @@ export default function MySpotsPage() {
               <span aria-hidden="true">{ALERT_KIND[n.kind].emoji} </span>
               {n.title}
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.8 }}>
-              {n.body}
-            </Typography>
-            <Typography variant="caption" sx={{ opacity: 0.55 }}>
+            <NotificationBody n={n} />
+            <Typography variant="caption" sx={{ opacity: 0.55, display: 'block', mt: 0.5 }}>
               {ALERT_KIND[n.kind].label} · {timeAgo(n.createdAt)}
             </Typography>
           </Box>
