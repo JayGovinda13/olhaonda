@@ -6,6 +6,7 @@ import { AccessGate } from './components/community/AccessGate'
 import { Layout } from './layout/Layout'
 import ForecastPage from './pages/ForecastPage'
 import HomePage from './pages/HomePage'
+import RouteError from './pages/RouteError'
 
 // Fórum e fotos carregam sob demanda: a previsão abre mais rápido.
 const ForumPage = lazy(() => import('./pages/forum/ForumPage'))
@@ -58,7 +59,7 @@ const routes: RouteObject[] = [
   { path: '*', element: <Navigate to="/" replace /> },
 ]
 
-const router = createBrowserRouter([{ element: <Layout />, children: routes }])
+const router = createBrowserRouter([{ element: <Layout />, children: [{ errorElement: <RouteError />, children: routes }] }])
 
 export default function App() {
   return (
