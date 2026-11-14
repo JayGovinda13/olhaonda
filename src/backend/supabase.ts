@@ -295,12 +295,19 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         check(await q)
       },
       onChange(cb) {
-        // novas notificações chegam pela Edge Function; o realtime avisa o site aberto
-        const ch = sb
-          .channel('notifications')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => cb())
-          .subscribe()
-        return () => void sb.removeChannel(ch)
+        // novas notificações chegam pela Edge Function; o realtime avisa o site aberto.
+        // Um canal por assinatura (nome único): dois componentes ouvindo ao mesmo tempo não podem dividir o mesmo canal.
+        // Se o tempo real falhar, o app segue funcionando (a lista também atualiza sozinha a cada 5 minutos).
+        try {
+          const ch = sb
+            .channel(`notifications:${Math.random().toString(36).slice(2)}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => cb())
+            .subscribe()
+          return () => void sb.removeChannel(ch)
+        } catch (e) {
+          console.warn('Tempo real indisponível', e)
+          return () => {}
+        }
       },
     },
 
