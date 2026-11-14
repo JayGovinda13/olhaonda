@@ -9,12 +9,50 @@ import { SpotPicker } from '../components/SpotPicker'
 import { cities, spotsIn, STATE_NAMES, states } from '../data/hierarchy'
 import { DEFAULT_SPOT_ID, distanceKm, KIND_LABEL, SPOTS, type Spot } from '../data/spots'
 import { useLocalState } from '../hooks/useLocalState'
-import { getPosition } from '../lib/geo'
+import { getPosition, inAppBrowser, openInChromeUrl } from '../lib/geo'
 import { usePageMeta } from '../lib/meta'
 import { dirDeg } from '../lib/surf'
 import { alpha, brand } from '../theme'
 
 const MAP_H = 520
+
+/** Navegador interno do Instagram/Facebook não pede a localização: ensina a abrir no navegador de verdade. */
+function InAppHelp({ app }: { app: string }) {
+  const [copied, setCopied] = useState(false)
+  const android = /Android/i.test(navigator.userAgent)
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(location.origin + '/')
+      setCopied(true)
+    } catch {
+      window.prompt('Copie o endereço e cole no Safari ou no Chrome:', location.origin + '/')
+    }
+  }
+  return (
+    <Box sx={{ mt: 1.5, p: 1.75, borderRadius: '16px', border: `1.5px solid ${alpha(brand.plum, 0.35)}`, bgcolor: alpha(brand.plum, 0.06), textAlign: 'left' }}>
+      <Typography variant="body2" sx={{ fontWeight: 800, color: brand.purple }}>
+        {app === 'app' ? 'Este navegador' : `O navegador do ${app}`} não deixa o site pedir a sua localização.
+      </Typography>
+      <Typography variant="body2" sx={{ mt: 0.5, color: brand.purple }}>
+        {android ? 'Abra no Chrome e toque em "Perto de mim" de novo.' : 'Toque em ••• (ou no ícone de compartilhar) e escolha "Abrir no Safari"; depois toque em "Perto de mim" de novo.'}
+      </Typography>
+      <Stack direction="row" spacing={1} sx={{ mt: 1.25, flexWrap: 'wrap', rowGap: 1 }}>
+        {android && (
+          <Button size="small" variant="contained" href={openInChromeUrl()} sx={{ borderRadius: 99, fontWeight: 800 }}>
+            Abrir no Chrome
+          </Button>
+        )}
+        <Button size="small" variant={android ? 'outlined' : 'contained'} onClick={copy} sx={{ borderRadius: 99, fontWeight: 800 }}>
+          {copied ? 'Endereço copiado' : 'Copiar endereço'}
+        </Button>
+      </Stack>
+      <Typography variant="caption" sx={{ display: 'block', mt: 1, color: brand.plum }}>
+        Sem localização, é só buscar o pico acima ou escolher o estado na lista.
+      </Typography>
+    </Box>
+  )
+}
+
 
 /**
  * Tela de início: escolha da praia no mapa, em níveis.
@@ -102,6 +140,10 @@ export default function HomePage() {
     const r = await getPosition()
     setLocating(false)
     if (!r.ok) {
+      if (r.reason === 'inapp') {
+        setGeoError(`inapp:${inAppBrowser() ?? 'app'}`)
+        return
+      }
       setGeoError(
         r.reason === 'unsupported'
           ? 'Este navegador não informa a localização.'
@@ -203,10 +245,14 @@ export default function HomePage() {
             Perto de mim
           </Button>
         </Stack>
-        {geoError && (
-          <Typography variant="body2" sx={{ mt: 1.25, color: brand.plum, fontWeight: 700 }}>
-            {geoError}
-          </Typography>
+        {geoError?.startsWith('inapp:') ? (
+          <InAppHelp app={geoError.slice(6)} />
+        ) : (
+          geoError && (
+            <Typography variant="body2" sx={{ mt: 1.25, color: brand.plum, fontWeight: 700 }}>
+              {geoError}
+            </Typography>
+          )
         )}
         {last && (
           <Button
