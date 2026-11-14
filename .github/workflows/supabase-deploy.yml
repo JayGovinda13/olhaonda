@@ -69,3 +69,5 @@ jobs:
           # rodada diária: protegida pelo cabeçalho x-cron-secret (não usa login)
           supabase functions deploy daily-forecast --no-verify-jwt --project-ref "$PROJECT_REF"
           supabase functions deploy push-test --project-ref "$PROJECT_REF"
+          supabase functions deploy whatsapp-link --project-ref "$PROJECT_REF"
+          supabase functions deploy whatsapp-webhook --no-verify-jwt --project-ref "$PROJECT_REF"

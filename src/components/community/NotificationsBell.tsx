@@ -3,6 +3,7 @@ import { Bell } from 'iconoir-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useNotifications } from '../../hooks/useNotifications'
+import { ALERT_KIND } from '../../lib/alertKinds'
 import { timeAgo } from '../../lib/time'
 import { alpha, brand } from '../../theme'
 
@@ -53,7 +54,10 @@ export function NotificationsBell() {
           >
             <Box sx={{ width: 8, height: 8, mt: 0.9, borderRadius: '50%', flexShrink: 0, bgcolor: n.readAt ? 'transparent' : brand.green }} />
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 800, fontSize: 14 }}>{n.title}</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: 14 }}>
+                <span aria-hidden="true">{ALERT_KIND[n.kind].emoji} </span>
+                {n.title}
+              </Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 {n.body}
               </Typography>

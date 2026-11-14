@@ -1,4 +1,5 @@
 /** Tipos de domínio compartilhados pelo backend real (Supabase) e pelo modo demonstração. */
+import type { AlertEventType, AlertState } from '../../supabase/functions/_shared/core/alerts.ts'
 import type { SpotPrefs } from '../../supabase/functions/_shared/core/prefs.ts'
 import type { DailySummary } from '../../supabase/functions/_shared/core/summary.ts'
 
@@ -72,6 +73,8 @@ export type Favorite = { spotId: string; prefs: SpotPrefs; notify: boolean; crea
 export type AppNotification = {
   id: string
   spotId: string
+  /** enter = entrou na condição · back = voltou · change = a previsão mudou · lost = saiu (com o motivo) · match = aviso antigo */
+  kind: AlertEventType | 'match'
   sessionDate: string
   title: string
   body: string
@@ -79,9 +82,19 @@ export type AppNotification = {
   url: string
   createdAt: string
   readAt: string | null
+  /** número do aviso do pico (alerts.ts): o mesmo número nunca é registrado duas vezes */
+  eventSeq?: number
 }
 
 export type NewNotification = Omit<AppNotification, 'id' | 'createdAt' | 'readAt'>
+
+export type WhatsAppStatus = {
+  /** número verificado, no formato +5511999991234 (null = nenhum) */
+  phone: string | null
+  enabled: boolean
+  /** respondeu PARAR no WhatsApp */
+  optedOut: boolean
+}
 
 export type Post = {
   id: string
@@ -126,7 +139,7 @@ export type Purchase = {
 }
 
 export type NewThread = { title: string; body: string; category: ForumCategory; spotId: string | null }
-export type { DailySummary, SpotPrefs }
+export type { AlertEventType, AlertState, DailySummary, SpotPrefs }
 export type NewSession = { spotId: string; date: string; period: Period; title: string | null; priceCents: number }
 
 export interface Backend {
@@ -174,6 +187,22 @@ export interface Backend {
     onChange(cb: () => void): () => void
     /** Só no modo demonstração: registra um aviso; devolve null se já existia para esse pico e dia. */
     add?(n: NewNotification): Promise<AppNotification | null>
+  }
+
+  alerts: {
+    /** Estado do ciclo de aviso de cada pico favorito, por id do pico. */
+    states(): Promise<Record<string, AlertState>>
+    /** Só no modo demonstração: o navegador faz o papel da Edge Function e guarda o estado. */
+    saveState?(spotId: string, state: AlertState): Promise<void>
+  }
+
+  whatsapp: {
+    status(): Promise<WhatsAppStatus>
+    /** Envia o código de verificação. dryRunCode só vem em ambiente de teste sem credenciais do WhatsApp. */
+    start(phone: string): Promise<{ phone: string; dryRunCode?: string }>
+    verify(code: string): Promise<{ phone: string }>
+    setEnabled(on: boolean): Promise<void>
+    unlink(): Promise<void>
   }
 
   push: {

@@ -1,6 +1,7 @@
 # Rodada diária do fórum e dos alertas (Edge Function daily-forecast) no STAGING:
 #   05:13 (horário de Brasília): publica o resumo da previsão no fórum de cada pico e confere os alertas
-#   17:13: confere os alertas de novo com a previsão atualizada (não repete o resumo)
+#   a cada 3 h (08:43, 11:43, 14:43, 17:43, 20:43, 23:43, 02:43): só os alertas, com a previsão atualizada.
+#   Cada conferência manda aviso (site, push e WhatsApp) só se algo mudou: entrou, mudou, saiu ou voltou.
 #
 # Segredos no environment "staging" do GitHub: SUPABASE_PROJECT_REF (já existe) e CRON_SECRET
 # (o mesmo valor configurado na função: supabase secrets set CRON_SECRET=...).
@@ -8,8 +9,8 @@ name: Previsão diária no fórum
 
 on:
   schedule:
-    - cron: '13 8 * * *' # 05:13 BRT
-    - cron: '13 20 * * *' # 17:13 BRT
+    - cron: '13 8 * * *' # 05:13 BRT: fórum + alertas
+    - cron: '43 11,14,17,20,23,2 * * *' # de 3 em 3 h: só alertas
   workflow_dispatch:
 
 jobs:
@@ -21,7 +22,7 @@ jobs:
         env:
           REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          ONLY: ${{ github.event.schedule == '13 20 * * *' && 'alerts' || '' }}
+          ONLY: ${{ (github.event_name == 'schedule' && github.event.schedule != '13 8 * * *') && 'alerts' || '' }}
         run: |
           if [ -z "$REF" ] || [ -z "$CRON_SECRET" ]; then echo "::notice::Supabase do staging ainda não configurado (SUPABASE_PROJECT_REF e CRON_SECRET): nada a fazer."; exit 0; fi
           url="https://$REF.supabase.co/functions/v1/daily-forecast"

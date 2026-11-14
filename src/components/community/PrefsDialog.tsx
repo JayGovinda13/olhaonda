@@ -15,12 +15,15 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
-import { Bell } from 'iconoir-react'
+import { Bell, ChatBubble } from 'iconoir-react'
+import { Link as RouterLink } from 'react-router'
 import { useEffect, useMemo, useState } from 'react'
 import { fetchForecast, type Forecast } from '../../api/openMeteo'
 import type { SpotPrefs } from '../../backend'
 import type { Spot } from '../../data/spots'
+import { useWhatsApp, maskPhone } from '../../hooks/useWhatsApp'
 import { enablePush, pushState, type PushState } from '../../lib/push'
+import { DegreePicker } from './DegreePicker'
 import { alpha, brand } from '../../theme'
 import {
   DAYPART_LABEL,
@@ -76,6 +79,7 @@ export function PrefsDialog({
   const [error, setError] = useState<string | null>(null)
   const [forecast, setForecast] = useState<{ spot: string; f: Forecast } | null>(null)
   const [push, setPush] = useState<PushState | null>(null)
+  const wa = useWhatsApp().status
   const set = <K extends keyof SpotPrefs>(k: K, v: SpotPrefs[K]) => setP((x) => ({ ...x, [k]: v }))
 
   useEffect(() => {
@@ -113,12 +117,12 @@ export function PrefsDialog({
       <DialogTitle sx={{ fontWeight: 800, pb: 0.5 }}>Seu gosto em {spot.name}</DialogTitle>
       <DialogContent>
         <Typography variant="body2" sx={{ opacity: 0.7, mb: 2 }}>
-          Avisamos quando a previsão bater com essas condições. A altura é a da arrebentação, a mesma do card principal.
+          Avisamos quando a previsão dos próximos dias bater com essas condições. Depois, só se algo mudar: se a janela mudar, se sair (dizendo o motivo) ou se voltar. Se nada mudar, não mandamos nada.
         </Typography>
         <Stack spacing={2.5}>
           {error && <Alert severity="error">{error}</Alert>}
 
-          <Section title={`Tamanho: ${m1(p.minWave)} a ${m1(p.maxWave)}`} hint="Altura das séries na arrebentação">
+          <Section title={`Tamanho: ${m1(p.minWave)} a ${m1(p.maxWave)}`} hint="Altura das séries na arrebentação deste pico (já considera a direção e o período da ondulação)">
             <Slider
               value={[p.minWave, p.maxWave]}
               min={0.3}
@@ -136,28 +140,113 @@ export function PrefsDialog({
             />
           </Section>
 
+          <DegreePicker
+            label="Direção da ondulação"
+            hint="De onde vem o swell, em graus (180° = vem do sul). Está no card do pico, ao lado do tamanho."
+            value={p.swellDir}
+            tol={p.swellDirTol}
+            defaultValue={Math.round(spot.facing / 5) * 5}
+            onChange={(v, t) => setP((x) => ({ ...x, swellDir: v, swellDirTol: t }))}
+          />
+
+          <Section
+            title={`Período do swell: ${p.minPeriod} a ${p.maxPeriod ?? 'sem limite'}${p.maxPeriod != null ? ' s' : ''}`}
+            hint="Período maior = onda com mais força e mais organizada"
+          >
+            <Slider
+              value={[p.minPeriod, p.maxPeriod ?? 20]}
+              min={4}
+              max={20}
+              step={1}
+              onChange={(_, v) => {
+                const [a, b] = v as number[]
+                setP((x) => ({ ...x, minPeriod: a, maxPeriod: b >= 20 ? null : b }))
+              }}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(v) => (v >= 20 ? 'sem limite' : `${v} s`)}
+              color="success"
+              disableSwap
+              getAriaLabel={(i) => (i ? 'Período máximo' : 'Período mínimo')}
+            />
+          </Section>
+
+          <Section
+            title={`Potência da onda: ${p.minPower ?? 0} a ${p.maxPower ?? 'sem limite'}${p.maxPower != null ? ' kJ' : ''}`}
+            hint="A mesma Força do card do pico, em kJ por onda e metro de crista: até 100 fraca · 400 moderada · 1000 forte · acima, muito forte"
+          >
+            <Slider
+              value={[p.minPower ?? 0, p.maxPower ?? 1500]}
+              min={0}
+              max={1500}
+              step={25}
+              onChange={(_, v) => {
+                const [a, b] = v as number[]
+                setP((x) => ({ ...x, minPower: a <= 0 ? null : a, maxPower: b >= 1500 ? null : b }))
+              }}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(v) => (v >= 1500 ? 'sem limite' : `${v} kJ`)}
+              color="success"
+              disableSwap
+              getAriaLabel={(i) => (i ? 'Potência máxima' : 'Potência mínima')}
+            />
+          </Section>
+
           <Section title="Vento">
             <ToggleButtonGroup
               exclusive
-              value={p.wind}
-              onChange={(_, v) => v && set('wind', v)}
+              value={p.windDir != null ? 'graus' : 'tipo'}
+              onChange={(_, v) => v && setP((x) => ({ ...x, windDir: v === 'graus' ? ((spot.facing + 180) % 360 / 5 | 0) * 5 : null }))}
               size="small"
-              sx={{ flexWrap: 'wrap', '& .MuiToggleButton-root': { textTransform: 'none', fontWeight: 700, borderRadius: '10px !important', m: 0.25, border: `1px solid ${alpha(brand.purple, 0.2)} !important` } }}
+              sx={{ mb: 1, '& .MuiToggleButton-root': { textTransform: 'none', fontWeight: 700, borderRadius: '10px !important', m: 0.25, border: `1px solid ${alpha(brand.purple, 0.2)} !important` } }}
             >
-              {(Object.keys(WIND_PREF_LABEL) as SpotPrefs['wind'][]).map((k) => (
-                <ToggleButton key={k} value={k}>
-                  {WIND_PREF_LABEL[k]}
-                </ToggleButton>
-              ))}
+              <ToggleButton value="tipo">Por tipo (terral, lateral…)</ToggleButton>
+              <ToggleButton value="graus">Por direção em graus</ToggleButton>
             </ToggleButtonGroup>
+            {p.windDir == null ? (
+              <ToggleButtonGroup
+                exclusive
+                value={p.wind}
+                onChange={(_, v) => v && set('wind', v)}
+                size="small"
+                sx={{ display: 'flex', flexWrap: 'wrap', '& .MuiToggleButton-root': { textTransform: 'none', fontWeight: 700, borderRadius: '10px !important', m: 0.25, border: `1px solid ${alpha(brand.purple, 0.2)} !important` } }}
+              >
+                {(Object.keys(WIND_PREF_LABEL) as SpotPrefs['wind'][]).map((k) => (
+                  <ToggleButton key={k} value={k}>
+                    {WIND_PREF_LABEL[k]}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            ) : (
+              <DegreePicker
+                label="Direção do vento"
+                hint={`De onde o vento sopra, em graus. Para este pico, terral vem de cerca de ${(spot.facing + 180) % 360}°.`}
+                value={p.windDir}
+                tol={p.windDirTol}
+                defaultValue={(spot.facing + 180) % 360}
+                anyLabel="Qualquer"
+                onChange={(v, t) => setP((x) => ({ ...x, windDir: v, windDirTol: t }))}
+                color={brand.plum}
+              />
+            )}
             <Typography variant="body2" sx={{ mt: 1.5, fontWeight: 700 }}>
-              Vento máximo: {p.maxWind} km/h
+              Velocidade do vento: {p.minWind > 0 ? `${p.minWind} a ` : 'até '}
+              {p.maxWind} km/h
             </Typography>
-            <Slider value={p.maxWind} min={5} max={40} step={1} onChange={(_, v) => set('maxWind', v as number)} color="success" aria-label="Vento máximo" />
-          </Section>
-
-          <Section title={`Período mínimo do swell: ${p.minPeriod} s`} hint="Período maior = onda com mais força e mais organizada">
-            <Slider value={p.minPeriod} min={4} max={16} step={1} onChange={(_, v) => set('minPeriod', v as number)} color="success" aria-label="Período mínimo" />
+            <Slider
+              value={[p.minWind, p.maxWind]}
+              min={0}
+              max={40}
+              step={1}
+              onChange={(_, v) => {
+                const [a, b] = v as number[]
+                setP((x) => ({ ...x, minWind: a, maxWind: Math.max(b, 5) }))
+              }}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(v) => `${v} km/h`}
+              color="success"
+              disableSwap
+              getAriaLabel={(i) => (i ? 'Vento máximo' : 'Vento mínimo')}
+            />
           </Section>
 
           <Section title="Maré" hint="Nenhuma marcada = qualquer maré">
@@ -197,7 +286,7 @@ export function PrefsDialog({
             </Box>
             <Box sx={{ flex: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                Avisar até {p.daysAhead} {p.daysAhead === 1 ? 'dia' : 'dias'} antes
+                Avisar com até {p.daysAhead} {p.daysAhead === 1 ? 'dia' : 'dias'} de antecedência
               </Typography>
               <Slider value={p.daysAhead} min={1} max={7} step={1} marks onChange={(_, v) => set('daysAhead', v as number)} color="success" aria-label="Antecedência do aviso" />
             </Box>
@@ -235,6 +324,21 @@ export function PrefsDialog({
                 Este navegador não aceita notificações. Os avisos aparecem no sino do site. No iPhone, adicione o OlhaOnda à tela de
                 início para receber.
               </Alert>
+            )}
+            {notify && (
+              <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, opacity: 0.85, mt: 0.5 }}>
+                <ChatBubble width={14} height={14} />
+                {wa.phone && wa.enabled ? (
+                  <>WhatsApp ligado: avisos também chegam em {maskPhone(wa.phone)}.</>
+                ) : (
+                  <>
+                    Quer receber no WhatsApp?{' '}
+                    <Box component={RouterLink} to="/meus-picos#whatsapp" onClick={onClose} sx={{ color: brand.plum, fontWeight: 800 }}>
+                      Ligue em Meus picos
+                    </Box>
+                  </>
+                )}
+              </Typography>
             )}
             {notify && push === 'off' && (
               <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, opacity: 0.75 }}>

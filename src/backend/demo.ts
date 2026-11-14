@@ -2,6 +2,7 @@
  * Modo demonstração: tudo fica no localStorage deste navegador.
  * Usado quando VITE_SUPABASE_URL não está configurado, para navegar e testar as telas.
  */
+import type { AlertState } from '../../supabase/functions/_shared/core/alerts.ts'
 import { USERNAME_RE } from './types'
 import type {
   AppNotification,
@@ -25,6 +26,10 @@ type DB = {
   users: DemoUser[]
   favorites: Record<string, Favorite[]>
   notifications: Record<string, AppNotification[]>
+  /** ciclo de aviso por usuário e pico (o que a Edge Function guarda em alert_state) */
+  alertStates?: Record<string, Record<string, AlertState>>
+  /** WhatsApp "ligado" por usuário (simulado: nenhuma mensagem sai do navegador) */
+  whatsapp?: Record<string, { phone: string; enabled: boolean }>
   threads: Thread[]
   posts: Post[]
   sessions: PhotoSession[]
@@ -159,6 +164,12 @@ let db = load()
 const blobUrls = new Map<string, string>()
 const listeners = new Set<(p: Profile | null) => void>()
 const notifListeners = new Set<() => void>()
+function dropAlertState(userId: string, spotId: string) {
+  const mine = { ...(db.alertStates?.[userId] ?? {}) }
+  delete mine[spotId]
+  db.alertStates = { ...(db.alertStates ?? {}), [userId]: mine }
+}
+let demoWaPending: { phone: string; code: string } | null = null
 const emitNotif = () => notifListeners.forEach((l) => l())
 
 function save() {
@@ -323,6 +334,8 @@ export const demoBackend: Backend = {
       const list = db.favorites[me.id] ?? []
       const prev = list.find((f) => f.spotId === spotId)
       const fav: Favorite = { spotId, prefs, notify, createdAt: prev?.createdAt ?? iso() }
+      // mudou o gosto ou ligou/desligou o aviso: o ciclo recomeça (o banco faz o mesmo por trigger)
+      if (!prev || JSON.stringify(prev.prefs) !== JSON.stringify(prefs) || prev.notify !== notify) dropAlertState(me.id, spotId)
       db.favorites[me.id] = [...list.filter((f) => f.spotId !== spotId), fav]
       save()
       return delay(fav)
@@ -330,6 +343,7 @@ export const demoBackend: Backend = {
     async remove(spotId) {
       const me = requireMe()
       db.favorites[me.id] = (db.favorites[me.id] ?? []).filter((f) => f.spotId !== spotId)
+      dropAlertState(me.id, spotId)
       save()
     },
   },
@@ -353,12 +367,63 @@ export const demoBackend: Backend = {
     async add(input) {
       const me = requireMe()
       const list = db.notifications[me.id] ?? []
-      if (list.some((n) => n.spotId === input.spotId && n.sessionDate === input.sessionDate)) return null
+      const dup = input.eventSeq != null ? (n: AppNotification) => n.spotId === input.spotId && n.eventSeq === input.eventSeq : (n: AppNotification) => n.spotId === input.spotId && n.sessionDate === input.sessionDate && n.kind === input.kind
+      if (list.some(dup)) return null
       const n: AppNotification = { ...input, id: uid(), createdAt: iso(), readAt: null }
       db.notifications[me.id] = [n, ...list].slice(0, 100)
       save()
       emitNotif()
       return n
+    },
+  },
+
+  alerts: {
+    async states() {
+      if (!db.me) return {}
+      return delay({ ...(db.alertStates?.[db.me.id] ?? {}) })
+    },
+    async saveState(spotId, state) {
+      const me = requireMe()
+      db.alertStates = { ...(db.alertStates ?? {}), [me.id]: { ...(db.alertStates?.[me.id] ?? {}), [spotId]: state } }
+      save()
+    },
+  },
+
+  whatsapp: {
+    async status() {
+      const w = db.me ? db.whatsapp?.[db.me.id] : undefined
+      return delay(w ? { phone: w.phone, enabled: w.enabled, optedOut: false } : { phone: null, enabled: false, optedOut: false })
+    },
+    async start(phone) {
+      requireMe()
+      const digits = phone.replace(/\D/g, '')
+      const full = digits.startsWith('55') ? digits : `55${digits}`
+      if (!/^55[1-9][0-9][2-9][0-9]{7,8}$/.test(full)) throw new Error('Número inválido. Use o DDD e o número, por exemplo 11 99999-1234.')
+      demoWaPending = { phone: `+${full}`, code: String(Math.floor(100000 + Math.random() * 900000)) }
+      // demonstração: nada é enviado; o código aparece na tela
+      return delay({ phone: demoWaPending.phone, dryRunCode: demoWaPending.code })
+    },
+    async verify(code) {
+      const me = requireMe()
+      if (!demoWaPending || code.replace(/\D/g, '') !== demoWaPending.code) throw new Error('Código incorreto.')
+      db.whatsapp = { ...(db.whatsapp ?? {}), [me.id]: { phone: demoWaPending.phone, enabled: true } }
+      const phone = demoWaPending.phone
+      demoWaPending = null
+      save()
+      return delay({ phone })
+    },
+    async setEnabled(on) {
+      const me = requireMe()
+      const w = db.whatsapp?.[me.id]
+      if (w) db.whatsapp = { ...db.whatsapp, [me.id]: { ...w, enabled: on } }
+      save()
+    },
+    async unlink() {
+      const me = requireMe()
+      const rest = { ...(db.whatsapp ?? {}) }
+      delete rest[me.id]
+      db.whatsapp = rest
+      save()
     },
   },
 

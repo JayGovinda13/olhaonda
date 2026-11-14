@@ -3,6 +3,7 @@
  * Esquema em supabase/migrations; pagamentos em supabase/functions.
  */
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
+import { EMPTY_ALERT, type AlertState } from '../../supabase/functions/_shared/core/alerts.ts'
 import type { SpotPrefs } from '../../supabase/functions/_shared/core/prefs.ts'
 import { normalizePrefs } from '../../supabase/functions/_shared/core/prefs.ts'
 import type { AppNotification, Backend, Favorite, ForumCategory, Level, Modality, Photo, PhotoSession, Post, Profile, Purchase, Thread } from './types'
@@ -41,6 +42,7 @@ function toNotification(r: Row): AppNotification {
   return {
     id: str(r.id),
     spotId: str(r.spot_id),
+    kind: (['enter', 'back', 'change', 'lost'].includes(r.kind as string) ? r.kind : 'match') as AppNotification['kind'],
     sessionDate: str(r.session_date),
     title: str(r.title),
     body: str(r.body),
@@ -275,6 +277,37 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
           .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => cb())
           .subscribe()
         return () => void sb.removeChannel(ch)
+      },
+    },
+
+    alerts: {
+      async states() {
+        const { data: s } = await sb.auth.getSession()
+        if (!s.session) return {}
+        const rows = check(await sb.from('alert_state').select('spot_id, state')) as Row[]
+        return Object.fromEntries(rows.map((r) => [str(r.spot_id), { ...EMPTY_ALERT, ...(r.state as Partial<AlertState>) }]))
+      },
+    },
+
+    whatsapp: {
+      async status() {
+        const { data: s } = await sb.auth.getSession()
+        if (!s.session) return { phone: null, enabled: false, optedOut: false }
+        const r = (check(await sb.from('whatsapp_contacts').select('phone, enabled, opted_out_at').maybeSingle()) ?? null) as Row | null
+        return r ? { phone: str(r.phone), enabled: Boolean(r.enabled), optedOut: Boolean(r.opted_out_at) } : { phone: null, enabled: false, optedOut: false }
+      },
+      async start(phone) {
+        return invoke<{ phone: string; dryRunCode?: string }>('whatsapp-link', { action: 'start', phone })
+      },
+      async verify(code) {
+        return invoke<{ phone: string }>('whatsapp-link', { action: 'verify', code })
+      },
+      async setEnabled(on) {
+        const id = await uidOrThrow()
+        check(await sb.from('whatsapp_contacts').update({ enabled: on }).eq('user_id', id))
+      },
+      async unlink() {
+        await invoke('whatsapp-link', { action: 'unlink' })
       },
     },
 

@@ -4,22 +4,22 @@ import { useAuth } from '../auth/context'
 import { backend } from '../backend'
 import { ALL_SPOTS } from '../data/spots'
 import { localNotify } from '../lib/push'
-import { describeMatch, findMatches } from '../../supabase/functions/_shared/core/prefs.ts'
+import { EMPTY_ALERT, evaluateAlert, type AlertState } from '../../supabase/functions/_shared/core/alerts.ts'
 import { dailySummary } from '../../supabase/functions/_shared/core/summary.ts'
 import { localNow } from '../../supabase/functions/_shared/core/time.ts'
 
 const EVERY = 30 * 60_000
 
 /**
- * Modo demonstração (sem servidor): faz no navegador a rodada que a Edge Function daily-forecast
- * faz no Supabase: resumo do dia no fórum de cada pico favorito e alertas quando a previsão bate
- * com as condições preferidas. Roda ao abrir o site e a cada 30 min.
+ * Modo demonstração (sem servidor): faz no navegador a rodada que a Edge Function daily-forecast faz no Supabase:
+ * resumo do dia no fórum de cada pico favorito e o ciclo de avisos (entrou, mudou, saiu com o motivo, voltou).
+ * Roda ao abrir o site e a cada 30 min. Não há WhatsApp aqui: só o sino e a notificação do navegador.
  */
 export function useDemoAlerts() {
   const { user } = useAuth()
   const uid = user?.id
   useEffect(() => {
-    if (!uid || backend.mode !== 'demo' || !backend.notifications.add) return
+    if (!uid || backend.mode !== 'demo' || !backend.notifications.add || !backend.alerts.saveState) return
     let alive = true
     const run = async () => {
       const key = `olhaonda:demo-alerts:${uid}`
@@ -32,6 +32,7 @@ export function useDemoAlerts() {
       }
       const now = localNow()
       const favs = await backend.favorites.list().catch(() => [])
+      const states: Record<string, AlertState> = await backend.alerts.states().catch(() => ({}))
       for (const fav of favs) {
         const spot = ALL_SPOTS.find((s) => s.id === fav.spotId)
         if (!spot || !alive) continue
@@ -40,13 +41,12 @@ export function useDemoAlerts() {
         const s = dailySummary(spot, f, now.date)
         if (s) await backend.forum.ensureDailyPost?.(spot.id, s)
         if (!fav.notify) continue
-        for (const m of findMatches(spot, f.hours, fav.prefs, now.hour)) {
-          const url = `/pico/${spot.id}?t=${encodeURIComponent(m.start)}`
-          const title = `${spot.name}: condição do seu gosto`
-          const body = describeMatch(m)
-          const n = await backend.notifications.add!({ spotId: spot.id, sessionDate: m.date, title, body, url })
-          if (n) await localNotify(title, body, url, `${spot.id}:${m.date}`)
+        const { state, event } = evaluateAlert(spot, f.hours, fav.prefs, states[spot.id] ?? EMPTY_ALERT, now)
+        if (event) {
+          const n = await backend.notifications.add!({ spotId: spot.id, kind: event.type, eventSeq: event.seq, sessionDate: event.sessionDate, title: event.title, body: event.body, url: event.url })
+          if (n) await localNotify(event.title, event.body, event.url, spot.id)
         }
+        await backend.alerts.saveState!(spot.id, state)
       }
     }
     void run()
@@ -61,7 +61,7 @@ export function useDemoAlerts() {
   }, [uid])
 }
 
-/** Força a próxima rodada (depois de salvar um favorito, por exemplo). */
+/** Força a próxima rodada (depois de salvar um favorito, por exemplo). Também zera o ciclo do pico, como o banco faz. */
 export function resetDemoAlerts(uid: string) {
   try {
     localStorage.removeItem(`olhaonda:demo-alerts:${uid}`)

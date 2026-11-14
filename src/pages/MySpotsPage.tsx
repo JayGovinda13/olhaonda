@@ -6,15 +6,19 @@ import { fetchForecast } from '../api/openMeteo'
 import { useAuth } from '../auth/context'
 import { backend, type Favorite } from '../backend'
 import { PrefsDialog } from '../components/community/PrefsDialog'
+import { WhatsAppCard } from '../components/community/WhatsAppCard'
 import { SpotPicker } from '../components/SpotPicker'
 import { ALL_SPOTS, type Spot } from '../data/spots'
 import { resetDemoAlerts } from '../hooks/useDemoAlerts'
+import { useAlertStates } from '../hooks/useAlertStates'
 import { useFavorites } from '../hooks/useFavorites'
 import { useNotifications } from '../hooks/useNotifications'
+import { ALERT_KIND } from '../lib/alertKinds'
 import { usePageMeta } from '../lib/meta'
 import { disablePush, enablePush, localNotify, pushState, type PushState } from '../lib/push'
 import { timeAgo } from '../lib/time'
 import { alpha, brand } from '../theme'
+import { type AlertState } from '../../supabase/functions/_shared/core/alerts.ts'
 import { describeMatch, describePrefs, findMatches, type Match } from '../../supabase/functions/_shared/core/prefs.ts'
 import { localNow } from '../../supabase/functions/_shared/core/time.ts'
 
@@ -23,6 +27,7 @@ export default function MySpotsPage() {
   const { user, ready } = useAuth()
   const { favorites, save, remove } = useFavorites()
   const { list: notes, markRead } = useNotifications()
+  const alertStates = useAlertStates(favorites?.length)
   const [params] = useSearchParams()
   const [editing, setEditing] = useState<Spot | null>(null)
   const [push, setPush] = useState<PushState | null>(null)
@@ -129,6 +134,9 @@ export default function MySpotsPage() {
         </Stack>
       </Paper>
 
+      {/* WhatsApp */}
+      <WhatsAppCard />
+
       {/* favoritos */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}>
         <Typography variant="h6" component="h2">
@@ -157,6 +165,7 @@ export default function MySpotsPage() {
                 key={f.spotId}
                 spot={spot}
                 fav={f}
+                alert={alertStates[f.spotId] ?? null}
                 onEdit={() => setEditing(spot)}
                 onToggle={async (on) => {
                   await save(spot.id, f.prefs, on)
@@ -181,7 +190,7 @@ export default function MySpotsPage() {
       <Paper sx={{ overflow: 'hidden' }}>
         {notes.length === 0 && (
           <Typography variant="body2" sx={{ p: 2.5, opacity: 0.7 }}>
-            Nenhum aviso ainda. A previsão é conferida todo dia às 5h e às 17h.
+            Nenhum aviso ainda. A previsão é conferida de 3 em 3 horas e só avisamos quando algo muda.
           </Typography>
         )}
         {notes.slice(0, 15).map((n, i) => (
@@ -192,12 +201,15 @@ export default function MySpotsPage() {
             onClick={() => !n.readAt && void markRead([n.id])}
             sx={{ display: 'block', p: 2, borderTop: i ? 1 : 0, borderColor: 'divider', color: 'inherit', textDecoration: 'none', bgcolor: n.readAt ? 'transparent' : alpha(brand.green, 0.08), '&:hover': { bgcolor: alpha(brand.purple, 0.04) } }}
           >
-            <Typography sx={{ fontWeight: 800 }}>{n.title}</Typography>
+            <Typography sx={{ fontWeight: 800 }}>
+              <span aria-hidden="true">{ALERT_KIND[n.kind].emoji} </span>
+              {n.title}
+            </Typography>
             <Typography variant="body2" sx={{ opacity: 0.8 }}>
               {n.body}
             </Typography>
             <Typography variant="caption" sx={{ opacity: 0.55 }}>
-              {timeAgo(n.createdAt)}
+              {ALERT_KIND[n.kind].label} · {timeAgo(n.createdAt)}
             </Typography>
           </Box>
         ))}
@@ -222,7 +234,7 @@ export default function MySpotsPage() {
   )
 }
 
-function FavoriteCard({ spot, fav, onEdit, onToggle }: { spot: Spot; fav: Favorite; onEdit: () => void; onToggle: (on: boolean) => Promise<void> }) {
+function FavoriteCard({ spot, fav, alert, onEdit, onToggle }: { spot: Spot; fav: Favorite; alert: AlertState | null; onEdit: () => void; onToggle: (on: boolean) => Promise<void> }) {
   const [matches, setMatches] = useState<{ key: string; list: Match[] } | null>(null)
   const key = `${spot.id}|${JSON.stringify(fav.prefs)}`
   useEffect(() => {
@@ -253,6 +265,15 @@ function FavoriteCard({ spot, fav, onEdit, onToggle }: { spot: Spot; fav: Favori
         </Stack>
       </Stack>
       <Chip label={describePrefs(fav.prefs)} sx={{ alignSelf: 'flex-start', height: 'auto', py: 0.5, '& .MuiChip-label': { whiteSpace: 'normal' }, bgcolor: alpha(brand.purple, 0.06) }} />
+      {fav.notify && (
+        <Typography variant="body2" sx={{ fontWeight: 700, color: alert?.status === 'active' ? brand.deepGreen : alert?.wasLost ? '#B3541E' : 'text.secondary' }}>
+          {alert?.status === 'active'
+            ? `🌊 Avisando: ${alert.notified.length} ${alert.notified.length === 1 ? 'dia' : 'dias'} bate${alert.notified.length === 1 ? '' : 'm'} com o seu gosto`
+            : alert?.wasLost
+              ? '⚠️ Saiu da sua condição. Avisamos se voltar.'
+              : 'Esperando a previsão bater com o seu gosto'}
+        </Typography>
+      )}
       <Box>
         <Typography variant="body2" sx={{ fontWeight: 800 }}>
           {!list ? 'Conferindo a previsão…' : list.length ? 'Próximos dias que batem:' : 'Nenhum dia dos próximos 14 bate por enquanto.'}

@@ -179,8 +179,10 @@ Cálculos compartilhados entre o site e o servidor em `supabase/functions/_share
 3. Chaves de push: `npx web-push generate-vapid-keys`. Pública em `VITE_VAPID_PUBLIC_KEY` (Preview na Cloudflare);
    na função: `supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:contato@olhaonda.com`.
 4. Agendamento: `supabase secrets set CRON_SECRET=<senha longa> SITE_URL=https://staging.olhaonda.com` e o mesmo
-   `CRON_SECRET` no environment `staging` do GitHub. O workflow `daily-forecast.yml` chama a função às 5h13 e 17h13.
-5. Opcional: `OPEN_METEO_API_KEY` (plano comercial) e `SPOT_SCOPE=baixada` no projeto de produção.
+   `CRON_SECRET` no environment `staging` do GitHub. O workflow `daily-forecast.yml` chama a função às 5h13 (resumo + avisos) e a cada 3 h (só avisos).
+5. Avisos no WhatsApp (migração `20261114000000_alertas_whatsapp.sql`): ver `docs/whatsapp.md`
+   (`WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`; `WHATSAPP_MODE=dryrun` para testar).
+6. Opcional: `OPEN_METEO_API_KEY` (plano comercial) e `SPOT_SCOPE=baixada` no projeto de produção.
 
 Sem Supabase (modo demonstração) tudo funciona no navegador: o resumo do dia é gerado ao abrir o fórum do pico
 e os alertas são conferidos com o site aberto, a cada 30 min.
