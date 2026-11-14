@@ -16,6 +16,7 @@ import { Lock, Mail, Xmark } from 'iconoir-react'
 import { useState, type FormEvent } from 'react'
 import { backend } from '../backend'
 import { LogoMark } from '../components/Logo'
+import { FEATURES } from '../config/env'
 
 /** O diálogo fica fora do roteador: navega pelo History API e avisa o React Router. */
 function softNavigate(path: string) {
@@ -139,7 +140,7 @@ export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?
             </Box>
           ) : (
             <>
-              {!demo && (
+              {!demo && FEATURES.google && (
                 <>
                   <Button
                     variant="outlined"

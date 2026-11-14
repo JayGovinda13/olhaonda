@@ -27,6 +27,8 @@ export const FEATURES = {
   photos: flag(import.meta.env.VITE_FEATURE_PHOTOS, !IS_PRODUCTION),
   /** Avisos no WhatsApp (precisa da conta Meta configurada). Em produção só com VITE_FEATURE_WHATSAPP=true. */
   whatsapp: flag(import.meta.env.VITE_FEATURE_WHATSAPP, !IS_PRODUCTION),
+  /** Botão "Continuar com Google" no login. Desligado em produção até configurar o Google e o aceite da política. */
+  google: flag(import.meta.env.VITE_FEATURE_GOOGLE, false),
 }
 
 /** Algum recurso que exige conta (login) está ligado. */
