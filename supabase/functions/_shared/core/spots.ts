@@ -959,6 +959,25 @@ const PERNAMBUCO: Spot[] = [
   { id: 'sjc-saojose', name: 'São José da Coroa Grande', ...PE_SJC, lat: -8.8909, lon: -35.1428, facing: 98, kind: 'beach' },
 ]
 
+/** Fernando de Noronha (PE): Mar de Dentro (Vila dos Remédios, voltado para noroeste) e Mar de Fora (sudeste). */
+const NORONHA = { city: 'Fernando de Noronha', state: 'PE', region: 'Fernando de Noronha', tidePort: 'noronha' } as const
+const FERNANDO_DE_NORONHA: Spot[] = [
+  { id: 'fn-porto', name: 'Praia do Porto', ...NORONHA, lat: -3.834, lon: -32.4007, facing: 320, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-ampesca', name: 'Ampesca', ...NORONHA, lat: -3.8362, lon: -32.4041, facing: 328, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-abras', name: 'Abras', ...NORONHA, lat: -3.8368, lon: -32.4051, facing: 335, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-biboca', name: 'Biboca', ...NORONHA, lat: -3.8383, lon: -32.4071, facing: 340, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-cachorro', name: 'Praia do Cachorro', ...NORONHA, lat: -3.8393, lon: -32.4115, facing: 330, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-meio', name: 'Praia do Meio', ...NORONHA, lat: -3.8396, lon: -32.4135, facing: 331, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-conceicao', name: 'Conceição', ...NORONHA, lat: -3.8413, lon: -32.4175, facing: 335, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-boldro', name: 'Boldró', ...NORONHA, lat: -3.8445, lon: -32.4275, facing: 333, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-bode', name: 'Praia do Bode', ...NORONHA, lat: -3.849, lon: -32.4375, facing: 340, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-quixaba', name: 'Quixaba', ...NORONHA, lat: -3.8508, lon: -32.4405, facing: 330, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-cacimba', name: 'Cacimba do Padre', ...NORONHA, lat: -3.8535, lon: -32.4425, facing: 320, kind: 'beach', note: 'Vila dos Remédios' },
+  { id: 'fn-caieira', name: 'Enseada da Caieira', ...NORONHA, lat: -3.8389, lon: -32.3997, facing: 78, kind: 'beach', note: 'Mar de Fora' },
+  { id: 'fn-sueste', name: 'Baía do Sueste', ...NORONHA, lat: -3.8663, lon: -32.4255, facing: 138, kind: 'beach', note: 'Mar de Fora' },
+  { id: 'fn-leao', name: 'Praia do Leão', ...NORONHA, lat: -3.8704, lon: -32.4376, facing: 167, kind: 'beach', note: 'Mar de Fora' },
+]
+
 /**
  * Picos do litoral brasileiro, do Sul ao Nordeste.
  * Coordenadas e orientação aproximadas; ajuste conforme o conhecimento local.
@@ -980,7 +999,7 @@ export const ALL_SPOTS: Spot[] = [
   { id: 'pipa', name: 'Praia do Amor', city: 'Pipa', state: 'RN', lat: -6.23, lon: -35.04, facing: 90, kind: 'reef' },
   ...CEARA,
   ...AMAPA,
-  { id: 'cacimba', name: 'Cacimba do Padre', city: 'Fernando de Noronha', state: 'PE', region: 'PE · Fernando de Noronha', lat: -3.85, lon: -32.44, facing: 330, kind: 'beach' },
+  ...FERNANDO_DE_NORONHA,
 ]
 
 /** Estados no ar na produção. */
@@ -1020,6 +1039,7 @@ export const SPOT_ALIASES: Record<string, string> = {
   jeri: 'jij-jericoacoara',
   frances: 'mdd-frances',
   maracaipe: 'ipj-maracaipe',
+  cacimba: 'fn-cacimba',
   itacare: 'itc-tiririca',
   stellamaris: 'ssa-stellamaris',
 }
