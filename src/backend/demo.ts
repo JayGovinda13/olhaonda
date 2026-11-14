@@ -429,6 +429,20 @@ export const demoBackend: Backend = {
       }))
       return delay({ inviteOnly: true, limit: 10, members: users.filter((u) => u.approvedAt).length, users, audit: db.audit ?? [] })
     },
+    async updateProfile(userId, name, username) {
+      const me = requireMe()
+      const u = db.users.find((x) => x.profile.id === userId)
+      if (!u) throw new Error('Pessoa não encontrada.')
+      const nm = name.trim()
+      if (nm.length < 1 || nm.length > 60) throw new Error('O nome precisa ter de 1 a 60 caracteres.')
+      const un = username?.trim().toLowerCase() || null
+      if (un && !USERNAME_RE.test(un)) throw new Error('Apelido: de 3 a 24 letras minúsculas, números, ponto ou sublinhado.')
+      if (un && db.users.some((x) => x.profile.id !== userId && x.profile.username === un)) throw new Error('Esse apelido já está em uso.')
+      u.profile = { ...u.profile, name: nm, username: un }
+      if (db.me?.id === userId) setMe(u.profile)
+      db.audit = [{ at: iso(), action: 'editou' as const, admin: me.name, target: nm }, ...(db.audit ?? [])].slice(0, 20)
+      save()
+    },
     async setAccess(userId, allow) {
       const me = requireMe()
       db.approvedAt = { ...(db.approvedAt ?? {}) }

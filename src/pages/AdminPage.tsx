@@ -1,4 +1,5 @@
-import { Alert, Box, Button, Chip, Paper, Skeleton, Stack, Switch, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Paper, Skeleton, Stack, Switch, TextField, Typography } from '@mui/material'
+import { EditPencil } from 'iconoir-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router'
 import { useAuth } from '../auth/context'
@@ -24,6 +25,7 @@ function AdminPanel() {
   const [busy, setBusy] = useState<string | null>(null)
   const [filter, setFilter] = useState<Filter>('pending')
   const [q, setQ] = useState('')
+  const [editing, setEditing] = useState<AdminUser | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -140,6 +142,9 @@ function AdminPanel() {
                       {!u.emailConfirmed && ' · e-mail ainda não confirmado'}
                     </Typography>
                   </Box>
+                  <IconButton size="small" aria-label={`Editar ${u.name}`} onClick={() => setEditing(u)}>
+                    <EditPencil width={18} height={18} />
+                  </IconButton>
                   {staff ? (
                     <Chip size="small" label={u.role === 'admin' ? 'Administrador' : 'Moderador'} sx={{ bgcolor: alpha(brand.plum, 0.12), fontWeight: 700 }} />
                   ) : (
@@ -176,8 +181,67 @@ function AdminPanel() {
           <Button onClick={() => void load()} sx={{ alignSelf: 'flex-start' }}>
             Atualizar lista
           </Button>
+          {editing && (
+            <EditDialog
+              key={editing.id}
+              user={editing}
+              onClose={() => setEditing(null)}
+              onSaved={async () => {
+                setEditing(null)
+                await load()
+              }}
+            />
+          )}
         </>
       )}
     </Stack>
+  )
+}
+
+/** Editar o nome e o apelido de uma pessoa. */
+function EditDialog({ user, onClose, onSaved }: { user: AdminUser; onClose: () => void; onSaved: () => Promise<void> }) {
+  const [name, setName] = useState(user.name)
+  const [username, setUsername] = useState(user.username ?? '')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const save = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await backend.admin.updateProfile(user.id, name, username.trim() || null)
+      await onSaved()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível salvar.')
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>Editar pessoa</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          <Typography variant="body2" sx={{ opacity: 0.7, wordBreak: 'break-all' }}>
+            {user.email}
+          </Typography>
+          {error && <Alert severity="error">{error}</Alert>}
+          <TextField label="Nome" required value={name} onChange={(e) => setName(e.target.value)} slotProps={{ htmlInput: { maxLength: 60 } }} autoFocus />
+          <TextField
+            label="Apelido"
+            value={username}
+            onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, '').slice(0, 24))}
+            helperText="De 3 a 24 letras minúsculas, números, ponto ou _. Deixe vazio para ficar sem apelido."
+            slotProps={{ input: { startAdornment: <InputAdornment position="start">@</InputAdornment> } }}
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button variant="contained" disabled={busy || !name.trim()} onClick={() => void save()}>
+          Salvar
+        </Button>
+      </DialogActions>
+    </Dialog>
   )
 }

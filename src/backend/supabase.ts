@@ -369,6 +369,10 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         const { error } = await sb.rpc('admin_set_access', { target: userId, allow })
         if (error) throw new Error(error.message)
       },
+      async updateProfile(userId, name, username) {
+        const { error } = await sb.rpc('admin_update_profile', { target: userId, new_name: name, new_username: username })
+        if (error) throw new Error(error.message)
+      },
     },
 
     account: {
