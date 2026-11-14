@@ -95,7 +95,7 @@ function listSessions(ms: Match[]) {
 
 /**
  * Por que um dia deixou de bater: pega a hora do dia que ficou mais perto de bater e lista o que falhou nela.
- * Se as horas boas existem mas são menos seguidas do que o pedido, diz isso.
+ * Se as horas boas existem mas são menos seguidas do que o mínimo (2), diz isso.
  */
 export function explainDate(spot: Spot, hours: HourPoint[], prefs: SpotPrefs, date: string): string {
   const tides = tideStates(hours)

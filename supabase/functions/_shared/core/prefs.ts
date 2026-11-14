@@ -24,7 +24,6 @@ export type SpotPrefs = {
   tide: TideState[]
   /** partes do dia (vazio = qualquer hora com luz) */
   dayParts: DayPart[]
-  /** horas seguidas mínimas para valer a sessão */
   /** quantos dias à frente avisar (padrão 7) */
   daysAhead: number
   /** direção da ondulação principal (graus, de onde vem) com tolerância ±; null = qualquer direção */
