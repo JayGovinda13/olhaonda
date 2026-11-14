@@ -278,6 +278,21 @@ export function PrefsDialog({
             </Stack>
           </Section>
 
+          <Section title="Quanto tempo a condição precisa durar">
+            <ToggleButtonGroup
+              exclusive
+              fullWidth
+              size="small"
+              value={p.minHours}
+              onChange={(_, v) => v && set('minHours', v as 1 | 2)}
+              aria-label="Quanto tempo a condição precisa durar"
+              sx={{ '& .MuiToggleButton-root': { textTransform: 'none', fontWeight: 700, py: 1 } }}
+            >
+              <ToggleButton value={2}>Mínimo 2 horas seguidas</ToggleButton>
+              <ToggleButton value={1}>Avisar mesmo se for só 1 hora</ToggleButton>
+            </ToggleButtonGroup>
+          </Section>
+
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
             <Box sx={{ flex: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 700 }}>

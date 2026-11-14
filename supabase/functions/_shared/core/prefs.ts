@@ -24,6 +24,8 @@ export type SpotPrefs = {
   tide: TideState[]
   /** partes do dia (vazio = qualquer hora com luz) */
   dayParts: DayPart[]
+  /** 2 = só avisa se a condição durar 2 horas seguidas ou mais (padrão); 1 = avisa mesmo se for só 1 hora */
+  minHours: 1 | 2
   /** quantos dias à frente avisar (padrão 7) */
   daysAhead: number
   /** direção da ondulação principal (graus, de onde vem) com tolerância ±; null = qualquer direção */
@@ -49,6 +51,7 @@ export const DEFAULT_PREFS: SpotPrefs = {
   minPeriod: 7,
   tide: [],
   dayParts: ['manha', 'tarde'],
+  minHours: 2,
   daysAhead: 7,
   swellDir: null,
   swellDirTol: 45,
@@ -76,7 +79,9 @@ const OK_WIND: Record<SpotPrefs['wind'], WindKind[]> = {
 
 /** completa preferências salvas antigas/incompletas com o padrão */
 export function normalizePrefs(p: Partial<SpotPrefs> | null | undefined): SpotPrefs {
-  return { ...DEFAULT_PREFS, ...(p ?? {}) }
+  const n = { ...DEFAULT_PREFS, ...(p ?? {}) }
+  n.minHours = n.minHours === 1 ? 1 : 2 // só existem duas opções (valores antigos, de 3 a 5, viram 2)
+  return n
 }
 
 const hourOf = (iso: string) => Number(iso.slice(11, 13))
@@ -196,9 +201,6 @@ export type Match = {
  * Janelas de horas seguidas que batem com o gosto, a partir de `from` (ISO local) até `daysAhead` dias.
  * Uma janela por dia (a mais longa).
  */
-/** Janela mínima para avisar: horas seguidas boas. Fixa (não é opção): evita avisos de 1 hora só, que passam rápido. */
-export const MIN_RUN_HOURS = 2
-
 export function findMatches(spot: Spot, hours: HourPoint[], prefs: SpotPrefs, from: string, daysAhead = prefs.daysAhead): Match[] {
   const tides = tideStates(hours)
   const last = new Date(`${from.slice(0, 10)}T12:00:00Z`)
@@ -207,7 +209,7 @@ export function findMatches(spot: Spot, hours: HourPoint[], prefs: SpotPrefs, fr
   const best = new Map<string, Match>()
   let run: { i: number; checks: HourCheck[] }[] = []
   const flush = () => {
-    if (run.length >= MIN_RUN_HOURS) {
+    if (run.length >= prefs.minHours) {
       const hs = run.map((r) => hours[r.i])
       const date = hs[0].time.slice(0, 10)
       const hbs = run.map((r) => r.checks[0].hb)
