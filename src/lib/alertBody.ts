@@ -78,3 +78,28 @@ export function parseBody(n: Pick<AppNotification, 'kind' | 'body'>): ParsedBody
 
   return { type: 'text', text: body }
 }
+
+/** "dom 15/11" + data do aviso → "2026-11-15" (o ano vem da data em que o aviso foi criado; vira o ano se precisar) */
+function dateOf(dayLabel: string, createdAt: string): string | null {
+  const m = /(\d{1,2})\/(\d{1,2})/.exec(dayLabel)
+  if (!m) return null
+  const created = Date.parse(createdAt)
+  if (Number.isNaN(created)) return null
+  const y0 = new Date(created).getUTCFullYear()
+  for (const y of [y0, y0 + 1]) {
+    const d = Date.UTC(y, Number(m[2]) - 1, Number(m[1]))
+    if (d >= created - 2 * 86_400_000) return new Date(d).toISOString().slice(0, 10)
+  }
+  return null
+}
+
+/**
+ * Endereço do pico no dia e na hora de uma janela do aviso: abre a previsão exatamente naquele horário
+ * (e não na primeira janela do aviso). `day` = "dom 15/11"; `hours` = "16h–19h" ou "(05h)"; sem hora, 7h.
+ */
+export function windowHref(spotId: string, day: string, hours: string | undefined, createdAt: string): string | null {
+  const date = dateOf(day, createdAt)
+  if (!date) return null
+  const hh = /(\d{1,2})h/.exec(hours ?? '')?.[1]
+  return `/pico/${spotId}?t=${encodeURIComponent(`${date}T${String(hh ?? 7).padStart(2, '0')}:00`)}`
+}

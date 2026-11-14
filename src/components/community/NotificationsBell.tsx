@@ -59,7 +59,14 @@ export function NotificationsBell() {
                 <span aria-hidden="true">{ALERT_KIND[n.kind].emoji} </span>
                 {n.title}
               </Typography>
-              <NotificationBody n={n} />
+              <NotificationBody
+                n={n}
+                onOpen={(to) => {
+                  setAnchor(null)
+                  if (!n.readAt) void markRead([n.id])
+                  navigate(to)
+                }}
+              />
               <Typography variant="caption" sx={{ opacity: 0.55 }}>
                 {timeAgo(n.createdAt)}
               </Typography>

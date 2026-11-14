@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Chip, Paper, Skeleton, Stack, Switch, Typography } from '@mui/material'
 import { Bell, BellOff, ChatLines, EditPencil, SeaWaves } from 'iconoir-react'
 import { useEffect, useState } from 'react'
-import { Link as RouterLink, Navigate, useSearchParams } from 'react-router'
+import { Link as RouterLink, Navigate, useNavigate, useSearchParams } from 'react-router'
 import { fetchForecast } from '../api/openMeteo'
 import { useAuth } from '../auth/context'
 import { backend, type Favorite } from '../backend'
@@ -27,6 +27,7 @@ import { localNow } from '../../supabase/functions/_shared/core/time.ts'
 /** Meus picos: favoritos, condições preferidas, próximas sessões que batem e notificações. */
 export default function MySpotsPage() {
   const { user, ready } = useAuth()
+  const navigate = useNavigate()
   const { favorites, save, remove } = useFavorites()
   const { list: notes, markRead } = useNotifications()
   const alertStates = useAlertStates(favorites?.length)
@@ -207,7 +208,13 @@ export default function MySpotsPage() {
               <span aria-hidden="true">{ALERT_KIND[n.kind].emoji} </span>
               {n.title}
             </Typography>
-            <NotificationBody n={n} />
+            <NotificationBody
+              n={n}
+              onOpen={(to) => {
+                if (!n.readAt) void markRead([n.id])
+                navigate(to)
+              }}
+            />
             <Typography variant="caption" sx={{ opacity: 0.55, display: 'block', mt: 0.5 }}>
               {ALERT_KIND[n.kind].label} · {timeAgo(n.createdAt)}
             </Typography>

@@ -46,9 +46,10 @@ export default function ForecastPage() {
   // ?t=2026-11-12T06:00 (links dos avisos e do fórum) abre direto naquela hora
   const [params] = useSearchParams()
   const linked = params.get('t')
-  const [pick, setPick] = useState<{ spot: string; time: string } | null>(null)
-  const selTime = pick?.spot === spot.id ? pick.time : linked
-  const setSelTime = useCallback((time: string) => setPick({ spot: spot.id, time }), [spot.id])
+  const [pick, setPick] = useState<{ spot: string; time: string; linked: string | null } | null>(null)
+  // um novo ?t= (clique numa janela do aviso) vale mais do que a hora escolhida antes nesta página
+  const selTime = pick?.spot === spot.id && pick.linked === linked ? pick.time : linked
+  const setSelTime = useCallback((time: string) => setPick({ spot: spot.id, time, linked }), [spot.id, linked])
 
   const selected = hours ? (hours.find((h) => h.time === selTime) ?? hours[nowIdx]) : undefined
   const selDate = selected?.time.slice(0, 10) ?? ''
