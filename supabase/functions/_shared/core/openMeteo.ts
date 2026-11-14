@@ -14,6 +14,7 @@
 
 // Código compartilhado entre o site (Vite) e as Edge Functions (Deno): sem import.meta.env nem DOM.
 import { extendTide } from './tideHarmonic.ts'
+import { trainEnergy, energyPeriod } from './surf.ts'
 
 export const marineUrl = (apiKey?: string) =>
   apiKey ? 'https://customer-marine-api.open-meteo.com/v1/marine' : 'https://marine-api.open-meteo.com/v1/marine'
@@ -31,6 +32,9 @@ const MARINE_HOURLY = [
   'secondary_swell_wave_height',
   'secondary_swell_wave_direction',
   'secondary_swell_wave_period',
+  'tertiary_swell_wave_height',
+  'tertiary_swell_wave_direction',
+  'tertiary_swell_wave_period',
   'wind_wave_height',
   'wind_wave_direction',
   'wind_wave_period',
@@ -80,6 +84,12 @@ export type HourPoint = {
   swell2Height: number | null
   swell2Direction: number | null
   swell2Period: number | null
+  /** 3º swell (só alguns modelos entregam; vem do mesmo modelo dos outros swells) */
+  swell3Height?: number | null
+  swell3Direction?: number | null
+  swell3Period?: number | null
+  /** energia (kJ/m) calculada só com as ondulações do 2º modelo (NOAA GFS-Wave); a força da onda tira a média dos dois modelos */
+  energyAlt?: number | null
   windWaveHeight: number | null
   windWaveDirection: number | null
   windWavePeriod: number | null
@@ -227,7 +237,19 @@ export function fetchForecastRaw(lat: number, lon: number, opts: { apiKey?: stri
       // best_match primeiro; depois do horizonte dele, o modelo de longo prazo
       const best = (k: string) => m[`${k}_marine_best_match`]?.[i] ?? m[`${k}_best_match`]?.[i] ?? m[k]?.[i] ?? null
       const mv = (k: string) => best(k) ?? m[`${k}_${LONG_MODEL}`]?.[i] ?? null
+      // 3º swell: do mesmo modelo que entregou os outros swells nesta hora (não mistura partições de modelos diferentes)
+      const tv = (k: string) => (best('swell_wave_height') != null ? best(k) : (m[`${k}_${LONG_MODEL}`]?.[i] ?? null))
       const td = tideAt.get(time)
+      // energia pelo 2º modelo, com as ondulações dele (inclui o 3º swell); só quando o modelo principal também tem dado nesta hora
+      const lv = (k: string) => m[`${k}_${LONG_MODEL}`]?.[i] ?? null
+      let altEnergy: number | null = null
+      if (best('swell_wave_height') != null) {
+        for (const [hk, pk] of [['swell_wave_height', 'swell_wave_period'], ['secondary_swell_wave_height', 'secondary_swell_wave_period'], ['tertiary_swell_wave_height', 'tertiary_swell_wave_period'], ['wind_wave_height', 'wind_wave_period']]) {
+          const hh = lv(hk)
+          const te = energyPeriod(lv(pk))
+          if (hh != null && hh > 0 && te != null) altEnergy = (altEnergy ?? 0) + trainEnergy(hh, te)
+        }
+      }
       return {
         time,
         waveHeight: mv('wave_height'),
@@ -240,6 +262,10 @@ export function fetchForecastRaw(lat: number, lon: number, opts: { apiKey?: stri
         swell2Height: mv('secondary_swell_wave_height'),
         swell2Direction: mv('secondary_swell_wave_direction'),
         swell2Period: mv('secondary_swell_wave_period'),
+        swell3Height: tv('tertiary_swell_wave_height'),
+        swell3Direction: tv('tertiary_swell_wave_direction'),
+        swell3Period: tv('tertiary_swell_wave_period'),
+        energyAlt: altEnergy,
         windWaveHeight: mv('wind_wave_height'),
         windWaveDirection: mv('wind_wave_direction'),
         windWavePeriod: mv('wind_wave_period'),

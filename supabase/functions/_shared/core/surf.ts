@@ -185,14 +185,21 @@ export function trainEnergyFromPeriod(h: number, period: number) {
 
 /**
  * Força da onda: energia de uma onda por metro de crista, em quilojoules (kJ).
- * Soma a energia de cada trem de ondas com o período dele (swell principal, swell secundário e mar
- * de vento), porque a altura total misturada com o período de um deles erra: o mar de vento é curto
+ * Soma a energia de cada trem de ondas com o período dele (até 3 swells e o mar de vento), porque a altura total misturada com o período de um deles erra: o mar de vento é curto
  * e leva pouca energia, o swell é longo e leva muita. Sem as componentes, usa a altura total.
  */
 export function waveEnergy(h: HourPoint) {
+  const own = ownEnergy(h)
+  // média com a energia calculada pelo 2º modelo (juntar modelos reduz o erro de cada um)
+  if (own != null && h.energyAlt != null) return (own + h.energyAlt) / 2
+  return own
+}
+
+function ownEnergy(h: HourPoint) {
   const parts: [number | null, number | null][] = [
     [h.swellHeight, energyPeriod(h.swellPeriod, h.swellPeakPeriod)],
     [h.swell2Height, energyPeriod(h.swell2Period)],
+    [h.swell3Height ?? null, energyPeriod(h.swell3Period)],
     [h.windWaveHeight, energyPeriod(h.windWavePeriod)],
   ]
   let total = 0

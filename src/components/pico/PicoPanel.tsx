@@ -53,6 +53,7 @@ export function PicoPanel({
   const comps = [
     { label: 'Swell 1', h: h.swellHeight, d: h.swellDirection, t: h.swellPeakPeriod ?? h.swellPeriod },
     { label: 'Swell 2', h: h.swell2Height, d: h.swell2Direction, t: h.swell2Period },
+    { label: 'Swell 3', h: h.swell3Height ?? null, d: h.swell3Direction ?? null, t: h.swell3Period ?? null },
     { label: 'Mar de vento', h: h.windWaveHeight, d: h.windWaveDirection, t: h.windWavePeriod },
   ].filter((c) => c.h != null && c.d != null && c.t != null && c.h >= 0.05)
   const wk = windKind(spot, h.windDirection, h.windSpeed)

@@ -65,6 +65,7 @@ export function surfEstimate(spot: Spot, h: HourPoint): SurfEstimate | null {
   const raw: { label: string; h: number | null; t: number | null; d: number | null; windSea?: boolean }[] = [
     { label: 'Swell 1', h: h.swellHeight, t: h.swellPeakPeriod ?? h.swellPeriod, d: h.swellDirection },
     { label: 'Swell 2', h: h.swell2Height, t: h.swell2Period, d: h.swell2Direction },
+    { label: 'Swell 3', h: h.swell3Height ?? null, t: h.swell3Period ?? null, d: h.swell3Direction ?? null },
     { label: 'Mar de vento', h: h.windWaveHeight, t: h.windWavePeriod, d: h.windWaveDirection, windSea: true },
   ]
   let comps = raw.filter((c) => c.h != null && c.h > 0.02 && c.t != null && c.d != null)
