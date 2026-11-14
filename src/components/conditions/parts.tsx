@@ -60,7 +60,7 @@ export function DayChips({ label, days, selectedDate, onSelect }: { label: strin
               border: d.trend && !active ? `1px dashed ${alpha(brand.purple, 0.3)}` : '1px solid transparent',
             }}
           >
-            <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', opacity: 0.75 }}>
+            <Typography sx={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', opacity: 0.75 }}>
               {i === 0 ? 'Hoje' : wd} {dm.slice(0, 2)}
             </Typography>
             <Box sx={{ height: 24, display: 'grid', placeItems: 'center', my: 0.25 }}>{d.glyph}</Box>
@@ -106,7 +106,7 @@ export function StatGrid({ items }: { items: Stat[] }) {
     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, mt: 2 }}>
       {items.map((s, i) => (
         <Box key={i} sx={{ px: 1.5, py: 1, borderRadius: '12px', bgcolor: s.tint ? alpha(s.tint, 0.13) : alpha(brand.purple, 0.045), minWidth: 0 }}>
-          <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', opacity: 0.65 }} noWrap>
+          <Typography sx={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.04em', opacity: 0.65 }} noWrap>
             {s.label}
           </Typography>
           <Typography sx={{ fontSize: 18, fontWeight: 800, lineHeight: 1.25 }} noWrap>

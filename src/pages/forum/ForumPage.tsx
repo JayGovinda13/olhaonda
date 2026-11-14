@@ -14,6 +14,8 @@ import {
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import { ChatBubble, Plus } from 'iconoir-react'
 import { useEffect, useState, type FormEvent } from 'react'
@@ -84,11 +86,12 @@ export default function ForumPage() {
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ alignItems: { md: 'center' } }}>
         <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, flex: 1 }}>
-          <Chip label="Tudo" onClick={() => update({ cat: null })} color={!category ? 'primary' : 'default'} variant={!category ? 'filled' : 'outlined'} />
+          <Chip sx={{ height: 36, fontSize: 13.5 }} label="Tudo" onClick={() => update({ cat: null })} color={!category ? 'primary' : 'default'} variant={!category ? 'filled' : 'outlined'} />
           {FORUM_CATEGORIES.map((c) => (
             <Chip
               key={c.id}
               label={c.label}
+              sx={{ height: 36, fontSize: 13.5 }}
               onClick={() => update({ cat: c.id })}
               color={category === c.id ? 'primary' : 'default'}
               variant={category === c.id ? 'filled' : 'outlined'}
@@ -143,9 +146,9 @@ export default function ForumPage() {
                 <Chip
                   size="small"
                   label={t.kind === 'daily' ? 'OlhaOnda · previsão do dia' : catLabel(t.category)}
-                  sx={{ height: 22, fontSize: 11, bgcolor: t.kind === 'daily' ? brand.purple : alpha(brand.green, 0.14), color: t.kind === 'daily' ? brand.sand : brand.deepGreen }}
+                  sx={{ height: 24, fontSize: 12, bgcolor: t.kind === 'daily' ? brand.purple : alpha(brand.green, 0.14), color: t.kind === 'daily' ? brand.sand : brand.deepGreen }}
                 />
-                {t.spotId && <Chip size="small" label={spotName(t.spotId)} variant="outlined" sx={{ height: 22, fontSize: 11 }} />}
+                {t.spotId && <Chip size="small" label={spotName(t.spotId)} variant="outlined" sx={{ height: 24, fontSize: 12 }} />}
               </Stack>
               <Typography sx={{ fontWeight: 800, fontSize: 17 }}>{t.title}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.65 }}>
@@ -184,6 +187,7 @@ export function NewThreadDialog({
   onClose: () => void
   onCreated: (t: Thread) => void
 }) {
+  const phone = useMediaQuery(useTheme().breakpoints.down('sm')) // no celular o diálogo ocupa a tela toda
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [category, setCategory] = useState<ForumCategory>(defaultCategory && defaultCategory !== 'previsao' ? defaultCategory : 'condicoes')
@@ -207,7 +211,7 @@ export function NewThreadDialog({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" slotProps={{ paper: { component: 'form', onSubmit: submit, sx: { borderRadius: '24px' } } as never }}>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={phone} slotProps={{ paper: { component: 'form', onSubmit: submit, sx: { borderRadius: { xs: 0, sm: '24px' } } } as never }}>
       <DialogTitle sx={{ fontWeight: 800 }}>Novo tópico</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
@@ -241,7 +245,7 @@ export function NewThreadDialog({
           />
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3 }}>
+      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 'max(16px, env(safe-area-inset-bottom))', sm: 3 } }}>
         <Button onClick={onClose}>Cancelar</Button>
         <Button type="submit" variant="contained" disabled={busy}>
           Publicar

@@ -14,6 +14,8 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import { Bell, ChatBubble } from 'iconoir-react'
 import { Link as RouterLink } from 'react-router'
@@ -74,6 +76,7 @@ export function PrefsDialog({
   onSave: (prefs: SpotPrefs, notify: boolean) => Promise<void>
   onRemove: () => Promise<void>
 }) {
+  const phone = useMediaQuery(useTheme().breakpoints.down('sm')) // no celular o diálogo ocupa a tela toda
   const [p, setP] = useState<SpotPrefs>(initial ?? DEFAULT_PREFS)
   const [notify, setNotify] = useState(initialNotify)
   const [busy, setBusy] = useState(false)
@@ -114,7 +117,7 @@ export function PrefsDialog({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" slotProps={{ paper: { sx: { borderRadius: '24px' } } }}>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={phone} slotProps={{ paper: { sx: { borderRadius: { xs: 0, sm: '24px' } } } }}>
       <DialogTitle sx={{ fontWeight: 800, pb: 0.5 }}>Seu gosto em {spot.name}</DialogTitle>
       <DialogContent>
         <Typography variant="body2" sx={{ opacity: 0.7, mb: 2 }}>
@@ -358,7 +361,7 @@ export function PrefsDialog({
           </Box>
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3, gap: 1, flexWrap: 'wrap' }}>
+      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 'max(16px, env(safe-area-inset-bottom))', sm: 3 }, gap: 1, flexWrap: 'wrap' }}>
         {isFavorite && (
           <Button
             color="secondary"

@@ -384,6 +384,7 @@ export function SpotDetailMap({ spot, hour, mode = 'ondas' }: { spot: Spot; hour
             boxShadow: '0 2px 8px rgba(75,29,90,.35)',
           },
           '& .maplibregl-ctrl-group': { borderRadius: '10px', boxShadow: 'none', border: '1px solid rgba(75,29,90,.15)' },
+          '@media (pointer: coarse)': { '& .maplibregl-ctrl-group button': { width: 38, height: 38 } },
         }}
       />
       {/* resumo do swell + legenda da força (cor das setas) */}

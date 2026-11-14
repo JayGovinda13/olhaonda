@@ -32,7 +32,7 @@ export function SpotPicker({
   }
 
   return (
-    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', width: '100%', maxWidth: width }}>
+    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', width: '100%', maxWidth: { xs: '100%', sm: width } }}>
       <Autocomplete
         size="small"
         options={SPOTS_BY_PLACE}
@@ -43,6 +43,7 @@ export function SpotPicker({
         isOptionEqualToValue={(a, b) => a.id === b.id}
         onChange={(_, s) => onChange(s ?? null)}
         sx={{ flex: 1 }}
+        slotProps={{ popupIndicator: { sx: { width: 36, height: 36 } }, clearIndicator: { sx: { width: 36, height: 36 } } }}
         renderInput={(params) => (
           <TextField
             {...params}

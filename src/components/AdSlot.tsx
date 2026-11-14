@@ -66,7 +66,7 @@ export function AdSlot({ format = 'leaderboard', seed = 0 }: { format?: AdFormat
 
   const tag = (
     <Typography
-      sx={{ position: 'absolute', top: 8, right: 12, fontSize: 10, fontWeight: 800, letterSpacing: '.08em', opacity: 0.5 }}
+      sx={{ position: 'absolute', top: 8, right: 12, fontSize: 11, fontWeight: 800, letterSpacing: '.08em', opacity: 0.5 }}
     >
       PUBLICIDADE
     </Typography>

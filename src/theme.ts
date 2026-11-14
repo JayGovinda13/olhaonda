@@ -135,7 +135,8 @@ export const theme = createTheme({
     MuiAutocomplete: { styleOverrides: { paper: { backgroundColor: 'var(--oo-paper-solid)', backdropFilter: 'none' } } },
     MuiPopover: { styleOverrides: { paper: { backgroundColor: 'var(--oo-paper-solid)', backdropFilter: 'none' } } },
     MuiDialog: { styleOverrides: { paper: { backgroundColor: 'var(--oo-paper-solid)', backdropFilter: 'none' } } },
-    MuiButton: { defaultProps: { disableElevation: true } },
+    // botões pequenos ficam com pelo menos 36 px de altura em tela de toque (mais fáceis de acertar com o dedo)
+    MuiButton: { defaultProps: { disableElevation: true }, styleOverrides: { sizeSmall: { '@media (pointer: coarse)': { minHeight: 36 } } } },
     MuiChip: { styleOverrides: { root: { fontWeight: 700 } } },
     MuiTooltip: {
       styleOverrides: {

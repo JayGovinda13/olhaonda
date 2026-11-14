@@ -243,6 +243,7 @@ export function HomeMap({ items, height }: { items: MapItem[]; height: number | 
             px: '5px',
           },
           '& .maplibregl-ctrl-group': { borderRadius: '10px', boxShadow: 'none', border: '1px solid rgba(75,29,90,.15)' },
+          '@media (pointer: coarse)': { '& .maplibregl-ctrl-group button': { width: 38, height: 38 } },
         }}
       />
       {!ready && (

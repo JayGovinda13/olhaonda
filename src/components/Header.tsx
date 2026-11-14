@@ -40,8 +40,8 @@ export function Header() {
         borderBottom: `1px solid ${alpha(brand.purple, 0.08)}`,
       }}
     >
-      <Container maxWidth="lg" sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, py: 1.25, px: { xs: 2, sm: 3 } }}>
-        <Box component={NavLink} to="/" aria-label="OlhaOnda, início" sx={{ display: 'flex', mr: { md: 2 } }}>
+      <Container maxWidth="lg" sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 2 }, py: 1, px: { xs: 1.5, sm: 3 } }}>
+        <Box component={NavLink} to="/" aria-label="OlhaOnda, início" sx={{ display: 'flex', alignItems: 'center', minHeight: 44, px: { xs: 0.5, md: 0 }, mr: { md: 2 } }}>
           <Box sx={{ display: { xs: 'block', md: 'none' } }}>
             <LogoMark size={28} />
           </Box>
@@ -50,7 +50,7 @@ export function Header() {
           </Box>
         </Box>
 
-        <Stack component="nav" direction="row" spacing={0.5} sx={{ flex: 1, justifyContent: { xs: 'center', md: 'flex-start' } }}>
+        <Stack component="nav" direction="row" spacing={0.25} sx={{ flex: 1, minWidth: 0, justifyContent: { xs: 'center', md: 'flex-start' } }}>
           {nav.length > 1 && nav.map((n) => (
             <Button
               key={n.to}
@@ -59,16 +59,20 @@ export function Header() {
               end={n.end}
               startIcon={n.icon}
               color="primary"
+              aria-label={n.label}
               sx={{
                 borderRadius: 99,
                 px: { xs: 1.25, sm: 2 },
                 minWidth: 0,
+                minHeight: 40,
                 '& .MuiButton-startIcon': { mr: { xs: 0.5, sm: 1 } },
                 '&.active': { bgcolor: brand.purple, color: brand.sand },
                 fontSize: { xs: 13, sm: 14 },
+                // telas bem estreitas: só a página aberta mostra o nome, as outras viram só o ícone (assim o cabeçalho cabe)
+                '@media (max-width: 419.95px)': { '&:not(.active)': { px: 1.25, '& .MuiButton-startIcon': { m: 0 }, '& .nav-label': { display: 'none' } } },
               }}
             >
-              {n.label}
+              <span className="nav-label">{n.label}</span>
             </Button>
           ))}
         </Stack>
@@ -80,7 +84,7 @@ export function Header() {
             target="_blank"
             rel="noopener"
             aria-label="Instagram do OlhaOnda (@olhaonda_)"
-            sx={{ color: 'text.primary' }}
+            sx={{ color: 'text.primary', display: { xs: 'none', sm: 'inline-flex' } }} // no celular o Instagram fica no rodapé
           >
             <Instagram width={20} height={20} />
           </IconButton>

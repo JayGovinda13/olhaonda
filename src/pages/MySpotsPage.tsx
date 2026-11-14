@@ -286,7 +286,7 @@ function FavoriteCard({ spot, fav, alert, onEdit, onToggle }: { spot: Spot; fav:
           {!list ? 'Conferindo a previsão…' : list.length ? 'Próximos dias que batem:' : 'Nenhum dia dos próximos 14 bate por enquanto.'}
         </Typography>
         {list?.slice(0, 3).map((m) => (
-          <Typography key={m.start} variant="body2" component={RouterLink} to={`/pico/${spot.id}?t=${encodeURIComponent(m.start)}`} sx={{ display: 'block', color: brand.deepGreen, fontWeight: 600 }}>
+          <Typography key={m.start} variant="body2" component={RouterLink} to={`/pico/${spot.id}?t=${encodeURIComponent(m.start)}`} sx={{ display: 'block', py: 0.5, color: brand.deepGreen, fontWeight: 600 }}>
             {describeMatch(m)}
           </Typography>
         ))}
