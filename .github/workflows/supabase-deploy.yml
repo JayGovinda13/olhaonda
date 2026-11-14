@@ -70,5 +70,6 @@ jobs:
           supabase functions deploy daily-forecast --no-verify-jwt --yes
           supabase functions deploy push-test --yes
           supabase functions deploy account-delete --yes
+          supabase functions deploy alerts-now --yes
           supabase functions deploy whatsapp-link --yes
           supabase functions deploy whatsapp-webhook --no-verify-jwt --yes

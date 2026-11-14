@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { backend, type AlertState } from '../backend'
 import { useAuth } from '../auth/context'
+import { ALERTS_EVENT } from '../lib/alertsBus'
 
 /** Ciclo de aviso de cada pico favorito (ativo, parado, janelas já avisadas), para mostrar em "Meus picos". */
 export function useAlertStates(reload?: unknown) {
@@ -18,9 +19,11 @@ export function useAlertStates(reload?: unknown) {
     void load()
     const t = setInterval(() => void load(), 2 * 60_000)
     const off = backend.notifications.onChange(() => void load())
+    window.addEventListener(ALERTS_EVENT, load)
     return () => {
       alive = false
       clearInterval(t)
+      window.removeEventListener(ALERTS_EVENT, load)
       off()
     }
   }, [uid, reload])

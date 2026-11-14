@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { backend, type AppNotification } from '../backend'
+import { ALERTS_EVENT } from '../lib/alertsBus'
 import { useAuth } from '../auth/context'
 
 /** Notificações do usuário (sino do cabeçalho e "Meus picos"). */
@@ -28,10 +29,12 @@ export function useNotifications() {
         .catch(() => {})
     void load()
     const off = backend.notifications.onChange(() => void load())
+    window.addEventListener(ALERTS_EVENT, load)
     const t = setInterval(() => void load(), 5 * 60_000)
     return () => {
       alive = false
       off()
+      window.removeEventListener(ALERTS_EVENT, load)
       clearInterval(t)
     }
   }, [uid])

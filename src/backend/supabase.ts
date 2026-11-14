@@ -6,6 +6,7 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import { EMPTY_ALERT, type AlertState } from '../../supabase/functions/_shared/core/alerts.ts'
 import type { SpotPrefs } from '../../supabase/functions/_shared/core/prefs.ts'
 import { normalizePrefs } from '../../supabase/functions/_shared/core/prefs.ts'
+import { notifyAlertsChanged } from '../lib/alertsBus'
 import { TERMS_VERSION } from './types'
 import type { AdminOverview, AppNotification, Backend, Favorite, ForumCategory, Level, Modality, Photo, PhotoSession, Post, Profile, Purchase, Thread } from './types'
 
@@ -322,6 +323,8 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         const row = check(
           await sb.from('favorite_spots').upsert({ user_id: id, spot_id: spotId, prefs, notify }).select('*').single(),
         ) as Row
+        // confere o aviso na hora (em vez de esperar a próxima rodada do servidor) e avisa as telas para atualizar
+        if (notify) void invoke('alerts-now', { spotId }).then(notifyAlertsChanged, notifyAlertsChanged)
         return toFavorite(row)
       },
       async remove(spotId) {
