@@ -87,6 +87,8 @@ export type Thread = {
   spotId: string | null
   authorId: string
   authorName: string
+  /** apelido de quem escreveu (sem @) */
+  authorUsername?: string | null
   createdAt: string
   lastActivityAt: string
   replyCount: number
@@ -103,8 +105,8 @@ export type Favorite = { spotId: string; prefs: SpotPrefs; notify: boolean; crea
 export type AppNotification = {
   id: string
   spotId: string
-  /** enter = entrou na condição · back = voltou · change = a previsão mudou · lost = saiu (com o motivo) · match = aviso antigo */
-  kind: AlertEventType | 'match'
+  /** enter = entrou na condição · back = voltou · change = a previsão mudou · lost = saiu (com o motivo) · match = aviso antigo · mention = te marcaram no fórum */
+  kind: AlertEventType | 'match' | 'mention'
   sessionDate: string
   title: string
   body: string
@@ -132,6 +134,7 @@ export type Post = {
   body: string
   authorId: string
   authorName: string
+  authorUsername?: string | null
   createdAt: string
 }
 
@@ -168,6 +171,7 @@ export type Purchase = {
   createdAt: string
 }
 
+export type MemberHit = { username: string; name: string }
 export type NewThread = { title: string; body: string; category: ForumCategory; spotId: string | null }
 export type { AlertEventType, AlertState, DailySummary, SpotPrefs }
 export type NewSession = { spotId: string; date: string; period: Period; title: string | null; priceCents: number }
@@ -206,6 +210,8 @@ export interface Backend {
     getThread(id: string): Promise<{ thread: Thread; posts: Post[] } | null>
     createThread(input: NewThread): Promise<Thread>
     reply(threadId: string, body: string): Promise<Post>
+    /** Pessoas liberadas para marcar com @ (por apelido ou nome). */
+    searchMembers(query: string): Promise<MemberHit[]>
     deletePost(postId: string): Promise<void>
     /**
      * Só no modo demonstração: publica o resumo do dia (no Supabase quem publica é a Edge Function

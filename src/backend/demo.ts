@@ -3,6 +3,7 @@
  * Usado quando VITE_SUPABASE_URL não está configurado, para navegar e testar as telas.
  */
 import type { AlertState } from '../../supabase/functions/_shared/core/alerts.ts'
+import { extractMentions } from '../lib/mentions'
 import { USERNAME_RE } from './types'
 import type {
   AdminOverview,
@@ -81,6 +82,7 @@ function seed(): DB {
       spotId: 'gua-tombo-palanque',
       authorId: 'u-rafa',
       authorName: 'Rafa Bodyboard',
+      authorUsername: 'rafa.bodyboard',
       createdAt: iso(180),
       lastActivityAt: iso(40),
       replyCount: 2,
@@ -95,6 +97,7 @@ function seed(): DB {
       spotId: 'gua-pit-ilha',
       authorId: 'u-ana',
       authorName: 'Ana Lima',
+      authorUsername: 'ana.lima',
       createdAt: iso(60 * 26),
       lastActivityAt: iso(60 * 20),
       replyCount: 1,
@@ -109,6 +112,7 @@ function seed(): DB {
       spotId: 'itacare',
       authorId: 'u-leo',
       authorName: 'Léo',
+      authorUsername: 'leo',
       createdAt: iso(60 * 72),
       lastActivityAt: iso(60 * 72),
       replyCount: 0,
@@ -117,9 +121,9 @@ function seed(): DB {
     },
   ]
   const posts: Post[] = [
-    { id: 'p1', threadId: t1, body: 'Guaiúba estava menor mas bem formada na direita do canto.', authorId: 'u-ana', authorName: 'Ana Lima', createdAt: iso(120) },
-    { id: 'p2', threadId: t1, body: 'Amanhã o modelo mostra 12 s de período, deve ficar ainda melhor.', authorId: 'u-leo', authorName: 'Léo', createdAt: iso(40) },
-    { id: 'p3', threadId: t2, body: 'Fish funciona bem lá até meio metro. Acima disso vai de prancha normal.', authorId: 'u-rafa', authorName: 'Rafa Bodyboard', createdAt: iso(60 * 20) },
+    { id: 'p1', threadId: t1, body: 'Guaiúba estava menor mas bem formada na direita do canto.', authorId: 'u-ana', authorName: 'Ana Lima', authorUsername: 'ana.lima', createdAt: iso(120) },
+    { id: 'p2', threadId: t1, body: 'Amanhã o modelo mostra 12 s de período, deve ficar ainda melhor.', authorId: 'u-leo', authorName: 'Léo', authorUsername: 'leo', createdAt: iso(40) },
+    { id: 'p3', threadId: t2, body: 'Fish funciona bem lá até meio metro. Acima disso vai de prancha normal.', authorId: 'u-rafa', authorName: 'Rafa Bodyboard', authorUsername: 'rafa.bodyboard', createdAt: iso(60 * 20) },
   ]
   const sessions: PhotoSession[] = []
   const photos: Photo[] = []
@@ -177,6 +181,26 @@ function dropAlertState(userId: string, spotId: string) {
 }
 let demoWaPending: { phone: string; code: string } | null = null
 const emitNotif = () => notifListeners.forEach((l) => l())
+/** marcou @alguém: a pessoa (se tiver conta neste navegador) recebe um aviso, como o servidor faz no Supabase */
+function notifyMentions(author: Profile, text: string, threadTitle: string, threadId: string) {
+  for (const handle of extractMentions(text)) {
+    const target = db.users.find((u) => u.profile.username === handle && u.profile.id !== author.id)
+    if (!target) continue
+    const n: AppNotification = {
+      id: uid(),
+      spotId: 'forum',
+      kind: 'mention',
+      sessionDate: today(),
+      title: `${author.name} te marcou no fórum`,
+      body: `${threadTitle.slice(0, 80)}: ${text.slice(0, 140)}`,
+      url: `/forum/${threadId}`,
+      createdAt: iso(),
+      readAt: null,
+    }
+    db.notifications[target.profile.id] = [n, ...(db.notifications[target.profile.id] ?? [])].slice(0, 100)
+  }
+  emitNotif()
+}
 
 function save() {
   try {
@@ -308,6 +332,7 @@ export const demoBackend: Backend = {
         id: uid(),
         authorId: me.id,
         authorName: me.name,
+        authorUsername: me.username ?? null,
         createdAt: iso(),
         lastActivityAt: iso(),
         replyCount: 0,
@@ -315,20 +340,32 @@ export const demoBackend: Backend = {
         forecastDate: null,
       }
       db.threads.unshift(t)
+      notifyMentions(me, `${t.title}: ${t.body}`, t.title, t.id)
       save()
       return delay(t)
     },
     async reply(threadId, body) {
       const me = requireMe()
-      const p: Post = { id: uid(), threadId, body, authorId: me.id, authorName: me.name, createdAt: iso() }
+      const p: Post = { id: uid(), threadId, body, authorId: me.id, authorName: me.name, authorUsername: me.username ?? null, createdAt: iso() }
       db.posts.push(p)
       const t = db.threads.find((x) => x.id === threadId)
+      notifyMentions(me, body, t?.title ?? '', threadId)
       if (t) {
         t.replyCount++
         t.lastActivityAt = p.createdAt
       }
       save()
       return delay(p)
+    },
+    async searchMembers(query) {
+      const q = query.toLowerCase()
+      const people = [
+        { username: 'rafa.bodyboard', name: 'Rafa Bodyboard' },
+        { username: 'ana.lima', name: 'Ana Lima' },
+        { username: 'leo', name: 'Léo' },
+        ...db.users.filter((u) => u.profile.username).map((u) => ({ username: u.profile.username as string, name: u.profile.name })),
+      ]
+      return delay(people.filter((p) => p.username !== db.me?.username && (!q || p.username.startsWith(q) || p.name.toLowerCase().includes(q))).slice(0, 6))
     },
     async deletePost(postId) {
       const me = requireMe()

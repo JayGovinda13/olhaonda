@@ -20,6 +20,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '../../auth/context'
 import { backend, FORUM_CATEGORIES, USER_CATEGORIES, type ForumCategory, type Thread } from '../../backend'
+import { MentionField } from '../../components/community/MentionField'
 import { SpotPicker } from '../../components/SpotPicker'
 import { SPOTS } from '../../data/spots'
 import { timeAgo } from '../../lib/time'
@@ -148,7 +149,7 @@ export default function ForumPage() {
               </Stack>
               <Typography sx={{ fontWeight: 800, fontSize: 17 }}>{t.title}</Typography>
               <Typography variant="body2" sx={{ opacity: 0.65 }}>
-                {t.authorName} · {timeAgo(t.lastActivityAt)}
+                {t.authorName}{t.authorUsername ? ` @${t.authorUsername}` : ''} · {timeAgo(t.lastActivityAt)}
               </Typography>
             </Box>
             <Stack sx={{ alignItems: 'center', minWidth: 48, color: brand.plum }}>
@@ -229,13 +230,13 @@ export function NewThreadDialog({
               width="100%"
             />
           </Stack>
-          <TextField
+          <MentionField
             label="Mensagem"
             required
             multiline
             minRows={5}
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={setBody}
             slotProps={{ htmlInput: { maxLength: 10000 } }}
           />
         </Stack>

@@ -23,6 +23,7 @@ function toThread(r: Row): Thread {
     spotId: (r.spot_id as string | null) ?? null,
     authorId: str(r.author_id),
     authorName: str(r.author_name),
+    authorUsername: (r.author_username as string | null) ?? null,
     createdAt: str(r.created_at),
     lastActivityAt: str(r.last_activity_at),
     replyCount: Number(r.reply_count ?? 0),
@@ -44,7 +45,7 @@ function toNotification(r: Row): AppNotification {
   return {
     id: str(r.id),
     spotId: str(r.spot_id),
-    kind: (['enter', 'back', 'change', 'lost'].includes(r.kind as string) ? r.kind : 'match') as AppNotification['kind'],
+    kind: (['enter', 'back', 'change', 'lost', 'mention'].includes(r.kind as string) ? r.kind : 'match') as AppNotification['kind'],
     sessionDate: str(r.session_date),
     title: str(r.title),
     body: str(r.body),
@@ -61,6 +62,7 @@ function toPost(r: Row): Post {
     body: str(r.body),
     authorId: str(r.author_id),
     authorName: str(r.author_name),
+    authorUsername: (r.author_username as string | null) ?? null,
     createdAt: str(r.created_at),
   }
 }
@@ -307,6 +309,11 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         const row = check(await sb.from('forum_posts').insert({ thread_id: threadId, body }).select('id').single()) as Row
         const full = check(await sb.from('forum_posts_v').select('*').eq('id', row.id).single()) as Row
         return toPost(full)
+      },
+      async searchMembers(query) {
+        const { data, error } = await sb.rpc('forum_member_search', { q: query })
+        if (error) return []
+        return ((data ?? []) as Row[]).map((r) => ({ username: str(r.username), name: str(r.name) }))
       },
       async deletePost(postId) {
         check(await sb.from('forum_posts').delete().eq('id', postId))

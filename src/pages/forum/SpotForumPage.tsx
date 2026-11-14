@@ -183,7 +183,7 @@ function ThreadRow({ t, flat }: { t: Thread; flat?: boolean }) {
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontWeight: 800 }}>{t.title}</Typography>
         <Typography variant="body2" sx={{ opacity: 0.65 }}>
-          {t.authorName} · {timeAgo(t.lastActivityAt)}
+          {t.authorName}{t.authorUsername ? ` @${t.authorUsername}` : ''} · {timeAgo(t.lastActivityAt)}
         </Typography>
       </Box>
       <Stack sx={{ alignItems: 'center', minWidth: 40, color: brand.plum }}>

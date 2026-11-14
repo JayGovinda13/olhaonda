@@ -1,16 +1,18 @@
-import { Alert, Avatar, Box, Button, Chip, IconButton, Paper, Skeleton, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { Alert, Avatar, Box, Button, Chip, IconButton, Paper, Skeleton, Stack, Tooltip, Typography } from '@mui/material'
 import { ArrowLeft, Send, Trash } from 'iconoir-react'
 import { Fragment, useEffect, useState, type FormEvent } from 'react'
 import { Link as RouterLink, useParams } from 'react-router'
 import { useAuth } from '../../auth/context'
 import { backend, FORUM_CATEGORIES, type Post, type Thread } from '../../backend'
 import { AdSlot } from '../../components/AdSlot'
+import { MentionField } from '../../components/community/MentionField'
+import { MentionText } from '../../components/community/MentionText'
 import { LogoMark } from '../../components/Logo'
 import { SPOTS } from '../../data/spots'
 import { timeAgo } from '../../lib/time'
 import { brand } from '../../theme'
 
-function Message({ name, at, body, onDelete, official }: { name: string; at: string; body: string; onDelete?: () => void; official?: boolean }) {
+function Message({ name, username, at, body, onDelete, onMention, official }: { name: string; username?: string | null; at: string; body: string; onDelete?: () => void; onMention?: (username: string) => void; official?: boolean }) {
   return (
     <Stack direction="row" spacing={1.5}>
       {official ? (
@@ -25,6 +27,24 @@ function Message({ name, at, body, onDelete, official }: { name: string; at: str
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline' }}>
           <Typography sx={{ fontWeight: 800 }}>{name}</Typography>
+          {username &&
+            (onMention ? (
+              <Tooltip title={`Marcar @${username} na resposta`}>
+                <Typography
+                  component="button"
+                  type="button"
+                  variant="caption"
+                  onClick={() => onMention(username)}
+                  sx={{ border: 0, bgcolor: 'transparent', p: 0, cursor: 'pointer', color: brand.plum, fontWeight: 700, font: 'inherit', fontSize: 12.5 }}
+                >
+                  @{username}
+                </Typography>
+              </Tooltip>
+            ) : (
+              <Typography variant="caption" sx={{ color: brand.plum, fontWeight: 700 }}>
+                @{username}
+              </Typography>
+            ))}
           <Typography variant="caption" sx={{ opacity: 0.6 }}>
             {timeAgo(at)}
           </Typography>
@@ -37,7 +57,7 @@ function Message({ name, at, body, onDelete, official }: { name: string; at: str
             </Tooltip>
           )}
         </Stack>
-        <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', mt: 0.5 }}>{body}</Typography>
+        <MentionText text={body} sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', mt: 0.5 }} />
       </Box>
     </Stack>
   )
@@ -64,6 +84,12 @@ export default function ThreadPage() {
   }, [id])
 
   const current = data && data !== 'missing' && data.id === id ? data : null
+
+  // clicar no @apelido de alguém coloca a marcação na resposta
+  const mention = (username: string) => {
+    setReply((r) => `${r}${r && !/\s$/.test(r) ? ' ' : ''}@${username} `)
+    requestAnimationFrame(() => document.getElementById('forum-resposta')?.focus())
+  }
 
   const send = async (e: FormEvent) => {
     e.preventDefault()
@@ -141,7 +167,7 @@ export default function ThreadPage() {
             <Typography variant="h4" component="h1" sx={{ mb: 3, overflowWrap: 'anywhere' }}>
               {t.title}
             </Typography>
-            <Message name={t.authorName} at={t.createdAt} body={t.body} official={t.kind === 'daily'} />
+            <Message name={t.authorName} username={t.authorUsername} at={t.createdAt} body={t.body} official={t.kind === 'daily'} onMention={user ? mention : undefined} />
           </>
         )}
       </Paper>
@@ -149,7 +175,7 @@ export default function ThreadPage() {
       {current?.posts.map((p, i) => (
         <Fragment key={p.id}>
           <Paper sx={{ p: { xs: 2.5, sm: 3 } }}>
-            <Message name={p.authorName} at={p.createdAt} body={p.body} onDelete={user?.id === p.authorId ? () => void remove(p.id) : undefined} />
+            <Message name={p.authorName} username={p.authorUsername} at={p.createdAt} body={p.body} onMention={user ? mention : undefined} onDelete={user?.id === p.authorId ? () => void remove(p.id) : undefined} />
           </Paper>
           {i === 2 && <AdSlot format="inline" seed={i} />}
         </Fragment>
@@ -160,14 +186,14 @@ export default function ThreadPage() {
       {current && (
         <Paper component="form" onSubmit={send} sx={{ p: { xs: 2, sm: 3 } }}>
           <Stack spacing={1.5}>
-            <TextField
+            <MentionField
               placeholder={user ? 'Escreva sua resposta' : 'Entre para responder'}
               multiline
               minRows={3}
               value={reply}
-              onChange={(e) => setReply(e.target.value)}
+              onChange={setReply}
               onFocus={() => !user && void requireLogin('Entre para responder no fórum.')}
-              slotProps={{ htmlInput: { maxLength: 10000, 'aria-label': 'Resposta' } }}
+              slotProps={{ htmlInput: { maxLength: 10000, 'aria-label': 'Resposta', id: 'forum-resposta' } }}
             />
             <Box>
               <Button type="submit" variant="contained" disabled={busy || !reply.trim()} endIcon={<Send width={16} height={16} />}>

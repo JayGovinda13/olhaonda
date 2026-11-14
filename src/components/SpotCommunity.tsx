@@ -90,7 +90,7 @@ export function SpotCommunity({ spot }: { spot: Spot }) {
                   {t.title}
                 </Typography>
                 <Typography variant="caption" sx={{ opacity: 0.65 }}>
-                  {t.authorName} · {timeAgo(t.lastActivityAt)} · {t.replyCount} respostas
+                  {t.authorName}{t.authorUsername ? ` @${t.authorUsername}` : ''} · {timeAgo(t.lastActivityAt)} · {t.replyCount} respostas
                 </Typography>
               </ButtonBase>
             ))}

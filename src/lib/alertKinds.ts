@@ -7,5 +7,6 @@ export const ALERT_KIND: Record<AppNotification['kind'], { emoji: string; label:
   back: { emoji: '✅', label: 'Voltou a ficar do seu gosto', color: brand.green },
   change: { emoji: '🔄', label: 'A previsão mudou', color: brand.plum },
   lost: { emoji: '⚠️', label: 'Saiu da sua condição', color: '#B3541E' },
+  mention: { emoji: '💬', label: 'Te marcaram no fórum', color: brand.plum },
   match: { emoji: '🌊', label: 'Condição do seu gosto', color: brand.green },
 }
