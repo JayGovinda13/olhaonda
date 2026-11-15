@@ -48,7 +48,12 @@ export type AlertEvent = {
 }
 
 /** intervalo mínimo entre dois avisos de "mudou" no mesmo pico (evita vai-e-volta na beirada da condição) */
-const CHANGE_COOLDOWN_H = 3
+const CHANGE_COOLDOWN_H = 8 // no máximo um aviso de mudança a cada 8 h por pico
+/** só avisamos mudanças nos próximos dias (a previsão de mais longe oscila toda hora e a janela de 7 dias anda: todo dia entra um dia novo na ponta) */
+const NEAR_DAYS = 4
+/** a mudança só conta se a janela andou 3 h ou mais, ou o tamanho mudou 0,4 m ou mais */
+const MOVED_H = 3
+const GREW_M = 0.4
 const MAX_LINES = 3
 
 const f1 = (v: number) => v.toFixed(1).replace('.', ',')
@@ -125,18 +130,18 @@ export function explainDate(spot: Spot, hours: HourPoint[], prefs: SpotPrefs, da
 
 type Diff = { removed: Match[]; added: Match[]; shifted: { before: Match; after: Match }[] }
 
-function diffSessions(before: Match[], after: Match[]): Diff {
+function diffSessions(before: Match[], after: Match[], nearDate: string): Diff {
   const byDate = (l: Match[]) => new Map(l.map((m) => [m.date, m]))
   const b = byDate(before)
   const a = byDate(after)
-  const removed = before.filter((m) => !a.has(m.date))
-  const added = after.filter((m) => !b.has(m.date))
+  const removed = before.filter((m) => !a.has(m.date) && m.date <= nearDate)
+  const added = after.filter((m) => !b.has(m.date) && m.date <= nearDate)
   const shifted: Diff['shifted'] = []
   for (const m of after) {
     const old = b.get(m.date)
-    if (!old) continue
-    const moved = Math.abs(hourNum(m.start) - hourNum(old.start)) >= 2 || Math.abs(hourNum(m.end) - hourNum(old.end)) >= 2
-    const grew = Math.abs((m.minHb + m.maxHb) / 2 - (old.minHb + old.maxHb) / 2) >= 0.3
+    if (!old || m.date > nearDate) continue
+    const moved = Math.abs(hourNum(m.start) - hourNum(old.start)) >= MOVED_H || Math.abs(hourNum(m.end) - hourNum(old.end)) >= MOVED_H
+    const grew = Math.abs((m.minHb + m.maxHb) / 2 - (old.minHb + old.maxHb) / 2) >= GREW_M
     if (moved || grew) shifted.push({ before: old, after: m })
   }
   return { removed, added, shifted }
@@ -200,7 +205,9 @@ export function evaluateAlert(
     return r as { state: AlertState; event: AlertEvent }
   }
 
-  const d = diffSessions(live, cur)
+  const near = new Date(`${now.date}T12:00:00Z`)
+  near.setUTCDate(near.getUTCDate() + NEAR_DAYS)
+  const d = diffSessions(live, cur, near.toISOString().slice(0, 10))
   const material = d.removed.length + d.added.length + d.shifted.length > 0
   if (!material) return { state: { ...state, notified: live }, event: null }
   if (state.lastEventAt && hoursBetween(state.lastEventAt, now.hour) < CHANGE_COOLDOWN_H) return { state, event: null } // espera o próximo ciclo

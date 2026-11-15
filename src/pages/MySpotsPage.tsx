@@ -15,6 +15,7 @@ import { resetDemoAlerts } from '../hooks/useDemoAlerts'
 import { useAlertStates } from '../hooks/useAlertStates'
 import { useFavorites } from '../hooks/useFavorites'
 import { useNotifications } from '../hooks/useNotifications'
+import { groupNotifications } from '../lib/alertGroups'
 import { ALERT_KIND } from '../lib/alertKinds'
 import { usePageMeta } from '../lib/meta'
 import { disablePush, enablePush, localNotify, pushState, type PushState } from '../lib/push'
@@ -28,6 +29,13 @@ import { localNow } from '../../supabase/functions/_shared/core/time.ts'
 export default function MySpotsPage() {
   const { user, ready } = useAuth()
   const navigate = useNavigate()
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set()) // picos com os avisos anteriores abertos
+  const toggleNote = (key: string) =>
+    setExpandedNotes((cur) => {
+      const next = new Set(cur)
+      if (!next.delete(key)) next.add(key)
+      return next
+    })
   const { favorites, save, remove } = useFavorites()
   const { list: notes, markRead } = useNotifications()
   const alertStates = useAlertStates(favorites?.length)
@@ -196,30 +204,62 @@ export default function MySpotsPage() {
             Nenhum aviso ainda. A previsão é conferida de 3 em 3 horas e só avisamos quando algo muda.
           </Typography>
         )}
-        {notes.slice(0, 15).map((n, i) => (
-          <Box
-            key={n.id}
-            component={RouterLink}
-            to={n.url}
-            onClick={() => !n.readAt && void markRead([n.id])}
-            sx={{ display: 'block', p: 2, borderTop: i ? 1 : 0, borderColor: 'divider', color: 'inherit', textDecoration: 'none', bgcolor: n.readAt ? 'transparent' : alpha(brand.green, 0.08), '&:hover': { bgcolor: alpha(brand.purple, 0.04) } }}
-          >
-            <Typography sx={{ fontWeight: 800 }}>
-              <span aria-hidden="true">{ALERT_KIND[n.kind].emoji} </span>
-              {n.title}
-            </Typography>
-            <NotificationBody
-              n={n}
-              onOpen={(to) => {
-                if (!n.readAt) void markRead([n.id])
-                navigate(to)
-              }}
-            />
-            <Typography variant="caption" sx={{ opacity: 0.55, display: 'block', mt: 0.5 }}>
-              {ALERT_KIND[n.kind].label} · {timeAgo(n.createdAt)}
-            </Typography>
-          </Box>
-        ))}
+        {groupNotifications(notes.slice(0, 60))
+          .slice(0, 12)
+          .map((g, i) => {
+            const n = g.latest
+            const open = expandedNotes.has(g.key)
+            return (
+              <Box key={g.key} sx={{ borderTop: i ? 1 : 0, borderColor: 'divider' }}>
+                <Box
+                  component={RouterLink}
+                  to={n.url}
+                  onClick={() => !n.readAt && void markRead([n.id])}
+                  sx={{ display: 'block', p: 2, color: 'inherit', textDecoration: 'none', bgcolor: n.readAt ? 'transparent' : alpha(brand.green, 0.08), '&:hover': { bgcolor: alpha(brand.purple, 0.04) } }}
+                >
+                  <Typography sx={{ fontWeight: 800 }}>
+                    <span aria-hidden="true">{ALERT_KIND[n.kind].emoji} </span>
+                    {n.title}
+                  </Typography>
+                  <NotificationBody
+                    n={n}
+                    onOpen={(to) => {
+                      if (!n.readAt) void markRead([n.id])
+                      navigate(to)
+                    }}
+                  />
+                  <Typography variant="caption" sx={{ opacity: 0.55, display: 'block', mt: 0.5 }}>
+                    {ALERT_KIND[n.kind].label} · {timeAgo(n.createdAt)}
+                  </Typography>
+                </Box>
+                {g.older.length > 0 && (
+                  <Box sx={{ px: 2, pb: 1 }}>
+                    <Button size="small" onClick={() => toggleNote(g.key)}>
+                      {open ? 'Ocultar anteriores' : `Ver ${g.older.length} ${g.older.length === 1 ? 'aviso anterior' : 'avisos anteriores'} deste pico`}
+                    </Button>
+                    {open &&
+                      g.older.map((o) => (
+                        <Box
+                          key={o.id}
+                          component={RouterLink}
+                          to={o.url}
+                          onClick={() => !o.readAt && void markRead([o.id])}
+                          sx={{ display: 'flex', gap: 1, py: 0.75, color: 'inherit', textDecoration: 'none', opacity: o.readAt ? 0.7 : 1, fontSize: 14 }}
+                        >
+                          <Box sx={{ flex: 1 }}>
+                            <span aria-hidden="true">{ALERT_KIND[o.kind].emoji} </span>
+                            {ALERT_KIND[o.kind].label}
+                          </Box>
+                          <Typography variant="caption" sx={{ opacity: 0.6, whiteSpace: 'nowrap' }}>
+                            {timeAgo(o.createdAt)}
+                          </Typography>
+                        </Box>
+                      ))}
+                  </Box>
+                )}
+              </Box>
+            )
+          })}
       </Paper>
 
       {editing && (

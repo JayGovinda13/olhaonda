@@ -1,6 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material'
 import type { AppNotification } from '../../backend'
-import { parseBody, windowHref, type Window } from '../../lib/alertBody'
+import { parseBody, windowHref, type ChangeRow, type Window } from '../../lib/alertBody'
 import { alpha, brand } from '../../theme'
 
 /** Linha clicável: abre o pico naquele dia e hora (sem passar pelo clique do aviso inteiro). */
@@ -47,6 +47,41 @@ function WindowRow({ w, href, onOpen }: { w: Window; href: string | null; onOpen
   )
 }
 
+const TAG_COLOR: Record<ChangeRow['tag'], string> = { Entrou: brand.green, Mudou: brand.plum, Saiu: '#B3541E' }
+
+/** "Mudou  ter 17/11  era 05h–11h · 1,5 m → agora 08h–13h · 1,5 m" */
+function ChangeLine({ r, href, onOpen }: { r: ChangeRow; href: string | null; onOpen?: (to: string) => void }) {
+  return (
+    <Box sx={{ pl: 1.25, borderLeft: `3px solid ${alpha(TAG_COLOR[r.tag], 0.65)}` }}>
+      <Go href={href} onOpen={onOpen} label={`Ver a previsão de ${r.day}`}>
+        <Typography component="div" sx={{ fontSize: 13.5, lineHeight: 1.4 }}>
+          <Box component="span" sx={{ fontWeight: 800, color: TAG_COLOR[r.tag], mr: 0.75, textTransform: 'uppercase', fontSize: 11, letterSpacing: '.05em' }}>
+            {r.tag}
+          </Box>
+          <b>{r.day}</b>
+          {r.tag === 'Entrou' && (
+            <>
+              {' · '}
+              {r.hours} · <b>{r.size}</b>
+            </>
+          )}
+        </Typography>
+        {r.tag === 'Mudou' && (
+          <Typography component="div" variant="caption" sx={{ display: 'block', opacity: 0.8, lineHeight: 1.35 }}>
+            era {r.before} → <b>agora {r.after}</b>
+          </Typography>
+        )}
+        {r.tag === 'Saiu' &&
+          r.why?.map((w) => (
+            <Typography key={w} component="div" variant="caption" sx={{ display: 'block', opacity: 0.8, lineHeight: 1.35 }}>
+              {w}
+            </Typography>
+          ))}
+      </Go>
+    </Box>
+  )
+}
+
 /** Texto do aviso em blocos: uma janela por linha, motivos em lista. */
 export function NotificationBody({ n, onOpen }: { n: Pick<AppNotification, 'kind' | 'body' | 'spotId' | 'createdAt'>; onOpen?: (to: string) => void }) {
   const p = parseBody(n)
@@ -88,18 +123,18 @@ export function NotificationBody({ n, onOpen }: { n: Pick<AppNotification, 'kind
     )
 
   if (p.type === 'change')
-    return (
+    return p.rows.length ? (
+      <Stack spacing={0.9} sx={{ mt: 0.25 }}>
+        {p.rows.map((r, i) => (
+          <ChangeLine key={i} r={r} href={hrefOf(r.day, r.hours)} onOpen={onOpen} />
+        ))}
+      </Stack>
+    ) : (
       <Stack spacing={0.75} sx={{ mt: 0.25 }}>
         {p.notes.map((t) => (
           <Typography key={t} variant="body2" sx={{ opacity: 0.85 }}>
             {t}
           </Typography>
-        ))}
-        <Typography variant="caption" sx={{ fontWeight: 800, opacity: 0.75 }}>
-          Agora:
-        </Typography>
-        {p.windows.map((w) => (
-          <WindowRow key={w.day + w.hours} w={w} href={hrefOf(w.day, w.hours)} onOpen={onOpen} />
         ))}
       </Stack>
     )

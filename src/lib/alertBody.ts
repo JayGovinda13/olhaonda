@@ -10,9 +10,12 @@ export type Window = {
   wind?: string // "92° L, até 6 km/h"
 }
 
+/** uma linha do aviso de "mudou": entrou um dia, a janela mudou, ou um dia saiu */
+export type ChangeRow = { tag: 'Entrou' | 'Mudou' | 'Saiu'; day: string; hours?: string; size?: string; before?: string; after?: string; why?: string[] }
+
 export type ParsedBody =
   | { type: 'windows'; lead: string | null; windows: Window[]; more: string | null }
-  | { type: 'change'; notes: string[]; windows: Window[] }
+  | { type: 'change'; rows: ChangeRow[]; notes: string[]; windows: Window[] }
   | { type: 'lost'; reasons: { when: string; why: string[] }[] }
   | { type: 'text'; text: string }
 
@@ -56,7 +59,8 @@ export function parseBody(n: Pick<AppNotification, 'kind' | 'body'>): ParsedBody
     const windows = nowText ? nowText.split('; ').map(shortWindow) : []
     if (windows.every(Boolean)) {
       const notes = notesText.split(/(?<=\.) (?=[A-ZÁÉÍÓÚ])/).map((x) => x.trim()).filter(Boolean)
-      return { type: 'change', notes, windows: windows as Window[] }
+      const rows = notes.map(parseChangeNote)
+      return { type: 'change', rows: rows.every(Boolean) ? (rows as ChangeRow[]) : [], notes, windows: windows as Window[] }
     }
   }
 
@@ -102,4 +106,16 @@ export function windowHref(spotId: string, day: string, hours: string | undefine
   if (!date) return null
   const hh = /(\d{1,2})h/.exec(hours ?? '')?.[1]
   return `/pico/${spotId}?t=${encodeURIComponent(`${date}T${String(hh ?? 7).padStart(2, '0')}:00`)}`
+}
+
+/** "Mudou ter 17/11: era 05h–11h, 1,5 m, agora 08h–13h, 1,5 m." / "Entrou: qui 19/11, 06h–10h, 1,5 m." / "Saiu: ter 17/11 (05h): motivo; motivo." */
+function parseChangeNote(note: string): ChangeRow | null {
+  const day = '(\\S+ \\d{1,2}\\/\\d{1,2})'
+  let m = new RegExp(`^Mudou ${day}: era (\\d{2}h–\\d{2}h), (.+?), agora (\\d{2}h–\\d{2}h), (.+?)\\.?$`).exec(note)
+  if (m) return { tag: 'Mudou', day: m[1], hours: m[4], size: m[5], before: `${m[2]} · ${m[3]}`, after: `${m[4]} · ${m[5]}` }
+  m = new RegExp(`^Entrou: ${day}, (\\d{2}h–\\d{2}h), (.+?)\\.?$`).exec(note)
+  if (m) return { tag: 'Entrou', day: m[1], hours: m[2], size: m[3] }
+  m = new RegExp(`^Saiu: ${day}( \\((\\d{2}h)\\))?: (.*?)\\.?$`).exec(note)
+  if (m) return { tag: 'Saiu', day: m[1], hours: m[3] ? `${m[3]}` : undefined, why: m[4].split('; ') }
+  return null
 }

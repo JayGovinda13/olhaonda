@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { NotificationBody } from './NotificationBody'
 import { useNotifications } from '../../hooks/useNotifications'
+import { groupNotifications } from '../../lib/alertGroups'
 import { ALERT_KIND } from '../../lib/alertKinds'
 import { timeAgo } from '../../lib/time'
 import { alpha, brand } from '../../theme'
@@ -12,6 +13,13 @@ import { alpha, brand } from '../../theme'
 export function NotificationsBell() {
   const { list, unread, markRead } = useNotifications()
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set()) // picos com os avisos anteriores abertos
+  const toggle = (key: string) =>
+    setExpanded((cur) => {
+      const next = new Set(cur)
+      if (!next.delete(key)) next.add(key)
+      return next
+    })
   const navigate = useNavigate()
 
   return (
@@ -43,36 +51,75 @@ export function NotificationsBell() {
             </Typography>
           </Box>
         )}
-        {list.slice(0, 20).map((n) => (
-          <MenuItem
-            key={n.id}
-            onClick={() => {
-              setAnchor(null)
-              if (!n.readAt) void markRead([n.id])
-              navigate(n.url)
-            }}
-            sx={{ whiteSpace: 'normal', alignItems: 'flex-start', gap: 1.25, py: 1.25, bgcolor: n.readAt ? 'transparent' : alpha(brand.green, 0.08) }}
-          >
-            <Box sx={{ width: 8, height: 8, mt: 0.9, borderRadius: '50%', flexShrink: 0, bgcolor: n.readAt ? 'transparent' : brand.green }} />
-            <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 800, fontSize: 14 }}>
-                <span aria-hidden="true">{ALERT_KIND[n.kind].emoji} </span>
-                {n.title}
-              </Typography>
-              <NotificationBody
-                n={n}
-                onOpen={(to) => {
+        {groupNotifications(list.slice(0, 40))
+          .slice(0, 10)
+          .flatMap((g) => {
+            const n = g.latest
+            const open = expanded.has(g.key)
+            const rows = [
+              <MenuItem
+                key={n.id}
+                onClick={() => {
                   setAnchor(null)
                   if (!n.readAt) void markRead([n.id])
-                  navigate(to)
+                  navigate(n.url)
                 }}
-              />
-              <Typography variant="caption" sx={{ opacity: 0.55 }}>
-                {timeAgo(n.createdAt)}
-              </Typography>
-            </Box>
-          </MenuItem>
-        ))}
+                sx={{ whiteSpace: 'normal', alignItems: 'flex-start', gap: 1.25, py: 1.25, bgcolor: n.readAt ? 'transparent' : alpha(brand.green, 0.08) }}
+              >
+                <Box sx={{ width: 8, height: 8, mt: 0.9, borderRadius: '50%', flexShrink: 0, bgcolor: n.readAt ? 'transparent' : brand.green }} />
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 800, fontSize: 14 }}>
+                    <span aria-hidden="true">{ALERT_KIND[n.kind].emoji} </span>
+                    {n.title}
+                  </Typography>
+                  <NotificationBody
+                    n={n}
+                    onOpen={(to) => {
+                      setAnchor(null)
+                      if (!n.readAt) void markRead([n.id])
+                      navigate(to)
+                    }}
+                  />
+                  <Typography variant="caption" sx={{ opacity: 0.55 }}>
+                    {timeAgo(n.createdAt)}
+                  </Typography>
+                </Box>
+              </MenuItem>,
+            ]
+            if (g.older.length) {
+              rows.push(
+                <MenuItem
+                  key={`${g.key}-mais`}
+                  onClick={() => toggle(g.key)}
+                  sx={{ justifyContent: 'center', py: 0.5, minHeight: 36, fontSize: 13, fontWeight: 700, color: brand.plum }}
+                >
+                  {open ? 'Ocultar anteriores' : `Ver ${g.older.length} ${g.older.length === 1 ? 'aviso anterior' : 'avisos anteriores'} deste pico`}
+                </MenuItem>,
+              )
+              if (open)
+                for (const o of g.older)
+                  rows.push(
+                    <MenuItem
+                      key={o.id}
+                      onClick={() => {
+                        setAnchor(null)
+                        if (!o.readAt) void markRead([o.id])
+                        navigate(o.url)
+                      }}
+                      sx={{ whiteSpace: 'normal', gap: 1, py: 0.75, pl: 3, opacity: o.readAt ? 0.7 : 1 }}
+                    >
+                      <Typography variant="body2" sx={{ flex: 1, fontSize: 13 }}>
+                        <span aria-hidden="true">{ALERT_KIND[o.kind].emoji} </span>
+                        {ALERT_KIND[o.kind].label}
+                      </Typography>
+                      <Typography variant="caption" sx={{ opacity: 0.6, whiteSpace: 'nowrap' }}>
+                        {timeAgo(o.createdAt)}
+                      </Typography>
+                    </MenuItem>,
+                  )
+            }
+            return rows
+          })}
         <Divider />
         <MenuItem
           onClick={() => {
