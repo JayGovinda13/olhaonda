@@ -464,7 +464,10 @@ export const demoBackend: Backend = {
         approvedAt: db.approvedAt?.[u.profile.id] ?? iso(),
         role: 'user' as const,
       }))
-      return delay({ inviteOnly: true, limit: 10, members: users.filter((u) => u.approvedAt).length, users, audit: db.audit ?? [] })
+      const counts: Record<string, number> = {}
+      for (const list of Object.values(db.favorites)) for (const f of list) counts[f.spotId] = (counts[f.spotId] ?? 0) + 1
+      const topSpots = Object.entries(counts).map(([spotId, count]) => ({ spotId, count })).sort((a, b) => b.count - a.count).slice(0, 20)
+      return delay({ inviteOnly: true, limit: 10, members: users.filter((u) => u.approvedAt).length, users, topSpots, audit: db.audit ?? [] })
     },
     async updateProfile(userId, name, username) {
       const me = requireMe()

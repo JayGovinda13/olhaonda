@@ -52,6 +52,8 @@ export type AdminOverview = {
   limit: number | null
   members: number
   users: AdminUser[]
+  /** picos mais favoritados (só totais), do maior para o menor */
+  topSpots: { spotId: string; count: number }[]
   audit: { at: string; action: 'liberou' | 'bloqueou' | 'editou'; admin: string | null; target: string | null }[]
 }
 

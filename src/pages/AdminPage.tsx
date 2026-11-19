@@ -3,6 +3,7 @@ import { EditPencil } from 'iconoir-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router'
 import { useAuth } from '../auth/context'
+import { ALL_SPOTS } from '../data/spots'
 import { backend, type AdminOverview, type AdminUser } from '../backend'
 import { usePageMeta } from '../lib/meta'
 import { timeAgo } from '../lib/time'
@@ -115,6 +116,29 @@ function AdminPanel() {
               ))}
             </Stack>
           </Paper>
+
+          {data.topSpots.length > 0 && (
+            <Paper sx={{ p: 2 }}>
+              <Typography sx={{ fontWeight: 800, mb: 1 }}>Praias mais favoritadas</Typography>
+              <Stack spacing={0.5}>
+                {data.topSpots.slice(0, 10).map((t, i) => {
+                  const spot = ALL_SPOTS.find((x) => x.id === t.spotId)
+                  return (
+                    <Stack key={t.spotId} direction="row" spacing={1} sx={{ alignItems: 'baseline' }}>
+                      <Typography variant="body2" sx={{ width: 22, opacity: 0.55, fontWeight: 700 }}>
+                        {i + 1}.
+                      </Typography>
+                      <Typography sx={{ flex: 1, fontWeight: 700 }} noWrap>
+                        {spot ? spot.name : t.spotId}
+                        {spot ? <Box component="span" sx={{ opacity: 0.55, fontWeight: 500 }}> · {spot.city}</Box> : null}
+                      </Typography>
+                      <Typography sx={{ fontWeight: 800 }}>{t.count}</Typography>
+                    </Stack>
+                  )
+                })}
+              </Stack>
+            </Paper>
+          )}
 
           <TextField size="small" placeholder="Buscar por nome, apelido, e-mail ou cidade" value={q} onChange={(e) => setQ(e.target.value)} fullWidth />
 
