@@ -125,11 +125,16 @@ export type HourCheck = {
   tide: TideState | null
   /** o que não bateu nesta hora (vazio quando ok), já escrito para a pessoa */
   failures: Failure[]
-  /** ondulação dominante na praia */
+  /** swell de referência (o que bate com o gosto, se houver; senão o maior na praia) */
   swellDir: number | null
   swellPeriod: number
   kj: number | null
+  /** os swells que pesam na praia, o de referência primeiro (no máximo 2) */
+  swells: SwellView[]
 }
+
+/** um swell visto da praia: de onde vem, período e quanto ele quebra aqui */
+export type SwellView = { dir: number; period: number; hb: number }
 
 const f1 = (v: number) => v.toFixed(1).replace('.', ',')
 const range = (lo: number | null, hi: number | null, unit: string, dec = false) => {
@@ -143,9 +148,26 @@ const range = (lo: number | null, hi: number | null, unit: string, dec = false) 
 export function checkHour(spot: Spot, h: HourPoint, prefs: SpotPrefs, tide: TideState | null): HourCheck {
   const est = surfEstimate(spot, h)
   const hb = est?.hb ?? 0
-  const dominant = est?.trains.length ? [...est.trains].sort((a, b) => b.hb - a.hb)[0] : null
-  const swellDir = dominant?.dir ?? h.swellDirection ?? h.waveDirection ?? null
-  const period = dominant?.period ?? h.swellPeakPeriod ?? h.swellPeriod ?? h.wavePeriod ?? 0
+
+  // Cada swell é conferido por si (direção e período), porque o 2º swell, mesmo menor em mar aberto, pode chegar de outra
+  // direção com período longo e quebrar grande aqui. Mar de vento não entra: direção e período do gosto falam do swell.
+  const swellTrains = (est?.trains ?? []).filter((t) => t.label !== 'Mar de vento').sort((a, b) => b.hb - a.hb)
+  const totalE = (est?.trains ?? []).reduce((s, t) => s + t.hb * t.hb, 0)
+  // pesa na praia: pelo menos 25 cm e 15 % da energia (se nenhum chega a isso, vale o maior)
+  const relevant = swellTrains.filter((t) => t.hb >= 0.25 && t.hb * t.hb >= 0.15 * totalE)
+  const cands = relevant.length ? relevant : swellTrains.slice(0, 1)
+  const dirOk = (t: { dir: number }) => prefs.swellDir == null || angleDiff(t.dir, prefs.swellDir) <= prefs.swellDirTol
+  const perOk = (t: { period: number }) => t.period >= prefs.minPeriod && (prefs.maxPeriod == null || t.period <= prefs.maxPeriod)
+  const misses = (t: { dir: number; period: number }) => Number(!dirOk(t)) + Number(!perOk(t))
+  // referência: o maior swell que bate com direção E período; se nenhum bate, o que mais se aproxima
+  const ref = cands.length ? [...cands].sort((a, b) => misses(a) - misses(b) || b.hb - a.hb)[0] : null
+  const other = ref ? swellTrains.find((t) => t !== ref && t.hb >= 0.1) : null
+  const swells: SwellView[] = [ref, ...cands.filter((t) => t !== ref)].filter((t): t is NonNullable<typeof t> => Boolean(t)).slice(0, 2).map((t) => ({ dir: t.dir, period: t.period, hb: t.hb }))
+  const swellDir = ref?.dir ?? h.swellDirection ?? h.waveDirection ?? null
+  const period = ref?.period ?? h.swellPeakPeriod ?? h.swellPeriod ?? h.wavePeriod ?? 0
+  const dirBadSwell = ref ? !dirOk(ref) : prefs.swellDir != null && (swellDir == null || angleDiff(swellDir, prefs.swellDir) > prefs.swellDirTol)
+  const perBadSwell = ref ? !perOk(ref) : period < prefs.minPeriod || (prefs.maxPeriod != null && period > prefs.maxPeriod)
+  const otherNote = other ? `; o outro swell vem de ${dirDeg(other.dir)}, ${Math.round(other.period)} s, ${f1(other.hb)} m na praia` : ''
   const kj = waveEnergy(h)
   const wk = windKind(spot, h.windDirection, h.windSpeed)
   const ws = h.windSpeed ?? 0
@@ -154,10 +176,8 @@ export function checkHour(spot: Spot, h: HourPoint, prefs: SpotPrefs, tide: Tide
   const fail = (key: FailKey, text: string) => failures.push({ key, text })
 
   if (hb < prefs.minWave || hb > prefs.maxWave) fail('tamanho', `ondas de ${f1(hb)} m (você quer ${f1(prefs.minWave)} a ${f1(prefs.maxWave)} m)`)
-  if (prefs.swellDir != null && (swellDir == null || angleDiff(swellDir, prefs.swellDir) > prefs.swellDirTol))
-    fail('swellDir', `ondulação de ${dirDeg(swellDir)} (você quer ${dirDeg(prefs.swellDir)} ±${prefs.swellDirTol}°)`)
-  if (period < prefs.minPeriod || (prefs.maxPeriod != null && period > prefs.maxPeriod))
-    fail('periodo', `período de ${Math.round(period)} s (você quer ${range(prefs.minPeriod, prefs.maxPeriod, 's')})`)
+  if (dirBadSwell) fail('swellDir', `ondulação de ${dirDeg(swellDir)} (você quer ${dirDeg(prefs.swellDir)} ±${prefs.swellDirTol}°)${otherNote}`)
+  if (perBadSwell) fail('periodo', `período de ${Math.round(period)} s (você quer ${range(prefs.minPeriod, prefs.maxPeriod, 's')})${dirBadSwell ? '' : otherNote}`)
   if ((prefs.minPower != null || prefs.maxPower != null) && (kj == null || (prefs.minPower != null && kj < prefs.minPower) || (prefs.maxPower != null && kj > prefs.maxPower)))
     fail('potencia', `força de ${kj == null ? '—' : Math.round(kj)} kJ (você quer ${range(prefs.minPower, prefs.maxPower, 'kJ')})`)
   // vento: direção em graus (quando o vento é fraco demais para ter direção útil, vale) ou o tipo; e a velocidade
@@ -176,7 +196,7 @@ export function checkHour(spot: Spot, h: HourPoint, prefs: SpotPrefs, tide: Tide
     fail('mare', `maré ${tide ? TIDE_LABEL[tide].toLowerCase() : 'sem dado'} (você quer ${prefs.tide.map((t) => TIDE_LABEL[t].toLowerCase()).join(' ou ')})`)
 
   const inPart = part != null && (prefs.dayParts.length === 0 || prefs.dayParts.includes(part))
-  return { ok: inPart && failures.length === 0, hb, windKind: wk, tide, failures, swellDir, swellPeriod: period, kj }
+  return { ok: inPart && failures.length === 0, hb, windKind: wk, tide, failures, swellDir, swellPeriod: period, kj, swells }
 }
 
 export type Match = {
@@ -192,9 +212,11 @@ export type Match = {
   maxWind: number
   windDir: number | null
   period: number
-  /** ondulação dominante no meio da janela e potência máxima (kJ) */
+  /** ondulação de referência no meio da janela e potência máxima (kJ) */
   swellDir: number | null
   kj: number | null
+  /** os swells que pesam na praia no meio da janela, o de referência primeiro (no máximo 2) */
+  swells?: SwellView[]
 }
 
 /**
@@ -225,6 +247,7 @@ export function findMatches(spot: Spot, hours: HourPoint[], prefs: SpotPrefs, fr
         windDir: hs[Math.floor(hs.length / 2)].windDirection,
         period: Math.max(...hs.map((h) => h.swellPeakPeriod ?? h.swellPeriod ?? h.wavePeriod ?? 0)),
         swellDir: run[Math.floor(run.length / 2)].checks[0].swellDir,
+        swells: run[Math.floor(run.length / 2)].checks[0].swells,
         kj: Math.max(...run.map((r) => r.checks[0].kj ?? 0)) || null,
       }
       const cur = best.get(date)

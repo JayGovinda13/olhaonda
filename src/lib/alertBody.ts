@@ -6,6 +6,7 @@ export type Window = {
   hours: string
   size: string
   swell?: string // "176° S, 5 s"
+  swell2?: string // 2º swell: "110° ESE, 13 s"
   kj?: string // "93 kJ"
   wind?: string // "92° L, até 6 km/h"
 }
@@ -26,6 +27,7 @@ function longWindow(s: string): Window | null {
   const w: Window = { day: p[0], hours: p[1], size: p[2] }
   for (const x of p.slice(3)) {
     if (x.startsWith('ondulação ')) w.swell = x.slice(10)
+    else if (x.startsWith('2ª ondulação ')) w.swell2 = x.slice(13)
     else if (/ kJ$/.test(x)) w.kj = x
     else if (x.startsWith('vento ')) w.wind = x.slice(6)
   }

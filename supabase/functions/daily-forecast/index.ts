@@ -1,5 +1,5 @@
 // Rodada diária (chamada pelo agendador com o cabeçalho x-cron-secret):
-//  1. publica no fórum de cada pico o resumo da previsão do dia, assinado pelo OlhaOnda
+//  1. publica no fórum dos picos FAVORITADOS por alguém o resumo da previsão do dia, assinado pelo OlhaOnda
 //  2. confere os picos favoritos de cada usuário contra a previsão (próximos 7 dias) e avisa no site, por push e
 //     por WhatsApp quando uma janela ENTRA, MUDA, SAI (com o motivo) ou VOLTA a bater com as condições preferidas.
 //     O ciclo de cada pico fica em alert_state (regras em _shared/core/alerts.ts).
@@ -9,7 +9,7 @@ import { fetchForecastRaw, type Forecast } from '../_shared/core/openMeteo.ts'
 import { EMPTY_ALERT, type AlertState } from '../_shared/core/alerts.ts'
 import { applyAlert } from '../_shared/alerts-run.ts'
 import { normalizePrefs } from '../_shared/core/prefs.ts'
-import { ALL_SPOTS, spotsForScope, type Spot, type SpotScope } from '../_shared/core/spots.ts'
+import { ALL_SPOTS, type Spot } from '../_shared/core/spots.ts'
 import { dailySummary } from '../_shared/core/summary.ts'
 import { localNow } from '../_shared/core/time.ts'
 
@@ -28,8 +28,6 @@ Deno.serve(async (req) => {
   const url = new URL(req.url)
   const onlyAlerts = url.searchParams.get('only') === 'alerts'
   const sb = admin()
-  const v = Deno.env.get('SPOT_SCOPE')
-  const scope: SpotScope = v === 'baixada' ? 'baixada' : v === 'prod' || v === 'sp' ? 'prod' : 'all'
   const apiKey = Deno.env.get('OPEN_METEO_API_KEY') || undefined
   const now = localNow()
 
@@ -51,12 +49,14 @@ Deno.serve(async (req) => {
     favBySpot.get(f.spot_id)!.push(f)
   }
 
-  // picos do ambiente + qualquer pico favoritado
-  const spots: Spot[] = onlyAlerts ? [] : spotsForScope(scope)
-  for (const id of favBySpot.keys()) if (!spots.some((s) => s.id === id)) {
-    const s = ALL_SPOTS.find((x) => x.id === id)
-    if (s) spots.push(s)
-  }
+  // O resumo do dia no fórum só sai nos picos que alguém (com acesso liberado) favoritou, com o aviso ligado ou não.
+  // Os outros picos ficam sem mensagem: o fórum deles não enche de resumos que ninguém pediu.
+  const { data: allFavs } = await sb.from('favorite_spots').select('user_id, spot_id')
+  const favoritedSpots = new Set((allFavs ?? []).filter((f) => cfg?.invite_only === false || allowedIds.has(f.user_id)).map((f) => f.spot_id as string))
+
+  // picos a consultar: nas conferências só de avisos, os que têm aviso ligado; na rodada completa, todos os favoritados
+  const spotIds = new Set<string>(onlyAlerts ? favBySpot.keys() : [...favoritedSpots, ...favBySpot.keys()])
+  const spots: Spot[] = [...spotIds].map((id) => ALL_SPOTS.find((x) => x.id === id)).filter((s): s is Spot => Boolean(s))
 
   // retenção (LGPD): registros técnicos de mensagens e códigos não ficam guardados para sempre
   const day = 86_400_000
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     }
 
     // 1. resumo do dia no fórum do pico (um por dia: o índice único barra repetidos)
-    if (!onlyAlerts && spotsForScope(scope).some((s) => s.id === spot.id)) {
+    if (!onlyAlerts && favoritedSpots.has(spot.id)) {
       const s = dailySummary(spot, f, now.date)
       if (s) {
         const { error: e } = await sb.from('forum_threads').insert({

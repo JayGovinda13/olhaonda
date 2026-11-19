@@ -2,9 +2,10 @@ import { Box, Typography } from '@mui/material'
 import type { GeoJSONSource, Map as MLMap, Marker as MLMarker, StyleSpecification } from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
 import type { HourPoint } from '../api/openMeteo'
+import { hourSwells } from '../lib/hourSwells'
 import type { Spot } from '../data/spots'
 import { arrowImage, loadMapLibre, OFM_ATTRIBUTION, OFM_GLYPHS, OFM_SOURCE, cachedCoast, offsetLngLat, rememberCoast, SNAP_ZOOM } from '../lib/maplibre'
-import { dirDeg, ENERGY_GRADIENT, energyColor, energyLabel, energyRatio, fmt, fmtEnergy, waveEnergy, WIND_LABEL, windKind } from '../lib/surf'
+import { dirDeg, ENERGY_GRADIENT, energyColor, energyLabel, energyRatio, fmt, fmtEnergy, trainEnergyFromPeriod, waveEnergy, WIND_LABEL, windKind } from '../lib/surf'
 // cores fixas: o MapLibre não lê variáveis CSS e o card verde é igual nos dois modos
 import { fixed as brand } from '../theme'
 
@@ -126,6 +127,8 @@ function swellArrows(
   phase: number,
   color: string,
   isSea: (p: [number, number]) => boolean = () => true,
+  weight = 1, // transparência do swell (o 2º, quando aparecem os dois, fica um pouco mais suave)
+  laneShift = 0, // desloca as faixas (m) para as setas dos dois swells não se sobreporem
 ) {
   const L = Math.min(420, Math.max(160, 1.56 * periodS * periodS)) // comprimento de onda em águas profundas (m)
   const step = Math.max(L * 1.6, 420) // espaço entre setas na mesma faixa
@@ -142,14 +145,14 @@ function swellArrows(
       const d = minDist + (k + 1 - phase + stagger) * step
       if (d > maxDist) break
       const onLine = offsetLngLat(base.lat, base.lon, fromDeg, d)
-      const p = offsetLngLat(onLine[1], onLine[0], fromDeg + 90, lane * laneGap)
+      const p = offsetLngLat(onLine[1], onLine[0], fromDeg + 90, lane * laneGap + laneShift)
       if (!isSea(p)) continue // nada de setas sobre ilhas e costões
       const near = Math.min(1, (d - minDist) / step) // some ao chegar na praia
       const far = Math.min(1, (maxDist - d) / (step * 1.5)) // surge lá fora
       const edge = 1 - Math.abs(lane) / (lanes.length / 2 + 1) // faixas das pontas mais suaves
       features.push({
         type: 'Feature' as const,
-        properties: { o: 0.95 * near * far * (0.45 + 0.55 * edge), s: size * (1 + 0.2 * (1 - d / maxDist)), r: toward, c: color },
+        properties: { o: 0.95 * weight * near * far * (0.45 + 0.55 * edge), s: size * (1 + 0.2 * (1 - d / maxDist)), r: toward, c: color },
         geometry: { type: 'Point' as const, coordinates: p },
       })
     }
@@ -209,15 +212,17 @@ function windArrows(center: { lat: number; lon: number }, fromDeg: number, kmh: 
 }
 
 export type FlowMode = 'ondas' | 'vento'
+/** quais swells o mapa desenha: os dois juntos, só o 1º ou só o 2º */
+export type SwellSel = 'todos' | '1' | '2'
 
-export function SpotDetailMap({ spot, hour, mode = 'ondas' }: { spot: Spot; hour: HourPoint; mode?: FlowMode }) {
+export function SpotDetailMap({ spot, hour, mode = 'ondas', swells = 'todos' }: { spot: Spot; hour: HourPoint; mode?: FlowMode; swells?: SwellSel }) {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
   const marker = useRef<MLMarker | null>(null)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   // valores atuais lidos pela animação (que roda fora do ciclo do React)
-  const swell = useRef({ dir: 0, h: 0, t: 10, c: brand.deepGreen as string, mode: 'ondas' as FlowMode, wd: 0, ws: 0 })
+  const swell = useRef({ trains: [] as { dir: number; h: number; t: number; c: string }[], mode: 'ondas' as FlowMode, wd: 0, ws: 0 })
   const spotRef = useRef(spot)
   /** Ponto do pico na linha da costa (calculado depois que o mapa desenha). */
   const coastRef = useRef<{ lat: number; lon: number } | null>(null)
@@ -237,18 +242,19 @@ export function SpotDetailMap({ spot, hour, mode = 'ondas' }: { spot: Spot; hour
     else m.once('idle', apply)
   }
 
-  const dir = hour.swellDirection ?? hour.waveDirection
-  const period = hour.swellPeakPeriod ?? hour.swellPeriod ?? hour.wavePeriod ?? 10
-  const height = hour.swellHeight ?? hour.waveHeight ?? 0
+  const all = hourSwells(hour)
+  // o que está desenhado: o swell escolhido (se ele não existe nesta hora, mostra o que existe)
+  const shown = swells === 'todos' ? all : all.filter((s) => s.id === swells).length ? all.filter((s) => s.id === swells) : all
+  const trains = shown.map((s) => ({ dir: s.dir, h: s.h, t: s.t, c: energyColor(trainEnergyFromPeriod(s.h, s.t)) }))
   const energy = waveEnergy(hour)
   const color = energyColor(energy)
   const windDir = hour.windDirection ?? 0
   const windSpeed = hour.windSpeed ?? 0
   const wk = windKind(spot, hour.windDirection, hour.windSpeed)
   useEffect(() => {
-    swell.current = { dir: dir ?? spot.facing, h: height, t: period, c: color, mode, wd: windDir, ws: windSpeed }
+    swell.current = { trains: trains.length ? trains : [{ dir: spot.facing, h: 0, t: 10, c: color }], mode, wd: windDir, ws: windSpeed }
     spotRef.current = spot
-  }, [dir, height, period, color, mode, windDir, windSpeed, spot])
+  }, [trains, color, mode, windDir, windSpeed, spot]) // só copia valores para a animação: barato mesmo a cada render
 
   useEffect(() => {
     let cancelled = false
@@ -291,7 +297,7 @@ export function SpotDetailMap({ spot, hour, mode = 'ondas' }: { spot: Spot; hour
           last = now
           const src = created?.getSource('waves') as GeoJSONSource | undefined
           if (!src) return
-          const { dir: d, h, t, c, mode: md, wd, ws } = swell.current
+          const { trains: tr, mode: md, wd, ws } = swell.current
           const m = created!
           if (md === 'vento') {
             // a malha avança um espaçamento a cada `cycle` segundos (mais rápido com mais vento)
@@ -301,12 +307,16 @@ export function SpotDetailMap({ spot, hour, mode = 'ondas' }: { spot: Spot; hour
             src.setData(windArrows({ lat: ctr.lat, lon: ctr.lng }, wd, ws, wphase))
             return
           }
-          const phase = reduce ? 0.5 : (((now - start) / 1000) % t) / t
           const isSea = (p: [number, number]) => {
             const px = m.project(p)
             return m.queryRenderedFeatures([px.x, px.y], { layers: ['ocean-query'] }).length > 0
           }
-          src.setData(swellArrows(coastRef.current ?? spotRef.current, d, h, t, phase, c, isSea))
+          // cada swell anda no próprio ritmo (período) e na própria direção
+          const features = tr.flatMap((s, i) => {
+            const phase = reduce ? 0.5 : (((now - start) / 1000) % s.t) / s.t
+            return swellArrows(coastRef.current ?? spotRef.current, s.dir, s.h, s.t, phase, s.c, isSea, tr.length > 1 && i > 0 ? 0.8 : 1, tr.length > 1 ? (i === 0 ? -90 : 90) : 0).features
+          })
+          src.setData({ type: 'FeatureCollection' as const, features })
         }
         created.once('load', () => {
           if (cancelled || !created) return
@@ -398,7 +408,7 @@ export function SpotDetailMap({ spot, hour, mode = 'ondas' }: { spot: Spot; hour
           borderRadius: '10px',
           bgcolor: 'rgba(251,244,236,.92)',
           pointerEvents: 'none',
-          width: 186,
+          width: 200,
         }}
       >
         {mode === 'vento' ? (
@@ -430,11 +440,11 @@ export function SpotDetailMap({ spot, hour, mode = 'ondas' }: { spot: Spot; hour
           </>
         ) : (
           <>
-        {dir != null && (
-            <Typography sx={{ fontSize: 11, fontWeight: 800, color: brand.deepGreen }}>
-              Swell {dirDeg(dir)} · {fmt.m(height)} · {fmt.s(period)}
+        {shown.map((s) => (
+            <Typography key={s.id} sx={{ fontSize: 11, fontWeight: 800, color: brand.deepGreen }}>
+              {s.label} {dirDeg(s.dir)} · {fmt.m(s.h)} · {fmt.s(s.t)}
             </Typography>
-          )}
+          ))}
           <Typography sx={{ fontSize: 11, fontWeight: 800, color: brand.purple }}>
             Força: {fmtEnergy(energy)} · {energyLabel(energy)}
           </Typography>

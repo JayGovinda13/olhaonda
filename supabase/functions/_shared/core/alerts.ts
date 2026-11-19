@@ -68,7 +68,9 @@ export function describeSession(m: Match) {
   const { wd, dm } = dayLabel(m.date)
   const size = f1(m.minHb) === f1(m.maxHb) ? `${f1(m.maxHb)} m` : `${f1(m.minHb)}–${f1(m.maxHb)} m`
   const parts = [`${wd} ${dm}`, `${hh(m.start)}–${endHour(m.end)}`, size]
-  parts.push(`ondulação ${dirDeg(m.swellDir)}, ${Math.round(m.period)} s`)
+  const [s1, s2] = m.swells ?? []
+  parts.push(s1 ? `ondulação ${dirDeg(s1.dir)}, ${Math.round(s1.period)} s` : `ondulação ${dirDeg(m.swellDir)}, ${Math.round(m.period)} s`)
+  if (s2) parts.push(`2ª ondulação ${dirDeg(s2.dir)}, ${Math.round(s2.period)} s`) // o 2º swell pode vir de outra direção e quebrar grande
   if (m.kj != null) parts.push(`${Math.round(m.kj)} kJ`)
   parts.push(`vento ${dirDeg(m.windDir)}, até ${Math.round(m.maxWind)} km/h`)
   return parts.join(' · ')

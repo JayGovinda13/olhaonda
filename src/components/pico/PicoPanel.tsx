@@ -6,7 +6,8 @@ import type { Spot } from '../../data/spots'
 import { useLocalState } from '../../hooks/useLocalState'
 import { compass, dirDeg, energyColor, fmt, trainEnergyFromPeriod, WIND_LABEL, windKind } from '../../lib/surf'
 import { brand } from '../../theme'
-import { SpotDetailMap, type FlowMode } from '../SpotDetailMap'
+import { SpotDetailMap, type FlowMode, type SwellSel } from '../SpotDetailMap'
+import { hourSwells } from '../../lib/hourSwells'
 import { surfEstimate } from '../../lib/breaking'
 import { Timeline } from './Timeline'
 
@@ -45,6 +46,7 @@ export function PicoPanel({
   onSelect: (time: string) => void
 }) {
   const [mode, setMode] = useLocalState<FlowMode>('olhaonda:flow', 'ondas')
+  const [swellSel, setSwellSel] = useLocalState<SwellSel>('olhaonda:swellSel', 'todos')
   const times = useMemo(() => hours.map((h) => h.time), [hours])
   const index = Math.max(0, times.indexOf(selected.time))
   const pick = useCallback((i: number) => times[i] && onSelect(times[i]), [times, onSelect])
@@ -86,7 +88,28 @@ export function PicoPanel({
         </ToggleButtonGroup>
       </Stack>
 
-      <SpotDetailMap spot={spot} hour={selected} mode={mode} />
+      {mode === 'ondas' && (
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1, flexWrap: 'wrap', rowGap: 0.5 }}>
+          <Typography variant="caption" sx={{ fontWeight: 800, opacity: 0.7 }}>
+            Mostrar:
+          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={hourSwells(selected).length < 2 && swellSel !== 'todos' && !hourSwells(selected).some((s) => s.id === swellSel) ? 'todos' : swellSel}
+            onChange={(_, v) => v && setSwellSel(v)}
+            aria-label="Qual swell aparece no mapa"
+            sx={{ '& .MuiToggleButton-root': { px: 1.5, py: 0.5, fontWeight: 800, textTransform: 'none', minHeight: 36 } }}
+          >
+            <ToggleButton value="todos">Os 2 swells</ToggleButton>
+            <ToggleButton value="1">Swell 1</ToggleButton>
+            <ToggleButton value="2" disabled={!hourSwells(selected).some((s) => s.id === '2')}>
+              Swell 2
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Stack>
+      )}
+      <SpotDetailMap spot={spot} hour={selected} mode={mode} swells={swellSel} />
 
       {/* componentes do mar e vento da hora escolhida */}
       <Box

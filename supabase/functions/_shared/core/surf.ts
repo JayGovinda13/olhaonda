@@ -1,3 +1,4 @@
+import { surfEstimate } from './breaking.ts'
 import type { HourPoint } from './openMeteo.ts'
 import type { Spot } from './spots.ts'
 
@@ -65,16 +66,36 @@ const LABELS = ['Flat', 'Fraco', 'Regular', 'Bom', 'Muito bom', 'Clássico']
  * Nota de 0 a 5 para a sessão naquele horário.
  * Heurística simples e transparente: tamanho × exposição ao swell × período, menos penalidade de vento.
  */
+/**
+ * A escala da nota foi calibrada com a conta antiga (swell × exposição). A altura que quebra na praia é maior, então este fator
+ * (0,65, ajustado em Pitangueiras, Tombo e Praia do Leão: nota média 1,7–1,8 antes e depois) mantém as notas no mesmo nível.
+ */
+const RATE_SIZE_SCALE = 0.65
+
 export function rate(spot: Spot, h: HourPoint): Rating {
   const swellH = h.swellHeight ?? 0
-  const swellDir = h.swellDirection ?? h.waveDirection
-  const period = h.swellPeakPeriod ?? h.swellPeriod ?? h.wavePeriod ?? 0
   const total = h.waveHeight ?? swellH
 
-  // Exposição: swell chegando de frente vale 1, a 90° ou mais quase nada.
-  const exposure = swellDir == null ? 0.6 : Math.max(0, Math.cos((angleDiff(swellDir, spot.facing) * Math.PI) / 180))
-  const shelter = spot.sheltered ? 0.45 : 1
-  const effective = shelter * Math.max(swellH * (0.35 + 0.65 * exposure), (h.windWaveHeight ?? 0) * 0.5)
+  // Tamanho, direção e período vêm dos DOIS swells: cada um chega à praia com a própria direção (exposição), período
+  // (empinamento) e altura, e a nota usa o tamanho que quebra aqui (onda comum). Assim um 2º swell longo de outra direção
+  // pesa na nota, e um swell que vem de costas para a praia não puxa a nota para cima.
+  const est = surfEstimate(spot, h)
+  let effective: number
+  let period: number
+  if (est && est.hb > 0) {
+    effective = est.lo * RATE_SIZE_SCALE
+    const sw = est.trains.filter((t) => t.label !== 'Mar de vento')
+    const e = sw.reduce((acc, t) => acc + t.hb * t.hb, 0)
+    // período: média dos swells ponderada pela energia que chega na praia
+    period = e > 0 ? sw.reduce((acc, t) => acc + t.period * t.hb * t.hb, 0) / e : (h.swellPeakPeriod ?? h.swellPeriod ?? h.wavePeriod ?? 0)
+  } else {
+    // sem direção/altura por swell: conta antiga (swell 1 e exposição direta)
+    const swellDir = h.swellDirection ?? h.waveDirection
+    const exposure = swellDir == null ? 0.6 : Math.max(0, Math.cos((angleDiff(swellDir, spot.facing) * Math.PI) / 180))
+    const shelter = spot.sheltered ? 0.45 : 1
+    effective = shelter * Math.max(swellH * (0.35 + 0.65 * exposure), (h.windWaveHeight ?? 0) * 0.5)
+    period = h.swellPeakPeriod ?? h.swellPeriod ?? h.wavePeriod ?? 0
+  }
 
   // Tamanho útil (m) -> pontos (curva suave, satura ~2,5 m e cai no "mar grosso" de beach break)
   let size = 0

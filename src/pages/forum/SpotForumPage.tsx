@@ -88,7 +88,7 @@ export default function SpotForumPage() {
         <DailyCard t={todays} highlight />
       ) : (
         <Alert severity="info" variant="outlined">
-          O resumo da previsão de hoje é publicado todo dia às 5h.
+          O resumo da previsão do dia é publicado às 5h nos picos que alguém favoritou. Favorite este pico para receber o resumo aqui.
         </Alert>
       )}
 

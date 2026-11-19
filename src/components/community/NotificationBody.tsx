@@ -29,6 +29,7 @@ function Go({ href, onOpen, label, children }: { href: string | null; onOpen?: (
 function WindowRow({ w, href, onOpen }: { w: Window; href: string | null; onOpen?: (to: string) => void }) {
   const details = [
     w.swell ? `Ondulação ${w.swell}${w.kj ? ` · ${w.kj}` : ''}` : w.kj,
+    w.swell2 ? `2ª ondulação ${w.swell2}` : null,
     w.wind ? `Vento ${w.wind}` : null,
   ].filter(Boolean)
   return (
