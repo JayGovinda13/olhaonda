@@ -24,10 +24,17 @@ async function pool<T>(items: T[], n: number, fn: (x: T) => Promise<void>) {
 }
 
 Deno.serve(async (req) => {
-  if (req.headers.get('x-cron-secret') !== env('CRON_SECRET')) return json({ error: 'forbidden' }, 403)
+  const given = req.headers.get('x-cron-secret') ?? ''
+  const sb = admin()
+  // aceita o segredo da função (GitHub) ou o guardado no Vault do Supabase (pg_cron)
+  let authorized = !!given && given === (Deno.env.get('CRON_SECRET') ?? '')
+  if (!authorized && given) {
+    const { data } = await sb.rpc('cron_secret_matches', { candidate: given })
+    authorized = data === true
+  }
+  if (!authorized) return json({ error: 'forbidden' }, 403)
   const url = new URL(req.url)
   const onlyAlerts = url.searchParams.get('only') === 'alerts'
-  const sb = admin()
   const apiKey = Deno.env.get('OPEN_METEO_API_KEY') || undefined
   const now = localNow()
 

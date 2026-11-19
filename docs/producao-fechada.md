@@ -23,6 +23,23 @@ Produção e staging usam o **mesmo** projeto Supabase. Consequências:
   (o deploy só grava o que não estiver vazio).
 - Pergunta de segurança já tratada: as funções aceitam qualquer origem (CORS `*`), porque exigem o token de login.
 
+## Agendamento dos avisos (a cada 3 horas, no minuto certo)
+
+Quem dispara é o **pg_cron do Supabase** (migration `20261116000000_agendamento_avisos.sql`), não o GitHub, que atrasa e pula horários.
+Horários (Brasília): 05:13 resumo do fórum + avisos; 08:43, 11:43, 14:43, 17:43, 20:43, 23:43 e 02:43 só avisos.
+Configure uma única vez no **SQL Editor** do Supabase (os valores ficam no Vault; não vão para o código nem para o chat):
+
+```sql
+select vault.create_secret(encode(gen_random_bytes(32), 'hex'), 'cron_secret');
+select vault.create_secret('https://SEU_REF.supabase.co/functions/v1/daily-forecast', 'daily_forecast_url');
+```
+
+Conferir: `select jobname, schedule from cron.job;` e, depois de um horário,
+`select status, start_time from cron.job_run_details order by start_time desc limit 5;`
+e `select status_code, created from net._http_response order by created desc limit 5;` (200 = ok).
+Teste na hora: `select public.run_daily_forecast(true);`.
+O workflow do GitHub fica só como reserva e para rodar na mão.
+
 ## Passo a passo
 
 1. **GitHub → Environments → `production`**: copie do `staging` os mesmos `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`,
