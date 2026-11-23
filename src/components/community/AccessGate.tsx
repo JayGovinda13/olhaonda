@@ -22,7 +22,7 @@ export function AccessGate({ children }: { children: ReactNode }) {
       <Typography sx={{ mt: 1.5, opacity: 0.8 }}>
         {user
           ? 'Recebemos o seu cadastro. Neste teste só liberamos algumas pessoas por vez. Assim que o seu acesso for liberado, o fórum e os avisos aparecem aqui, sem precisar fazer nada.'
-          : 'O fórum e os avisos de condição estão em teste com um grupo pequeno. A previsão continua aberta para todo mundo. Quer participar? Crie a conta e aguarde a liberação.'}
+          : 'O fórum e os avisos de condição são só para quem foi convidado. A previsão continua aberta para todo mundo. Recebeu um link de convite? Abra-o para criar a conta. Já tem conta? Entre.'}
       </Typography>
       <Stack direction="row" spacing={1.5} sx={{ justifyContent: 'center', mt: 3 }}>
         {user ? (
@@ -31,10 +31,9 @@ export function AccessGate({ children }: { children: ReactNode }) {
           </Button>
         ) : (
           <>
-            <Button component={RouterLink} to="/cadastro" variant="contained">
-              Criar conta
+            <Button variant="contained" onClick={() => void requireLogin('Entre para acessar o fórum e os avisos.')}>
+              Entrar
             </Button>
-            <Button onClick={() => void requireLogin('Entre para acessar o fórum e os avisos.')}>Já tenho conta</Button>
           </>
         )}
       </Stack>

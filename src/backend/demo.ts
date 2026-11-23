@@ -37,6 +37,7 @@ type DB = {
   /** conta que pediu "esqueci a senha" (na demonstração não há e-mail: o link abre a tela direto) */
   recoveryFor?: string
   audit?: AdminOverview['audit']
+  invites?: AdminOverview['invites']
   threads: Thread[]
   posts: Post[]
   sessions: PhotoSession[]
@@ -256,9 +257,16 @@ export const demoBackend: Backend = {
         approved: true,
         isAdmin: true,
       }
+      const used = (db.invites ?? []).find((i) => i.code === input.invite)
+      if (used) used.uses += 1
       db.users.push({ profile, email, password: input.password })
       setMe(profile)
       return { needsConfirmation: false }
+    },
+    async inviteValid(code) {
+      // no demonstração qualquer código vale, a não ser que seja um convite criado aqui e já esgotado/revogado
+      const inv = (db.invites ?? []).find((i) => i.code === code)
+      return delay(!!code.trim() && (!inv || (!inv.revoked && (inv.maxUses == null || inv.uses < inv.maxUses))))
     },
     async usernameAvailable(username) {
       const u = username.trim().toLowerCase()
@@ -467,7 +475,18 @@ export const demoBackend: Backend = {
       const counts: Record<string, number> = {}
       for (const list of Object.values(db.favorites)) for (const f of list) counts[f.spotId] = (counts[f.spotId] ?? 0) + 1
       const topSpots = Object.entries(counts).map(([spotId, count]) => ({ spotId, count })).sort((a, b) => b.count - a.count).slice(0, 20)
-      return delay({ inviteOnly: true, limit: 10, members: users.filter((u) => u.approvedAt).length, users, topSpots, audit: db.audit ?? [] })
+      return delay({ inviteOnly: true, limit: null, members: users.filter((u) => u.approvedAt).length, users, invites: db.invites ?? [], topSpots, audit: db.audit ?? [] })
+    },
+    async createInvite({ label, maxUses, validDays }) {
+      requireMe()
+      const code = uid().replace(/-/g, '').padEnd(20, 'a').slice(0, 20)
+      const inv = { code, label: label?.trim() || null, createdAt: iso(), expiresAt: validDays ? new Date(Date.now() + validDays * 864e5).toISOString() : null, maxUses: maxUses ?? null, uses: 0, revoked: false }
+      db.invites = [inv, ...(db.invites ?? [])]
+      return delay(code)
+    },
+    async revokeInvite(code) {
+      db.invites = (db.invites ?? []).map((i) => (i.code === code ? { ...i, revoked: true } : i))
+      return delay(undefined)
     },
     async updateProfile(userId, name, username) {
       const me = requireMe()

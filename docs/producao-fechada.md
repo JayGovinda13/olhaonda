@@ -23,6 +23,16 @@ Produção e staging usam o **mesmo** projeto Supabase. Consequências:
   (o deploy só grava o que não estiver vazio).
 - Pergunta de segurança já tratada: as funções aceitam qualquer origem (CORS `*`), porque exigem o token de login.
 
+## Convites (cadastro só por link)
+
+Não há mais limite de pessoas. O cadastro só funciona por um **link de convite** criado em `/admin` → "Links de convite"
+(nome opcional, quantas pessoas podem usar e por quantos dias vale). Quem se cadastra pelo link já nasce liberado.
+O link tem a forma `https://olhaonda.com/cadastro?convite=CODIGO`; pode ser cancelado a qualquer momento (quem já entrou continua).
+A regra vale no banco (migration `20261123000000_convites.sql`): sem convite válido a conta nem é criada, mesmo chamando a API direto.
+Para voltar ao cadastro aberto: `update public.app_settings set invite_only = false;` (as contas novas então entram sem liberação automática).
+Contas criadas à mão pelo painel do Supabase (Authentication → Add user) também são barradas; crie-as com um convite no `user_metadata`
+(`{"invite": "CODIGO"}`) ou desligue `invite_only` por um instante.
+
 ## Agendamento dos avisos (a cada 3 horas, no minuto certo)
 
 Quem dispara é o **pg_cron do Supabase** (migration `20261116000000_agendamento_avisos.sql`), não o GitHub, que atrasa e pula horários.

@@ -161,9 +161,6 @@ export function Header() {
           </>
         ) : (
           <>
-            <Button onClick={() => navigate('/cadastro')} sx={{ borderRadius: 99, display: { xs: 'none', sm: 'inline-flex' } }}>
-              Criar conta
-            </Button>
             <Button
               variant="outlined"
               onClick={() => void requireLogin()}

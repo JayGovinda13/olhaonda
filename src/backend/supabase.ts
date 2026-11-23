@@ -198,16 +198,25 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
               modality: input.modality,
               level: input.level,
               terms_version: TERMS_VERSION, // aceite da política de privacidade e das regras (LGPD)
+              invite: input.invite ?? '', // o banco só cria a conta com convite válido
             },
           },
         })
-        if (error) throw new Error(error.message === 'User already registered' ? 'Já existe uma conta com esse e-mail.' : error.message)
+        if (error) {
+          if (error.message === 'User already registered') throw new Error('Já existe uma conta com esse e-mail.')
+          if (/convite|Database error saving new user/i.test(error.message)) throw new Error('Esse convite não vale mais. Peça um novo link a quem te convidou.')
+          throw new Error(error.message)
+        }
         return { needsConfirmation: !data.session }
       },
       async usernameAvailable(username) {
         const { data, error } = await sb.rpc('username_available', { name: username.trim().toLowerCase() })
         if (error) return true // na dúvida não bloqueia; o banco garante a unicidade
         return Boolean(data)
+      },
+      async inviteValid(code) {
+        const { data, error } = await sb.rpc('invite_valid', { invite_code: code.trim() })
+        return !error && data === true
       },
       async requestPasswordReset(email) {
         const { error } = await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${location.origin}/redefinir-senha` })
@@ -374,6 +383,15 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
       },
       async setAccess(userId, allow) {
         const { error } = await sb.rpc('admin_set_access', { target: userId, allow })
+        if (error) throw new Error(error.message)
+      },
+      async createInvite({ label, maxUses, validDays }) {
+        const { data, error } = await sb.rpc('admin_create_invite', { invite_label: label ?? null, uses_limit: maxUses ?? null, valid_days: validDays ?? null })
+        if (error) throw new Error(error.message)
+        return String(data)
+      },
+      async revokeInvite(code) {
+        const { error } = await sb.rpc('admin_revoke_invite', { invite_code: code })
         if (error) throw new Error(error.message)
       },
       async updateProfile(userId, name, username) {

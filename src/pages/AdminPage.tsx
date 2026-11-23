@@ -1,10 +1,10 @@
 import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Paper, Skeleton, Stack, Switch, TextField, Typography } from '@mui/material'
-import { EditPencil } from 'iconoir-react'
+import { Copy, EditPencil, ShareIos, Xmark } from 'iconoir-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router'
 import { useAuth } from '../auth/context'
 import { ALL_SPOTS } from '../data/spots'
-import { backend, type AdminOverview, type AdminUser } from '../backend'
+import { backend, type AdminInvite, type AdminOverview, type AdminUser } from '../backend'
 import { usePageMeta } from '../lib/meta'
 import { timeAgo } from '../lib/time'
 import { alpha, brand } from '../theme'
@@ -67,7 +67,6 @@ function AdminPanel() {
   }, [data, filter, q])
 
   const pending = data?.users.filter((u) => !u.approvedAt && u.role === 'user').length ?? 0
-  const full = data?.limit != null && data.members >= data.limit
 
   return (
     <Stack spacing={2.5} sx={{ maxWidth: 860, mx: 'auto' }}>
@@ -76,7 +75,7 @@ function AdminPanel() {
           Administração
         </Typography>
         <Typography sx={{ opacity: 0.75 }}>
-          Quem você liberar passa a ver o fórum e a receber os avisos. As pessoas se cadastram sozinhas e ficam aguardando aqui.
+          O cadastro é só por convite: crie um link abaixo e mande para quem você quer no OlhaOnda. Quem entra por um link já nasce liberado, sem limite de pessoas.
         </Typography>
       </Box>
 
@@ -89,11 +88,10 @@ function AdminPanel() {
           <Paper sx={{ p: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
             <Box sx={{ flex: 1, minWidth: 200 }}>
               <Typography sx={{ fontWeight: 800, fontSize: 22 }}>
-                {data.members}
-                {data.limit != null ? ` de ${data.limit}` : ''} liberados
+                {data.members} liberados
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                {full ? 'Limite atingido: bloqueie alguém para liberar outra pessoa.' : `${pending} aguardando liberação`}
+                {pending} aguardando liberação
                 {!data.inviteOnly && ' · O app está aberto a todos (convite desligado).'}
               </Typography>
             </Box>
@@ -116,6 +114,8 @@ function AdminPanel() {
               ))}
             </Stack>
           </Paper>
+
+          <InvitesCard invites={data.invites} onChange={load} />
 
           {data.topSpots.length > 0 && (
             <Paper sx={{ p: 2 }}>
@@ -178,7 +178,7 @@ function AdminPanel() {
                       </Typography>
                       <Switch
                         checked={!!u.approvedAt}
-                        disabled={busy === u.id || (!u.approvedAt && full)}
+                        disabled={busy === u.id}
                         color="success"
                         onChange={(e) => void toggle(u, e.target.checked)}
                         slotProps={{ input: { 'aria-label': `Liberar ${u.name}` } }}
@@ -267,5 +267,160 @@ function EditDialog({ user, onClose, onSaved }: { user: AdminUser; onClose: () =
         </Button>
       </DialogActions>
     </Dialog>
+  )
+}
+
+const USE_OPTIONS: { label: string; value: number | null }[] = [
+  { label: '1 pessoa', value: 1 },
+  { label: '5 pessoas', value: 5 },
+  { label: '20 pessoas', value: 20 },
+  { label: 'Sem limite', value: null },
+]
+const DAY_OPTIONS: { label: string; value: number | null }[] = [
+  { label: '7 dias', value: 7 },
+  { label: '30 dias', value: 30 },
+  { label: 'Sem prazo', value: null },
+]
+
+const inviteUrl = (code: string) => `${location.origin}/cadastro?convite=${code}`
+
+function inviteStatus(i: AdminInvite): { text: string; ok: boolean } {
+  if (i.revoked) return { text: 'cancelado', ok: false }
+  if (i.expiresAt && new Date(i.expiresAt).getTime() <= Date.now()) return { text: 'venceu', ok: false }
+  if (i.maxUses != null && i.uses >= i.maxUses) return { text: 'esgotado', ok: false }
+  return { text: 'ativo', ok: true }
+}
+
+/** Links de convite: o cadastro só funciona por eles. */
+function InvitesCard({ invites, onChange }: { invites: AdminInvite[]; onChange: () => Promise<void> }) {
+  const [label, setLabel] = useState('')
+  const [uses, setUses] = useState<number | null>(5)
+  const [days, setDays] = useState<number | null>(30)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+
+  const copy = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(inviteUrl(code))
+      setMsg('Link copiado. É só colar no WhatsApp ou onde quiser.')
+    } catch {
+      setMsg(inviteUrl(code))
+    }
+  }
+  const share = async (code: string) => {
+    try {
+      await navigator.share({ title: 'Convite para o OlhaOnda', text: 'Entre no OlhaOnda, previsão de onda por pico:', url: inviteUrl(code) })
+    } catch {
+      /* a pessoa fechou a folha de compartilhar */
+    }
+  }
+  const create = async () => {
+    setBusy(true)
+    setErr(null)
+    try {
+      const code = await backend.admin.createInvite({ label, maxUses: uses, validDays: days })
+      setLabel('')
+      await onChange()
+      await copy(code)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Não foi possível criar o convite.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  const revoke = async (code: string) => {
+    setBusy(true)
+    try {
+      await backend.admin.revokeInvite(code)
+      await onChange()
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Não foi possível cancelar.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+
+  return (
+    <Paper sx={{ p: 2 }}>
+      <Typography sx={{ fontWeight: 800 }}>Links de convite</Typography>
+      <Typography variant="body2" sx={{ opacity: 0.7, mb: 1.5 }}>
+        Só entra quem tiver um link válido. Cada pessoa que se cadastra pelo link já fica liberada.
+      </Typography>
+      {err && (
+        <Alert severity="error" sx={{ mb: 1.5 }}>
+          {err}
+        </Alert>
+      )}
+      {msg && (
+        <Alert severity="success" onClose={() => setMsg(null)} sx={{ mb: 1.5, wordBreak: 'break-all' }}>
+          {msg}
+        </Alert>
+      )}
+      <Stack spacing={1.25}>
+        <TextField size="small" label="Para quem é (opcional)" placeholder="Ex.: galera do Boldró" value={label} onChange={(e) => setLabel(e.target.value)} slotProps={{ htmlInput: { maxLength: 60 } }} />
+        <Box>
+          <Typography variant="caption" sx={{ opacity: 0.65 }}>
+            Quantas pessoas podem usar
+          </Typography>
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75, mt: 0.5 }}>
+            {USE_OPTIONS.map((o) => (
+              <Chip key={o.label} label={o.label} clickable size="small" variant={uses === o.value ? 'filled' : 'outlined'} onClick={() => setUses(o.value)} sx={uses === o.value ? { bgcolor: brand.plum, color: brand.sand, fontWeight: 800, '&:hover': { bgcolor: brand.plum } } : { fontWeight: 700 }} />
+            ))}
+          </Stack>
+        </Box>
+        <Box>
+          <Typography variant="caption" sx={{ opacity: 0.65 }}>
+            Vale por
+          </Typography>
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75, mt: 0.5 }}>
+            {DAY_OPTIONS.map((o) => (
+              <Chip key={o.label} label={o.label} clickable size="small" variant={days === o.value ? 'filled' : 'outlined'} onClick={() => setDays(o.value)} sx={days === o.value ? { bgcolor: brand.plum, color: brand.sand, fontWeight: 800, '&:hover': { bgcolor: brand.plum } } : { fontWeight: 700 }} />
+            ))}
+          </Stack>
+        </Box>
+        <Button variant="contained" disabled={busy} onClick={() => void create()} sx={{ alignSelf: 'flex-start' }}>
+          Criar link e copiar
+        </Button>
+      </Stack>
+
+      {invites.length > 0 && (
+        <Stack spacing={1} sx={{ mt: 2 }}>
+          {invites.map((i) => {
+            const st = inviteStatus(i)
+            return (
+              <Box key={i.code} sx={{ display: 'flex', gap: 1, alignItems: 'center', p: 1.25, borderRadius: '12px', bgcolor: alpha(brand.plum, 0.05), opacity: st.ok ? 1 : 0.6 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 800 }} noWrap>
+                    {i.label || 'Convite sem nome'}
+                  </Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.75 }}>
+                    {st.text} · {i.uses}
+                    {i.maxUses != null ? ` de ${i.maxUses}` : ''} {i.uses === 1 ? 'cadastro' : 'cadastros'}
+                    {i.expiresAt ? ` · vale até ${new Date(i.expiresAt).toLocaleDateString('pt-BR')}` : ''}
+                  </Typography>
+                </Box>
+                {st.ok && (
+                  <>
+                    <IconButton size="small" aria-label="Copiar link" onClick={() => void copy(i.code)}>
+                      <Copy width={18} height={18} />
+                    </IconButton>
+                    {canShare && (
+                      <IconButton size="small" aria-label="Compartilhar link" onClick={() => void share(i.code)}>
+                        <ShareIos width={18} height={18} />
+                      </IconButton>
+                    )}
+                    <IconButton size="small" aria-label="Cancelar convite" disabled={busy} onClick={() => void revoke(i.code)}>
+                      <Xmark width={18} height={18} />
+                    </IconButton>
+                  </>
+                )}
+              </Box>
+            )
+          })}
+        </Stack>
+      )}
+    </Paper>
   )
 }

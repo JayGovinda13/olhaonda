@@ -204,18 +204,8 @@ export function SignInDialog({ open, reason, onClose }: { open: boolean; reason?
               <Divider />
               <Stack spacing={1}>
                 <Typography variant="body2" sx={{ textAlign: 'center' }}>
-                  Ainda não tem conta?
+                  Ainda não tem conta? O cadastro é só por convite: peça um link a quem já usa o OlhaOnda.
                 </Typography>
-                <Button
-                  variant="outlined"
-                  size="large"
-                  onClick={() => {
-                    onClose()
-                    softNavigate('/cadastro')
-                  }}
-                >
-                  Criar conta grátis
-                </Button>
                 {demo && (
                   <Button size="small" onClick={() => setQuick(true)}>
                     Entrada rápida (demonstração)

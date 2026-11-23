@@ -17,7 +17,7 @@ import {
 } from '@mui/material'
 import { Bell, ChatLines, Star } from 'iconoir-react'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import { Link as RouterLink, Navigate, useNavigate } from 'react-router'
+import { Link as RouterLink, Navigate, useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '../auth/context'
 import { backend, LEVEL_LABEL, MODALITY_LABEL, USERNAME_RE, type Level, type Modality } from '../backend'
 import { LogoMark } from '../components/Logo'
@@ -58,6 +58,18 @@ export default function SignUpPage() {
   const { user, ready } = useAuth()
   const { save } = useFavorites()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  // o cadastro é só por convite: o código vem no link (?convite=...) e fica guardado até o fim do cadastro
+  const [invite] = useState(() => {
+    const fromLink = (params.get('convite') ?? '').trim().toLowerCase()
+    try {
+      if (fromLink) sessionStorage.setItem('olhaonda:convite', fromLink)
+      return fromLink || sessionStorage.getItem('olhaonda:convite') || ''
+    } catch {
+      return fromLink
+    }
+  })
+  const [inviteOk, setInviteOk] = useState<boolean | null>(invite ? null : false)
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
   const [touchedUser, setTouchedUser] = useState(false)
@@ -79,6 +91,15 @@ export default function SignUpPage() {
     description: 'Crie sua conta no OlhaOnda: fórum de cada pico, picos favoritos e avisos quando a previsão bater com o seu gosto.',
     path: '/cadastro',
   })
+
+  useEffect(() => {
+    if (!invite) return
+    let alive = true
+    void backend.auth.inviteValid(invite).then((ok) => alive && setInviteOk(ok))
+    return () => {
+      alive = false
+    }
+  }, [invite])
 
   // sugere o apelido a partir do nome até a pessoa mexer no campo
   const handle = touchedUser ? username : slug(name.split(' ')[0] ?? '')
@@ -107,7 +128,7 @@ export default function SignUpPage() {
     setBusy(true)
     setError(null)
     try {
-      const r = await backend.auth.signUp({ name, username: handle, email, password, city, modality, level })
+      const r = await backend.auth.signUp({ name, username: handle, email, password, city, modality, level, invite })
       if (r.needsConfirmation) {
         setPendingFavorites(spots)
         setConfirm(email)
@@ -137,6 +158,30 @@ export default function SignUpPage() {
           Enviamos um link para <b>{confirm}</b>. Abra o e-mail e toque no link para ativar a conta. Seus picos favoritos já ficam salvos
           para quando o seu acesso for liberado.
         </Typography>
+      </Paper>
+    )
+
+  if (inviteOk !== true)
+    return (
+      <Paper sx={{ p: { xs: 3, sm: 5 }, maxWidth: 560, mx: 'auto', textAlign: 'center' }}>
+        <LogoMark size={44} />
+        <Typography variant="h4" component="h1" sx={{ mt: 2 }}>
+          {inviteOk === null ? 'Conferindo o convite…' : invite ? 'Esse convite não vale mais' : 'Cadastro só por convite'}
+        </Typography>
+        {inviteOk !== null && (
+          <>
+            <Typography sx={{ mt: 1.5, opacity: 0.8 }}>
+              {invite
+                ? 'O link venceu, foi cancelado ou já foi usado por todo mundo que podia. Peça um link novo a quem te convidou.'
+                : 'Por enquanto o OlhaOnda só aceita novas contas por link de convite. Peça o seu a quem já usa o site. A previsão continua aberta para todo mundo.'}
+            </Typography>
+            <Stack direction="row" spacing={1.5} sx={{ justifyContent: 'center', mt: 3 }}>
+              <Button component={RouterLink} to="/" variant="contained">
+                Ver a previsão
+              </Button>
+            </Stack>
+          </>
+        )}
       </Paper>
     )
 

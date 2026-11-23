@@ -46,12 +46,24 @@ export type AdminUser = {
   approvedAt: string | null
   role: 'user' | 'moderator' | 'admin'
 }
+/** Link de convite criado pelo administrador. */
+export type AdminInvite = {
+  code: string
+  label: string | null
+  createdAt: string
+  expiresAt: string | null
+  /** quantas pessoas podem usar (null = sem limite) */
+  maxUses: number | null
+  uses: number
+  revoked: boolean
+}
 export type AdminOverview = {
   inviteOnly: boolean
-  /** máximo de pessoas liberadas (null = sem limite) */
+  /** máximo de pessoas liberadas (null = sem limite; hoje não há limite) */
   limit: number | null
   members: number
   users: AdminUser[]
+  invites: AdminInvite[]
   /** picos mais favoritados (só totais), do maior para o menor */
   topSpots: { spotId: string; count: number }[]
   audit: { at: string; action: 'liberou' | 'bloqueou' | 'editou'; admin: string | null; target: string | null }[]
@@ -65,6 +77,8 @@ export type SignUpInput = {
   city: string
   modality: Modality
   level: Level
+  /** código do link de convite (o cadastro é só por convite) */
+  invite?: string
 }
 
 export type ProfilePatch = Partial<Pick<Profile, 'name' | 'username' | 'city' | 'modality' | 'level' | 'bio'>>
@@ -189,6 +203,8 @@ export interface Backend {
     /** Cria a conta. needsConfirmation = precisa confirmar o e-mail antes de entrar. */
     signUp(input: SignUpInput): Promise<{ needsConfirmation: boolean }>
     usernameAvailable(username: string): Promise<boolean>
+    /** O link de convite ainda vale? */
+    inviteValid(code: string): Promise<boolean>
     /** "Esqueci a senha": manda o link de redefinição. Não revela se o e-mail tem conta. */
     requestPasswordReset(email: string): Promise<{ demoLink?: string }>
     /** A sessão atual veio de um link de redefinição de senha (só nela vale setNewPassword). */
@@ -240,6 +256,9 @@ export interface Backend {
   admin: {
     overview(): Promise<AdminOverview>
     setAccess(userId: string, allow: boolean): Promise<void>
+    /** Cria um link de convite; devolve o código. */
+    createInvite(opts: { label?: string; maxUses?: number | null; validDays?: number | null }): Promise<string>
+    revokeInvite(code: string): Promise<void>
     /** Edita o nome e o apelido de uma pessoa (apelido vazio = sem apelido). */
     updateProfile(userId: string, name: string, username: string | null): Promise<void>
   }
