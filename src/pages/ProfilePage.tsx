@@ -246,7 +246,7 @@ function ProfileForm({ user, onSaved }: { user: Profile; onSaved: () => Promise<
 
 /** O link de convite individual: cada pessoa liberada convida amigos pelo seu. */
 function InviteCard() {
-  const [inv, setInv] = useState<{ code: string; uses: number } | null>(null)
+  const [inv, setInv] = useState<{ code: string; uses: number; maxUses: number } | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
   useEffect(() => {
@@ -259,6 +259,7 @@ function InviteCard() {
       alive = false
     }
   }, [])
+  const full = !!inv && inv.uses >= inv.maxUses
   const url = inv ? `${location.origin}/cadastro?convite=${inv.code}` : ''
   const copy = async () => {
     try {
@@ -276,7 +277,7 @@ function InviteCard() {
     }
   }
   const renew = async () => {
-    if (!window.confirm('Gerar um novo link? O link atual deixa de funcionar (quem já entrou continua).')) return
+    if (!full && !window.confirm('Gerar um novo link? O link atual deixa de funcionar (quem já entrou continua).')) return
     try {
       setInv(await backend.invites.renew())
       setMsg('Novo link gerado.')
@@ -290,7 +291,7 @@ function InviteCard() {
         Convide seus amigos
       </Typography>
       <Typography variant="body2" sx={{ opacity: 0.75, mt: 0.5 }}>
-        O OlhaOnda é só por convite. Este é o seu link: quem se cadastrar por ele entra direto, sem esperar liberação.
+        O OlhaOnda é só por convite. Este é o seu link: quem se cadastrar por ele entra direto, sem esperar liberação. Cada link vale para 10 pessoas; depois é só gerar outro.
       </Typography>
       {err && (
         <Alert severity="error" sx={{ mt: 1.5 }}>
@@ -301,18 +302,24 @@ function InviteCard() {
         <Stack spacing={1.25} sx={{ mt: 1.5 }}>
           <TextField size="small" value={url} fullWidth slotProps={{ input: { readOnly: true }, htmlInput: { 'aria-label': 'Seu link de convite', onFocus: (e: React.FocusEvent<HTMLInputElement>) => e.currentTarget.select() } }} />
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-            <Button variant="contained" onClick={() => void copy()}>
-              Copiar link
-            </Button>
-            {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+            {!full && (
+              <Button variant="contained" onClick={() => void copy()}>
+                Copiar link
+              </Button>
+            )}
+            {!full && typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
               <Button variant="outlined" onClick={() => void share()}>
                 Compartilhar
               </Button>
             )}
-            <Button onClick={() => void renew()}>Gerar outro</Button>
+            <Button variant={full ? 'contained' : 'text'} onClick={() => void renew()}>
+              Gerar outro
+            </Button>
           </Stack>
           <Typography variant="caption" sx={{ opacity: 0.65 }}>
-            {inv.uses === 0 ? 'Ninguém entrou por ele ainda.' : `${inv.uses} ${inv.uses === 1 ? 'pessoa entrou' : 'pessoas entraram'} por ele.`} Se a sua conta for bloqueada, o link para de valer.
+            {full
+              ? 'Esse link já foi usado 10 vezes e não funciona mais. Gere outro para convidar mais gente.'
+              : `${inv.uses} de ${inv.maxUses} usos. Se a sua conta for bloqueada, o link para de valer.`}
           </Typography>
           {msg && <Typography variant="caption" sx={{ color: brand.deepGreen, fontWeight: 700 }}>{msg}</Typography>}
         </Stack>

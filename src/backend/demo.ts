@@ -518,10 +518,10 @@ export const demoBackend: Backend = {
       const me = requireMe()
       let inv = (db.invites ?? []).find((i) => i.owner === me.id && !i.revoked)
       if (!inv) {
-        inv = { code: uid().replace(/-/g, '').slice(0, 20), label: null, createdAt: iso(), expiresAt: null, maxUses: null, uses: 0, revoked: false, owner: me.id }
+        inv = { code: uid().replace(/-/g, '').slice(0, 20), label: null, createdAt: iso(), expiresAt: null, maxUses: 10, uses: 0, revoked: false, owner: me.id }
         db.invites = [...(db.invites ?? []), inv]
       }
-      return delay({ code: inv.code, uses: inv.uses })
+      return delay({ code: inv.code, uses: inv.uses, maxUses: inv.maxUses ?? 10 })
     },
     async renew() {
       const me = requireMe()

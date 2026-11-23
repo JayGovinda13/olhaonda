@@ -267,9 +267,9 @@ export interface Backend {
 
   /** O meu link de convite individual (só para quem já foi liberado). */
   invites: {
-    mine(): Promise<{ code: string; uses: number }>
+    mine(): Promise<{ code: string; uses: number; maxUses: number }>
     /** Gera outro link e cancela o anterior. */
-    renew(): Promise<{ code: string; uses: number }>
+    renew(): Promise<{ code: string; uses: number; maxUses: number }>
   }
 
   /** Direitos do titular (LGPD): levar os dados e excluir a conta. */

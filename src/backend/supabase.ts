@@ -402,10 +402,10 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
 
     invites: {
       async mine() {
-        return check(await sb.rpc('my_invite')) as { code: string; uses: number }
+        return check(await sb.rpc('my_invite')) as { code: string; uses: number; maxUses: number }
       },
       async renew() {
-        return check(await sb.rpc('my_invite_renew')) as { code: string; uses: number }
+        return check(await sb.rpc('my_invite_renew')) as { code: string; uses: number; maxUses: number }
       },
     },
 
