@@ -1,6 +1,6 @@
-import { Alert, Avatar, Box, Button, Chip, IconButton, Paper, Skeleton, Stack, Tooltip, Typography } from '@mui/material'
-import { ArrowLeft, Send, Trash } from 'iconoir-react'
-import { Fragment, useEffect, useState, type FormEvent } from 'react'
+import { Alert, Avatar, Box, Button, Chip, IconButton, Paper, Skeleton, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { ArrowLeft, EditPencil, Send, Trash } from 'iconoir-react'
+import { Fragment, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link as RouterLink, useParams } from 'react-router'
 import { useAuth } from '../../auth/context'
 import { backend, FORUM_CATEGORIES, type Post, type Thread } from '../../backend'
@@ -12,7 +12,39 @@ import { SPOTS } from '../../data/spots'
 import { timeAgo } from '../../lib/time'
 import { brand } from '../../theme'
 
-function Message({ name, username, at, body, onDelete, onMention, official }: { name: string; username?: string | null; at: string; body: string; onDelete?: () => void; onMention?: (username: string) => void; official?: boolean }) {
+type MessageProps = {
+  name: string
+  username?: string | null
+  at: string
+  body: string
+  editedAt?: string | null
+  onDelete?: () => void
+  onEdit?: () => void
+  /** quando preenchido, aparece no lugar do texto (o editor) */
+  editor?: ReactNode
+  onMention?: (username: string) => void
+  official?: boolean
+}
+
+/** Editor do texto de uma mensagem (com marcação de pessoas por @). */
+function EditBox({ value, onChange, onSave, onCancel, busy, label, title, onTitle }: { value: string; onChange: (v: string) => void; onSave: () => void; onCancel: () => void; busy: boolean; label: string; title?: string; onTitle?: (v: string) => void }) {
+  return (
+    <Stack spacing={1.25} sx={{ mt: 0.75 }}>
+      {onTitle && <TextField size="small" label="Título" value={title ?? ''} onChange={(e) => onTitle(e.target.value)} slotProps={{ htmlInput: { maxLength: 140 } }} fullWidth />}
+      <MentionField multiline minRows={3} value={value} onChange={onChange} slotProps={{ htmlInput: { maxLength: 10000, 'aria-label': label } }} />
+      <Stack direction="row" spacing={1}>
+        <Button variant="contained" size="small" disabled={busy || !value.trim() || (onTitle ? (title ?? '').trim().length < 3 : false)} onClick={onSave}>
+          Salvar
+        </Button>
+        <Button size="small" disabled={busy} onClick={onCancel}>
+          Cancelar
+        </Button>
+      </Stack>
+    </Stack>
+  )
+}
+
+function Message({ name, username, at, body, editedAt, onDelete, onEdit, editor, onMention, official }: MessageProps) {
   return (
     <Stack direction="row" spacing={1.5}>
       {official ? (
@@ -47,8 +79,16 @@ function Message({ name, username, at, body, onDelete, onMention, official }: { 
             ))}
           <Typography variant="caption" sx={{ opacity: 0.6 }}>
             {timeAgo(at)}
+            {editedAt ? ' · editado' : ''}
           </Typography>
           <Box sx={{ flex: 1 }} />
+          {onEdit && !editor && (
+            <Tooltip title="Editar">
+              <IconButton size="small" onClick={onEdit} aria-label="Editar mensagem">
+                <EditPencil width={16} height={16} />
+              </IconButton>
+            </Tooltip>
+          )}
           {onDelete && (
             <Tooltip title="Apagar">
               <IconButton size="small" onClick={onDelete} aria-label="Apagar mensagem">
@@ -57,7 +97,7 @@ function Message({ name, username, at, body, onDelete, onMention, official }: { 
             </Tooltip>
           )}
         </Stack>
-        <MentionText text={body} sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', mt: 0.5 }} />
+        {editor ?? <MentionText text={body} sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', mt: 0.5 }} />}
       </Box>
     </Stack>
   )
@@ -70,6 +110,10 @@ export default function ThreadPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { user, requireLogin } = useAuth()
+  // edição do tópico ('thread') ou de uma resposta (id dela)
+  const [editing, setEditing] = useState<string | null>(null)
+  const [draft, setDraft] = useState('')
+  const [titleDraft, setTitleDraft] = useState('')
 
   useEffect(() => {
     let alive = true
@@ -103,6 +147,33 @@ export default function ThreadPage() {
       setReply('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível responder.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const startEdit = (what: string, text: string, title = '') => {
+    setEditing(what)
+    setDraft(text)
+    setTitleDraft(title)
+    setError(null)
+  }
+  const saveEdit = async () => {
+    if (!current || !editing) return
+    setBusy(true)
+    setError(null)
+    try {
+      if (editing === 'thread') {
+        const t = await backend.forum.editThread(id, { title: titleDraft.trim(), body: draft.trim() })
+        setData({ ...current, thread: { ...current.thread, title: t.title, body: t.body, editedAt: t.editedAt } })
+        document.title = `${t.title} · Fórum OlhaOnda`
+      } else {
+        const p = await backend.forum.editPost(editing, draft.trim())
+        setData({ ...current, posts: current.posts.map((x) => (x.id === p.id ? { ...x, body: p.body, editedAt: p.editedAt } : x)) })
+      }
+      setEditing(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível salvar a edição.')
     } finally {
       setBusy(false)
     }
@@ -167,7 +238,21 @@ export default function ThreadPage() {
             <Typography variant="h4" component="h1" sx={{ mb: 3, overflowWrap: 'anywhere' }}>
               {t.title}
             </Typography>
-            <Message name={t.authorName} username={t.authorUsername} at={t.createdAt} body={t.body} official={t.kind === 'daily'} onMention={user ? mention : undefined} />
+            <Message
+              name={t.authorName}
+              username={t.authorUsername}
+              at={t.createdAt}
+              body={t.body}
+              editedAt={t.editedAt}
+              official={t.kind === 'daily'}
+              onMention={user ? mention : undefined}
+              onEdit={user?.id === t.authorId && t.kind === 'user' ? () => startEdit('thread', t.body, t.title) : undefined}
+              editor={
+                editing === 'thread' ? (
+                  <EditBox value={draft} onChange={setDraft} title={titleDraft} onTitle={setTitleDraft} onSave={() => void saveEdit()} onCancel={() => setEditing(null)} busy={busy} label="Texto do tópico" />
+                ) : undefined
+              }
+            />
           </>
         )}
       </Paper>
@@ -175,7 +260,17 @@ export default function ThreadPage() {
       {current?.posts.map((p, i) => (
         <Fragment key={p.id}>
           <Paper sx={{ p: { xs: 2.5, sm: 3 } }}>
-            <Message name={p.authorName} username={p.authorUsername} at={p.createdAt} body={p.body} onMention={user ? mention : undefined} onDelete={user?.id === p.authorId ? () => void remove(p.id) : undefined} />
+            <Message
+              name={p.authorName}
+              username={p.authorUsername}
+              at={p.createdAt}
+              body={p.body}
+              editedAt={p.editedAt}
+              onMention={user ? mention : undefined}
+              onEdit={user?.id === p.authorId ? () => startEdit(p.id, p.body) : undefined}
+              onDelete={user?.id === p.authorId ? () => void remove(p.id) : undefined}
+              editor={editing === p.id ? <EditBox value={draft} onChange={setDraft} onSave={() => void saveEdit()} onCancel={() => setEditing(null)} busy={busy} label="Texto da resposta" /> : undefined}
+            />
           </Paper>
           {i === 2 && <AdSlot format="inline" seed={i} />}
         </Fragment>

@@ -113,6 +113,8 @@ export type Thread = {
   /** user = tópico de pessoa; daily = resumo diário publicado pelo OlhaOnda */
   kind: 'user' | 'daily'
   forecastDate: string | null
+  /** quando o texto foi editado pela última vez (vazio = nunca) */
+  editedAt?: string | null
 }
 
 /** categorias que pessoas podem escolher (a "previsao" é só do OlhaOnda) */
@@ -154,6 +156,7 @@ export type Post = {
   authorName: string
   authorUsername?: string | null
   createdAt: string
+  editedAt?: string | null
 }
 
 export type Period = 'manha' | 'tarde'
@@ -233,6 +236,10 @@ export interface Backend {
     /** Pessoas liberadas para marcar com @ (por apelido ou nome). */
     searchMembers(query: string): Promise<MemberHit[]>
     deletePost(postId: string): Promise<void>
+    /** O autor corrige o título e o texto do próprio tópico. */
+    editThread(id: string, input: { title: string; body: string }): Promise<Thread>
+    /** O autor corrige o texto da própria resposta. */
+    editPost(id: string, body: string): Promise<Post>
     /**
      * Só no modo demonstração: publica o resumo do dia (no Supabase quem publica é a Edge Function
      * daily-forecast). Não duplica: um resumo por pico por dia.

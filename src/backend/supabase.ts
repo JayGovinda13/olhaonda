@@ -29,6 +29,7 @@ function toThread(r: Row): Thread {
     replyCount: Number(r.reply_count ?? 0),
     kind: r.kind === 'daily' ? 'daily' : 'user',
     forecastDate: (r.forecast_date as string | null) ?? null,
+    editedAt: (r.edited_at as string | null) ?? null,
   }
 }
 
@@ -64,6 +65,7 @@ function toPost(r: Row): Post {
     authorName: str(r.author_name),
     authorUsername: (r.author_username as string | null) ?? null,
     createdAt: str(r.created_at),
+    editedAt: (r.edited_at as string | null) ?? null,
   }
 }
 
@@ -323,6 +325,16 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
         const { data, error } = await sb.rpc('forum_member_search', { q: query })
         if (error) return []
         return ((data ?? []) as Row[]).map((r) => ({ username: str(r.username), name: str(r.name) }))
+      },
+      async editThread(id, input) {
+        await uidOrThrow()
+        check(await sb.from('forum_threads').update({ title: input.title, body: input.body }).eq('id', id))
+        return toThread(check(await sb.from('forum_threads_v').select('*').eq('id', id).single()) as Row)
+      },
+      async editPost(id, body) {
+        await uidOrThrow()
+        check(await sb.from('forum_posts').update({ body }).eq('id', id))
+        return toPost(check(await sb.from('forum_posts_v').select('*').eq('id', id).single()) as Row)
       },
       async deletePost(postId) {
         check(await sb.from('forum_posts').delete().eq('id', postId))

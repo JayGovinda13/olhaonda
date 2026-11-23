@@ -375,6 +375,25 @@ export const demoBackend: Backend = {
       ]
       return delay(people.filter((p) => p.username !== db.me?.username && (!q || p.username.startsWith(q) || p.name.toLowerCase().includes(q))).slice(0, 6))
     },
+    async editThread(id, input) {
+      const me = requireMe()
+      const t = db.threads.find((x) => x.id === id)
+      if (!t || t.authorId !== me.id || t.kind !== 'user') throw new Error('Você só pode editar os seus tópicos.')
+      t.title = input.title.trim()
+      t.body = input.body.trim()
+      t.editedAt = iso()
+      save()
+      return delay(t)
+    },
+    async editPost(id, body) {
+      const me = requireMe()
+      const p = db.posts.find((x) => x.id === id)
+      if (!p || p.authorId !== me.id) throw new Error('Você só pode editar as suas mensagens.')
+      p.body = body.trim()
+      p.editedAt = iso()
+      save()
+      return delay(p)
+    },
     async deletePost(postId) {
       const me = requireMe()
       const p = db.posts.find((x) => x.id === postId)
