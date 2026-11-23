@@ -29,7 +29,7 @@ Não há mais limite de pessoas. O cadastro só funciona por um **link de convit
 (nome opcional, quantas pessoas podem usar e por quantos dias vale). Quem se cadastra pelo link já nasce liberado.
 O link tem a forma `https://olhaonda.com/cadastro?convite=CODIGO`; pode ser cancelado a qualquer momento (quem já entrou continua).
 A regra vale no banco (migration `20261123000000_convites.sql`): sem convite válido a conta nem é criada, mesmo chamando a API direto.
-**Link individual:** cada pessoa liberada tem o seu em Meu perfil → "Convide seus amigos" (ou no menu da conta → Convidar amigos).
+**Link individual:** cada pessoa liberada tem o seu em Meu perfil → "Convide seus amigos".
 O link não tem limite de usos; "Gerar outro" cancela o anterior (quem já entrou continua). Se o dono for bloqueado, o link para de valer.
 Na lista de pessoas do `/admin` aparece "convidado por …" em cada conta.
 Para voltar ao cadastro aberto: `update public.app_settings set invite_only = false;` (as contas novas então entram sem liberação automática).

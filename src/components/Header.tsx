@@ -1,5 +1,5 @@
 import { Avatar, Box, Button, Container, Divider, IconButton, ListItemIcon, Menu, MenuItem, Stack, Tooltip, Typography } from '@mui/material'
-import { Camera, ChatLines, Instagram, LogIn, Lock, LogOut, SeaWaves, ShareIos, ShoppingBag, Star, Upload, User } from 'iconoir-react'
+import { Camera, ChatLines, Instagram, LogIn, Lock, LogOut, SeaWaves, ShoppingBag, Star, Upload, User } from 'iconoir-react'
 import { useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 import { backend } from '../backend'
@@ -121,14 +121,6 @@ export function Header() {
                 </ListItemIcon>
                 Meu perfil
               </MenuItem>
-              {member && (
-                <MenuItem onClick={() => go('/perfil#convite')}>
-                  <ListItemIcon>
-                    <ShareIos width={18} height={18} />
-                  </ListItemIcon>
-                  Convidar amigos
-                </MenuItem>
-              )}
               {user.isAdmin && (
                 <MenuItem onClick={() => go('/admin')}>
                   <ListItemIcon>
