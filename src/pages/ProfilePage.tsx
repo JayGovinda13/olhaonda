@@ -1,5 +1,5 @@
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, InputAdornment, Paper, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link as RouterLink, Navigate, useNavigate } from 'react-router'
 import { useAuth } from '../auth/context'
 import { backend, LEVEL_LABEL, MODALITY_LABEL, USERNAME_RE, type Level, type Modality, type Profile } from '../backend'
@@ -14,6 +14,7 @@ export default function ProfilePage() {
   if (!user) return null
   return (
     <Stack spacing={3} sx={{ maxWidth: 640, mx: 'auto' }}>
+      {user.approved && <InviteCard />}
       <ProfileForm key={user.id} user={user} onSaved={refresh} />
       <PasswordSection user={user} />
       <DataRights />
@@ -239,6 +240,83 @@ function ProfileForm({ user, onSaved }: { user: Profile; onSaved: () => Promise<
           </Button>
         </Box>
       </Stack>
+    </Paper>
+  )
+}
+
+/** O link de convite individual: cada pessoa liberada convida amigos pelo seu. */
+function InviteCard() {
+  const [inv, setInv] = useState<{ code: string; uses: number } | null>(null)
+  const [msg, setMsg] = useState<string | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+  useEffect(() => {
+    let alive = true
+    backend.invites
+      .mine()
+      .then((r) => alive && setInv(r))
+      .catch((e: unknown) => alive && setErr(e instanceof Error ? e.message : 'Não foi possível carregar o seu link.'))
+    return () => {
+      alive = false
+    }
+  }, [])
+  const url = inv ? `${location.origin}/cadastro?convite=${inv.code}` : ''
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url)
+      setMsg('Link copiado.')
+    } catch {
+      setMsg('Copie o link acima.')
+    }
+  }
+  const share = async () => {
+    try {
+      await navigator.share({ title: 'Convite para o OlhaOnda', text: 'Entre no OlhaOnda, previsão de onda por pico:', url })
+    } catch {
+      /* a pessoa fechou a folha de compartilhar */
+    }
+  }
+  const renew = async () => {
+    if (!window.confirm('Gerar um novo link? O link atual deixa de funcionar (quem já entrou continua).')) return
+    try {
+      setInv(await backend.invites.renew())
+      setMsg('Novo link gerado.')
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Não foi possível gerar outro link.')
+    }
+  }
+  return (
+    <Paper id="convite" sx={{ p: { xs: 2.5, sm: 4 } }}>
+      <Typography variant="h6" component="h2">
+        Convide seus amigos
+      </Typography>
+      <Typography variant="body2" sx={{ opacity: 0.75, mt: 0.5 }}>
+        O OlhaOnda é só por convite. Este é o seu link: quem se cadastrar por ele entra direto, sem esperar liberação.
+      </Typography>
+      {err && (
+        <Alert severity="error" sx={{ mt: 1.5 }}>
+          {err}
+        </Alert>
+      )}
+      {inv && (
+        <Stack spacing={1.25} sx={{ mt: 1.5 }}>
+          <TextField size="small" value={url} fullWidth slotProps={{ input: { readOnly: true }, htmlInput: { 'aria-label': 'Seu link de convite', onFocus: (e: React.FocusEvent<HTMLInputElement>) => e.currentTarget.select() } }} />
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+            <Button variant="contained" onClick={() => void copy()}>
+              Copiar link
+            </Button>
+            {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+              <Button variant="outlined" onClick={() => void share()}>
+                Compartilhar
+              </Button>
+            )}
+            <Button onClick={() => void renew()}>Gerar outro</Button>
+          </Stack>
+          <Typography variant="caption" sx={{ opacity: 0.65 }}>
+            {inv.uses === 0 ? 'Ninguém entrou por ele ainda.' : `${inv.uses} ${inv.uses === 1 ? 'pessoa entrou' : 'pessoas entraram'} por ele.`} Se a sua conta for bloqueada, o link para de valer.
+          </Typography>
+          {msg && <Typography variant="caption" sx={{ color: brand.deepGreen, fontWeight: 700 }}>{msg}</Typography>}
+        </Stack>
+      )}
     </Paper>
   )
 }

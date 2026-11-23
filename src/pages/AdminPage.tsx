@@ -163,6 +163,7 @@ function AdminPanel() {
                     </Typography>
                     <Typography variant="caption" sx={{ opacity: 0.55 }}>
                       cadastro {timeAgo(u.createdAt)}
+                      {u.invitedBy ? ` · convidado por ${u.invitedBy}` : ''}
                       {!u.emailConfirmed && ' · e-mail ainda não confirmado'}
                     </Typography>
                   </Box>

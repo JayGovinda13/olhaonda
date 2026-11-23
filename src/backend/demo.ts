@@ -37,7 +37,7 @@ type DB = {
   /** conta que pediu "esqueci a senha" (na demonstração não há e-mail: o link abre a tela direto) */
   recoveryFor?: string
   audit?: AdminOverview['audit']
-  invites?: AdminOverview['invites']
+  invites?: (AdminOverview['invites'][number] & { owner?: string })[]
   threads: Thread[]
   posts: Post[]
   sessions: PhotoSession[]
@@ -475,7 +475,7 @@ export const demoBackend: Backend = {
       const counts: Record<string, number> = {}
       for (const list of Object.values(db.favorites)) for (const f of list) counts[f.spotId] = (counts[f.spotId] ?? 0) + 1
       const topSpots = Object.entries(counts).map(([spotId, count]) => ({ spotId, count })).sort((a, b) => b.count - a.count).slice(0, 20)
-      return delay({ inviteOnly: true, limit: null, members: users.filter((u) => u.approvedAt).length, users, invites: db.invites ?? [], topSpots, audit: db.audit ?? [] })
+      return delay({ inviteOnly: true, limit: null, members: users.filter((u) => u.approvedAt).length, users, invites: (db.invites ?? []).filter((i) => !i.owner), topSpots, audit: db.audit ?? [] })
     },
     async createInvite({ label, maxUses, validDays }) {
       requireMe()
@@ -510,6 +510,23 @@ export const demoBackend: Backend = {
       const target = db.users.find((u) => u.profile.id === userId)?.profile.name ?? null
       db.audit = [{ at: iso(), action: allow ? ('liberou' as const) : ('bloqueou' as const), admin: me.name, target }, ...(db.audit ?? [])].slice(0, 20)
       save()
+    },
+  },
+
+  invites: {
+    async mine() {
+      const me = requireMe()
+      let inv = (db.invites ?? []).find((i) => i.owner === me.id && !i.revoked)
+      if (!inv) {
+        inv = { code: uid().replace(/-/g, '').slice(0, 20), label: null, createdAt: iso(), expiresAt: null, maxUses: null, uses: 0, revoked: false, owner: me.id }
+        db.invites = [...(db.invites ?? []), inv]
+      }
+      return delay({ code: inv.code, uses: inv.uses })
+    },
+    async renew() {
+      const me = requireMe()
+      db.invites = (db.invites ?? []).map((i) => (i.owner === me.id ? { ...i, revoked: true } : i))
+      return demoBackend.invites.mine()
     },
   },
 

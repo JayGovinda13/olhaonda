@@ -45,6 +45,8 @@ export type AdminUser = {
   emailConfirmed: boolean
   approvedAt: string | null
   role: 'user' | 'moderator' | 'admin'
+  /** nome de quem convidou (ou aviso de convite do administrador) */
+  invitedBy?: string | null
 }
 /** Link de convite criado pelo administrador. */
 export type AdminInvite = {
@@ -261,6 +263,13 @@ export interface Backend {
     revokeInvite(code: string): Promise<void>
     /** Edita o nome e o apelido de uma pessoa (apelido vazio = sem apelido). */
     updateProfile(userId: string, name: string, username: string | null): Promise<void>
+  }
+
+  /** O meu link de convite individual (só para quem já foi liberado). */
+  invites: {
+    mine(): Promise<{ code: string; uses: number }>
+    /** Gera outro link e cancela o anterior. */
+    renew(): Promise<{ code: string; uses: number }>
   }
 
   /** Direitos do titular (LGPD): levar os dados e excluir a conta. */

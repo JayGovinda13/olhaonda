@@ -400,6 +400,15 @@ export function createSupabaseBackend(url: string, anonKey: string): Backend {
       },
     },
 
+    invites: {
+      async mine() {
+        return check(await sb.rpc('my_invite')) as { code: string; uses: number }
+      },
+      async renew() {
+        return check(await sb.rpc('my_invite_renew')) as { code: string; uses: number }
+      },
+    },
+
     account: {
       async exportData() {
         return check(await sb.rpc('export_my_data')) as Record<string, unknown>
