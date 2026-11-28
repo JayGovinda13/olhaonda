@@ -47,7 +47,11 @@ const VARS = {
     '--oo-paper': 'rgba(251,244,236,.8)',
     '--oo-paper-solid': '#FBF4EC',
     '--oo-shadow': 'rgba(75,29,90,.22)',
-    '--oo-bg': 'url(/bg-sun.svg), url(/bg-waves-tile.svg)',
+    // fundos de tela (onda + sol) gerados no Affinity: public/wallpapers/
+    '--oo-bg': 'url(/wallpapers/olhaonda-desktop-light.svg)',
+    '--oo-bg-tablet': 'url(/wallpapers/olhaonda-ipad-light.svg)',
+    '--oo-bg-phone': 'url(/wallpapers/olhaonda-iphone-light.svg)',
+    '--oo-bg-phone-tall': 'url(/wallpapers/olhaonda-android-light.svg)',
   },
   dark: {
     '--oo-purple': NIGHT.purple,
@@ -58,7 +62,10 @@ const VARS = {
     '--oo-paper': 'rgba(35,26,42,.86)',
     '--oo-paper-solid': NIGHT.paper,
     '--oo-shadow': 'rgba(0,0,0,.5)',
-    '--oo-bg': 'url(/bg-sun-dark.svg), url(/bg-waves-tile-dark.svg)',
+    '--oo-bg': 'url(/wallpapers/olhaonda-desktop-dark.svg)',
+    '--oo-bg-tablet': 'url(/wallpapers/olhaonda-ipad-dark.svg)',
+    '--oo-bg-phone': 'url(/wallpapers/olhaonda-iphone-dark.svg)',
+    '--oo-bg-phone-tall': 'url(/wallpapers/olhaonda-android-dark.svg)',
   },
 }
 
@@ -108,14 +115,16 @@ export const theme = createTheme({
         ':root.dark .maplibregl-canvas': { filter: 'brightness(0.78) saturate(0.9)' },
         body: {
           backgroundColor: brand.sand,
-          // sol fixo no canto superior direito + ondas pequenas repetidas em diagonal
-          // (gerados por scripts/gen-wave.mjs; versões -dark para o modo noturno)
+          // fundo de tela: onda + sol (public/wallpapers/, versões -dark para o modo noturno).
+          // Paisagem usa o desktop; em pé, tablet ou celular conforme a proporção da tela.
           backgroundImage: 'var(--oo-bg)',
-          backgroundRepeat: 'no-repeat, repeat',
-          backgroundAttachment: 'fixed, fixed',
-          backgroundPosition: 'right 4vw top 72px, 0 0',
-          backgroundSize: 'clamp(110px, 16vw, 220px) auto, 300px 300px',
-          '@media (max-width: 600px)': { backgroundSize: '90px auto, 220px 220px', backgroundPosition: 'right -34px top 52px, 0 0' },
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed',
+          backgroundPosition: 'right bottom',
+          backgroundSize: 'cover',
+          '@media (orientation: portrait)': { backgroundImage: 'var(--oo-bg-tablet)' },
+          '@media (orientation: portrait) and (max-aspect-ratio: 2/3)': { backgroundImage: 'var(--oo-bg-phone)' },
+          '@media (orientation: portrait) and (max-aspect-ratio: 9/20)': { backgroundImage: 'var(--oo-bg-phone-tall)' },
         },
       },
     },
